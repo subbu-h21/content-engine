@@ -11,3 +11,6 @@ public/audio/sfx/*.wav
 /audio/*.wav
 __pycache__/
 *.blend1
+# content engine connection (machine-specific)
+.mcp.json
+.claude/settings.local.json

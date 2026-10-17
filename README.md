@@ -4,12 +4,34 @@ One place to make explainer videos: brief → script → voice and music → Ble
 Each video is a numbered folder in a workspace you choose (`project-4-<slug>`, `project-5-<slug>`, …) and every file
 that video needs lives in that folder.
 
-Status: **Phase 1** (engine core, template, pipeline, CLI). The web app (create page, editor with Claude, render queue)
-comes in Phases 2–4 and will call the same code as the `ce` command.
+Status: **Phase 2** done (website with editor + Claude). Next: Phase 3 (create page: script, music, style, uploads),
+Phase 4 (render queue).
+
+## The website
+
+```
+ce app            # starts http://127.0.0.1:4100 and opens it; Ctrl+C stops it (and the Studios/terminals it started)
+```
+
+- **Home**: the workspace, *New video* (creates the next `project-N-<slug>` and opens it), the list of videos.
+- **Editor** (`/p/<project>`): the project's Remotion Studio (started on a free port from 3200), the project's Claude Code
+  in a terminal on the right, and a strip under Studio showing what Claude is told about your position.
+- **How Claude knows "this"**: the template's `EngineBridge` (inside the video, active only in a Studio the engine
+  started) reports composition, playhead and props to the engine. Opening a project writes two git-ignored files into it:
+  `.mcp.json` (the engine's MCP tools for that project) and `.claude/settings.local.json` (approves them and adds a
+  `UserPromptSubmit` hook, `app/server/hook.mjs`, that prefixes each message with time, scene, narration line and the
+  headlines on screen). Works the same when Claude Code runs in VS Code instead of the website, as long as the website
+  has the project open.
+- **Claude's tools** (MCP `content-engine`): `editor_state`, `timeline`, `view_frame` (renders the frame as an image,
+  ~20 s), `seek`, `playback`, `show_setting` (opens Studio's props editor at a path).
+- **Safety**: the server listens on 127.0.0.1 only, rejects foreign `Host` headers (DNS rebinding) and foreign `Origin`s;
+  the terminal socket only accepts the engine's own page.
+- First time in a project, Claude Code asks once whether you trust the folder: choose *Yes*.
 
 ## Commands
 
 ```
+ce app [--no-open]                 # the website (see above)
 ce settings workspace D:\code_files\animations   # where video projects live (currently set)
 ce new <slug> --title "..."        # project-<N>-<slug> from the template: packages linked, git repo, ready for Studio
 ce list                            # projects in the workspace
@@ -30,7 +52,8 @@ name in the workspace, or a project number.
 | `template/` | What a new project starts as: the generic Remotion layer (`src/components`, `src/lib`), an example scene, `project.json`, `script.json`, `sfx.json`, README and CLAUDE.md for the project. |
 | `pipeline/` | Python steps that read a project's `project.json` / `script.json` / `sfx.json` and write into it: OpenRouter voice (verbatim-checked) and Lyria music, stems and music ducking, procedural sound effects, plate bloom + encode, captions. |
 | `library/blender/` | Reusable Blender builders (brain, phone) with their assets. A project copies what it uses into `blender/lib/`. |
-| `cli/` | `ce.mjs` (commands) and `projects.mjs` (create/list/link projects; the web app will reuse it). |
+| `cli/` | `ce.mjs` (commands) and `projects.mjs` (create/list/link projects; the website reuses it). |
+| `app/` | The website: `server/` (Express API, MCP endpoint, Studio and terminal management, bridge, hook), `web/` (React page, built with esbuild into `dist/`: `npm run build`). Own packages, separate from `runtime/`. |
 | `migrations/phone-reel/` | Turns the existing reel (project-3-development + project-2-expt/reel) into an engine project. |
 
 ## Rules the design follows
@@ -63,5 +86,21 @@ The phone reel rebuilt as an engine project (`migrations/phone-reel`), compared 
 - Studio starts and compiles; a fresh `ce new` project typechecks and renders; `npm install` inside a project removes
   only its link (shared packages intact) and `ce link` restores it.
 
-Not exercised: paid voice/music generation (same code paths, adapted), full Blender renders (hours), saving Props from
-Studio's panel (needs a browser).
+Not exercised: paid voice/music generation (same code paths, adapted), full Blender renders (hours).
+
+Props saving from Studio (2026-10-17): verified with a real save through Studio's `/api/update-default-props`; it only
+works because `defaultProps` is an inline literal in `<Composition id="Reel">` (see template/src/Root.tsx).
+
+## Verified, Phase 2 (2026-10-18)
+
+With project-4-phone-reel, Studio loaded in headless Chrome (Remotion's chrome-headless-shell):
+- the bridge reports composition/frame/props (no page errors); renders with the bridge are still identical to project-3
+- MCP: all six tools listed; `seek` to 0:41 moved Studio's playhead (frame 984); `show_setting` scrolled the props
+  editor to `scenes.s03.cueLabel.text`; `view_frame` returned the right frame (40 KB JPEG, ~19 s)
+- the hook prints the right context; real Claude Code (`claude -p`, read-only) parked at 0:41 answered
+  `scenes.s05.loop.lines` in one turn
+- the editor page shows Studio and a live Claude Code terminal; `ce app` starts and stopping it leaves no processes
+- security: foreign Origin → 403, foreign Host → 403, terminal socket from a foreign origin → 403
+
+Not exercised: a person using the editor page by hand (typing in the terminal, dragging the divider); Ctrl+C shutdown
+(the handlers exist; the tests stopped the process tree directly).

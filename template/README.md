@@ -44,6 +44,13 @@ moves everything with it. After re-timing, `ce pipeline <project> audio` rebuild
   Edit in `Reel`: the scene previews have no props editor.
 - **Guides**: safe areas, baseline grid, tracked 3D markers, cue readout, timecode, captions. Always off in `npm run render`.
 
+## In the engine website
+
+Open the video from the engine (`ce app`): Studio on the left, Claude Code on the right. Pause on a moment and talk
+about it ("make *this* headline smaller", "the label here overlaps the brain"): every message tells Claude the time,
+scene, narration line and the headlines on screen, and Claude can look at the frame, move the playhead and open the
+setting it means in the props editor. `src/components/EngineBridge.tsx` does the reporting; it is inactive in renders.
+
 ## Working together
 
 - `notes/NOTES.md` is the task list: add timestamped notes, Claude works through them and marks them done.

@@ -1,11 +1,12 @@
 /**
  * The composition. Layer order: plates → scene overlays → finish (vignette, grain) → developer guides.
  * Each scene lives in a named <Sequence>, so the Studio timeline reads like the script.
- * Scene components are registered in src/scenes/index.ts.
+ * Scene components are registered in src/scenes/index.ts. EngineBridge renders nothing (see the file).
  */
 import React from "react";
 import { AbsoluteFill, Sequence, useCurrentFrame } from "remotion";
 import { AudioMix } from "./components/AudioMix";
+import { EngineBridge } from "./components/EngineBridge";
 import { Finish } from "./components/Finish";
 import { Guides } from "./components/Guides";
 import { Plates } from "./components/Plate";
@@ -41,6 +42,7 @@ export const Reel: React.FC<ReelProps> = (props) => {
         <Finish />
         <Guides />
         <AudioMix />
+        <EngineBridge />
       </AbsoluteFill>
     </ReelProvider>
   );

@@ -17,6 +17,10 @@ const DEFAULT_SETTINGS = {
   workspace: "",
   python: "python",
   blender: "C:\\Program Files\\Blender Foundation\\Blender 5.1\\blender.exe",
+  /** the engine website (ce app) */
+  appPort: 4100,
+  /** Remotion Studio instances started by the website use ports from here upward */
+  studioPortBase: 3200,
 };
 
 export function loadSettings() {
@@ -110,6 +114,13 @@ export function createProject({ workspace, slug, title }) {
     // git missing: the project still works, it just has no history
   }
   return dir;
+}
+
+/** An engine project in the workspace by folder name (the website's project id), or null. Rejects anything path-like. */
+export function findProject(workspace, name) {
+  if (!workspace || !name || !PROJECT_RE.test(name) || name !== path.basename(name)) return null;
+  const dir = path.join(workspace, name);
+  return fs.existsSync(path.join(dir, "project.json")) ? dir : null;
 }
 
 /** Resolve a project argument: a path, a folder name, a project number, or (default) the current folder. */

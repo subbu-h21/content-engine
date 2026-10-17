@@ -8,11 +8,12 @@
  *   ce link [project]                create/repair node_modules junctions (all projects if none given)
  *   ce pipeline <project> <step> ... run a pipeline step (vo, music, stems, sfx, plates, captions)
  *   ce blender <project> <script> [args...]   run a Blender script from the project's blender/ folder headless
+ *   ce app [--no-open]               start the website (projects, editor with Studio + Claude) and open it
  *   ce doctor                        check the machine: node, python packages, ffmpeg, Blender, disk
  *
  * <project> is a path, a folder name in the workspace, or a project number.
  */
-import { execFileSync, spawnSync } from "node:child_process";
+import { execFileSync, spawn, spawnSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 import { createProject, ENGINE_DIR, linkProject, listProjects, loadSettings, resolveProject, RUNTIME_MODULES, saveSettings } from "./projects.mjs";
@@ -88,6 +89,17 @@ const commands = {
     const file = path.isAbsolute(script) ? script : path.join(dir, "blender", script);
     if (!fs.existsSync(file)) throw new Error(`No such script: ${file}`);
     run(settings.blender, ["-b", "-P", file, "--", ...args], { cwd: dir, env: { ...process.env, CE_PROJECT: dir } });
+  },
+
+  app() {
+    const appDir = path.join(ENGINE_DIR, "app");
+    if (!fs.existsSync(path.join(appDir, "node_modules"))) throw new Error(`website packages missing: run npm install in ${appDir}`);
+    if (!fs.existsSync(path.join(appDir, "dist", "index.html"))) run("node", ["build.mjs"], { cwd: appDir });
+    const url = `http://127.0.0.1:${settings.appPort || 4100}`;
+    const server = spawn(process.execPath, [path.join(appDir, "server", "index.mjs")], { cwd: appDir, stdio: "inherit" });
+    server.on("exit", (code) => (process.exitCode = code ?? 0));
+    process.on("SIGINT", () => server.kill("SIGINT"));
+    if (!rest.includes("--no-open")) setTimeout(() => spawn("cmd.exe", ["/c", "start", "", url], { stdio: "ignore", detached: true }).unref(), 1500);
   },
 
   doctor() {
