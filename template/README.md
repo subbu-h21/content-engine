@@ -25,8 +25,8 @@ npm run typecheck
 | Sound effects | `sfx.json` (events relative to cues) → `src/data/sfx_events.json`, `public/audio/sfx/` | `ce pipeline <project> sfx` |
 | 3D plates | `blender/*.py` shots → `renders/<plate>/final` → `public/plates/<plate>_{final,draft}.mp4` | `ce blender <project> shot.py final`, then `ce pipeline <project> plates` |
 | 3D → 2D tracking | `src/data/markers.json` | written by the shot script |
-| 2D layer | `src/scenes/*.tsx` (this video) + `src/components`, `src/lib` (engine code, frozen copy) | code, or the Props panel |
-| Tweakables | `src/Root.tsx` → `DEFAULTS`, typed by `src/lib/schema.ts` + `src/scenes/schema.ts` | Studio Props panel → 💾 writes back here |
+| 2D layer | `src/scenes/*.tsx` (this video) + `src/components`, `src/lib` (engine code, frozen copy) | code, or Default Props in Studio |
+| Tweakables | `src/Root.tsx` → `defaultProps={{…}}` of the `Reel` composition, typed by `src/lib/schema.ts` + `src/scenes/schema.ts` | Studio: open `Reel`, Inspector → Default Props; edits save here by themselves |
 
 Every animation is keyed to the second a narration cue starts (`cue("s03_cue", "response")`), so re-recording a line
 moves everything with it. After re-timing, `ce pipeline <project> audio` rebuilds timing, stems, effects and captions
@@ -35,14 +35,18 @@ moves everything with it. After re-timing, `ce pipeline <project> audio` rebuild
 ## Studio tour
 
 - **Timeline** rows are named after the script: scenes, plates, `Voice`, `Music (ducked)`, `SFX · …`.
-- **Props panel** (right sidebar, Ctrl+J): `plates` (final/draft), `guides`, `theme`, `type`, `look`, `audio`, `scenes.sXX`.
-  Headline lines use `*asterisks*` for italics. Press 💾 to save edits into `src/Root.tsx`.
-- **Scenes folder** in the sidebar: each scene as its own composition, starting at frame 0.
+- **Default Props** (right sidebar, Inspector tab): visible when nothing in the timeline is selected (press Esc to
+  deselect). Sections: `plates` (final/draft), `guides`, `theme`, `type`, `look`, `audio`, `scenes.sXX`.
+  Headline lines use `*asterisks*` for italics. Edits save into `src/Root.tsx` by themselves; Ctrl+Z / Ctrl+Y undo and
+  redo while Studio is open. (Selecting a timeline row shows that layer's Transform instead: leave it alone, it edits
+  shared component code.)
+- **Scenes folder** in the sidebar: each scene on its own, starting at frame 0, showing the saved props of `Reel`.
+  Edit in `Reel`: the scene previews have no props editor.
 - **Guides**: safe areas, baseline grid, tracked 3D markers, cue readout, timecode, captions. Always off in `npm run render`.
 
 ## Working together
 
 - `notes/NOTES.md` is the task list: add timestamped notes, Claude works through them and marks them done.
 - Commit after each round so either side can diff or revert. `git log -p src/Root.tsx` shows every prop change.
-- Don't edit `DEFAULTS` in an editor while Studio has unsaved Props changes; one side overwrites the other.
+- Don't hand-edit the props in `src/Root.tsx` while Studio is open; Studio and the editor would overwrite each other.
 - Never `npm install` here: `node_modules` is a link to the engine's packages. If it breaks, run `ce link`.
