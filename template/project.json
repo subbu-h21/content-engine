@@ -1,0 +1,24 @@
+{
+  "engine": "0.1.0",
+  "title": "Untitled",
+  "slug": "untitled",
+  "created": "",
+  "format": { "width": 1080, "height": 1920, "fps": 24 },
+  "voice": {
+    "model": "openai/gpt-audio",
+    "fallbackModel": "openai/gpt-audio",
+    "voice": "cedar",
+    "style": "calm, clear, natural narrator; unhurried, crisp diction, no hype",
+    "leadIn": 0.5,
+    "gap": 0.3,
+    "tail": 0.8
+  },
+  "music": {
+    "model": "google/lyria-3-pro-preview",
+    "prompt": ""
+  },
+  "mix": { "voicePeak": 0.89, "duckDb": -7 },
+  "stems": { "voice": null, "music": null },
+  "plates": [],
+  "markers": null
+}

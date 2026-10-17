@@ -1,0 +1,11 @@
+{
+  "scenes": [
+    {
+      "id": "s01_intro",
+      "title": "Intro",
+      "cues": [
+        { "id": "line", "text": "Your first line goes here." }
+      ]
+    }
+  ]
+}

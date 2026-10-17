@@ -1,0 +1,23 @@
+{
+  "events": [
+    { "scene": "s01_hook", "cue": "hand", "offset": -0.05, "kind": "buzz", "gain": 1.0 },
+    { "scene": "s01_hook", "cue": "who", "offset": 0.5, "kind": "buzz", "gain": 0.7 },
+    { "scene": "s02_boredom", "offset": 0.2, "kind": "hum_in", "gain": 0.9 },
+    { "scene": "s02_boredom", "cue": "lock", "offset": -0.2, "kind": "air", "gain": 0.5 },
+    { "scene": "s03_cue", "cue": "cue", "offset": 0.05, "kind": "pulse", "gain": 0.9 },
+    { "scene": "s03_cue", "cue": "response", "offset": -0.1, "kind": "sweep_low", "gain": 0.6 },
+    { "scene": "s03_cue", "cue": "response", "offset": 1.0, "kind": "pulse", "gain": 0.8 },
+    { "scene": "s04_relief", "cue": "relief", "offset": 0.1, "kind": "shimmer", "gain": 1.0 },
+    { "scene": "s05_loop", "cue": "loop", "offset": 0.1, "kind": "swish", "gain": 0.5 },
+    { "scene": "s05_loop", "cue": "loop", "offset": 1.0, "kind": "pulse", "gain": 0.7 },
+    { "scene": "s05_loop", "cue": "loop", "offset": 1.4, "kind": "swish", "gain": 0.65 },
+    { "scene": "s05_loop", "cue": "loop", "offset": 2.2, "kind": "pulse", "gain": 0.85 },
+    { "scene": "s05_loop", "cue": "loop", "offset": 2.6, "kind": "swish", "gain": 0.8 },
+    { "scene": "s05_loop", "cue": "loop", "offset": 3.3, "kind": "pulse", "gain": 1.0 },
+    { "scene": "s06_wanting", "cue": "circuits", "offset": 1.4, "kind": "hum_in", "gain": 0.7 },
+    { "scene": "s07_insight", "cue": "notice", "offset": 1.3, "kind": "tick", "gain": 0.6 },
+    { "scene": "s07_insight", "cue": "end", "offset": 0.2, "kind": "lock", "gain": 0.8 },
+    { "scene": "s07_insight", "cue": "end", "offset": 3.4, "kind": "air", "gain": 0.5 }
+  ],
+  "sceneTransitions": { "offset": -0.1, "kind": "swish", "gain": 0.3 }
+}

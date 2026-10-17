@@ -1,0 +1,16 @@
+{
+ "total": 5.0,
+ "fps": 24,
+ "scenes": {
+  "s01_intro": {
+   "start": 0.0,
+   "duration": 5.0,
+   "cues": {
+    "line": {
+     "start": 0.5,
+     "end": 2.5
+    }
+   }
+  }
+ }
+}

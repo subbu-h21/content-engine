@@ -1,0 +1,13 @@
+# packages come from the content engine (node_modules is a junction)
+node_modules
+out/
+_tmp/
+# heavy or regenerable: Blender frames, encoded plates, stems
+renders/
+public/plates/*.mp4
+public/audio/*.wav
+public/audio/sfx/*.wav
+# derived audio (rebuilt by the pipeline); per-cue voice lines and the music source stay tracked
+/audio/*.wav
+__pycache__/
+*.blend1

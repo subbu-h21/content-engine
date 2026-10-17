@@ -1,0 +1,27 @@
+{
+  "engine": "0.1.0",
+  "title": "Why do we reach for our phones the moment we're bored?",
+  "slug": "phone-reel",
+  "created": "2026-10-14",
+  "format": { "width": 1080, "height": 1920, "fps": 24 },
+  "voice": {
+    "model": "openai/gpt-audio-mini",
+    "fallbackModel": "openai/gpt-audio",
+    "voice": "cedar",
+    "style": "calm, intimate, close-mic narrator speaking directly to one person; thoughtful and unhurried but not slow, like a premium short documentary; crisp diction, low energy, no hype",
+    "leadIn": 0.5,
+    "gap": 0.3,
+    "tail": 0.8
+  },
+  "music": {
+    "model": "google/lyria-3-pro-preview",
+    "prompt": "Instrumental only, absolutely no vocals, no choir. A dark, intimate, minimal underscore for a short film about the mind, about 90 seconds. Mood: hushed, introspective, slightly uneasy, quietly beautiful. Slow pulse around 68 BPM. Instrumentation: deep soft sub bass, warm detuned analog synth pad, sparse felt piano single notes with long reverb, a faint ticking clock-like percussion texture, subtle tape hiss. Very spacious, lots of silence between notes. Structure: starts almost empty, slowly thickens, a gentle lift two thirds in, then thins out and ends cleanly on a held low note. Mixed to sit under a quiet voiceover: no sudden hits, no melody hooks, no drums."
+  },
+  "mix": { "voicePeak": 0.89, "duckDb": -7 },
+  "stems": { "voice": "audio/voice.wav", "music": "audio/music.wav" },
+  "plates": [
+    { "id": "phone", "from": "s01_hook", "to": "s01_hook", "frames": "renders/phone/final" },
+    { "id": "brain", "from": "s02_boredom", "to": "s07_insight", "frames": "renders/brain/final" }
+  ],
+  "markers": { "plate": "brain" }
+}

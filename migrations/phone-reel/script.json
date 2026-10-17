@@ -1,0 +1,63 @@
+{
+  "scenes": [
+    {
+      "id": "s01_hook",
+      "title": "Hook",
+      "cues": [
+        { "id": "bored", "text": "You're bored.", "pause": 0.5 },
+        { "id": "hand", "text": "And your hand is already on your phone." },
+        { "id": "who", "text": "You didn't decide that. So who did?", "pause": 0.8 }
+      ]
+    },
+    {
+      "id": "s02_boredom",
+      "title": "Boredom",
+      "cues": [
+        { "id": "empty", "text": "Boredom isn't an empty mind." },
+        { "id": "lock", "text": "It's a mind that can't lock onto anything." },
+        { "id": "search", "text": "Attention keeps searching for something to hold. And that feels bad.", "pause": 0.6 }
+      ]
+    },
+    {
+      "id": "s03_cue",
+      "title": "The shortcut",
+      "cues": [
+        { "id": "shortcut", "text": "Your brain has learned a shortcut." },
+        { "id": "cue", "text": "Boredom is the cue.", "pause": 0.4 },
+        { "id": "response", "text": "The phone is the response.", "pause": 0.8 }
+      ]
+    },
+    {
+      "id": "s04_relief",
+      "title": "Relief",
+      "cues": [
+        { "id": "not_joy", "text": "The reward isn't joy." },
+        { "id": "relief", "text": "It's relief. The discomfort fades, for a moment.", "pause": 0.8 }
+      ]
+    },
+    {
+      "id": "s05_loop",
+      "title": "The loop",
+      "cues": [
+        { "id": "loop", "text": "And every time relief follows the reach, the shortcut gets a little easier to take.", "pause": 1.0 }
+      ]
+    },
+    {
+      "id": "s06_wanting",
+      "title": "Wanting ≠ liking",
+      "cues": [
+        { "id": "scroll", "text": "That's why you keep scrolling after it stopped being fun." },
+        { "id": "circuits", "text": "Wanting and liking run on different circuits. One can grow while the other fades.", "pause": 0.8 }
+      ]
+    },
+    {
+      "id": "s07_insight",
+      "title": "The insight",
+      "cues": [
+        { "id": "sign", "text": "The urge to reach isn't a sign you enjoy it. It's a sign you've learned it.", "pause": 0.5 },
+        { "id": "notice", "text": "Next time, notice the cue. And wait ten seconds.", "pause": 0.6 },
+        { "id": "end", "text": "The loop can't run without the response.", "pause": 2.5 }
+      ]
+    }
+  ]
+}

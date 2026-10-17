@@ -1,0 +1,4 @@
+{
+  "plates": "draft",
+  "guides": { "safeAreas": false, "baselines": false, "markers": false, "cueReadout": true, "timecode": true, "captions": false }
+}

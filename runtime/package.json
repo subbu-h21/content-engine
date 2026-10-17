@@ -1,0 +1,22 @@
+{
+  "name": "content-engine-runtime",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Packages shared by every video project: each project's node_modules is a junction to runtime/node_modules. Versions are pinned on purpose; changing one changes how every project renders.",
+  "dependencies": {
+    "@remotion/cli": "4.0.535",
+    "@remotion/fonts": "4.0.535",
+    "@remotion/google-fonts": "4.0.535",
+    "@remotion/media": "4.0.535",
+    "@remotion/zod-types": "4.0.535",
+    "react": "19.0.0",
+    "react-dom": "19.0.0",
+    "remotion": "4.0.535",
+    "zod": "4.5.4"
+  },
+  "devDependencies": {
+    "@types/react": "19.0.0",
+    "@types/react-dom": "19.0.0",
+    "typescript": "5.8.3"
+  }
+}

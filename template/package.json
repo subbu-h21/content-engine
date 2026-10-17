@@ -1,0 +1,15 @@
+{
+  "name": "video-project",
+  "private": true,
+  "description": "A content-engine video project. Packages come from the engine (node_modules is a junction to content-engine/runtime/node_modules): never npm install here.",
+  "scripts": {
+    "preinstall": "node -e \"console.error('\\nThis project uses the content engine packages. Do not npm install here.\\nIf node_modules is missing, run:  ce link\\n');process.exit(1)\"",
+    "studio": "remotion studio src/index.ts",
+    "render": "remotion render src/index.ts Reel out/video.mp4 --codec=h264 --crf=16 --props=./props/final.json",
+    "render:draft": "remotion render src/index.ts Reel out/draft.mp4 --codec=h264 --crf=22 --scale=0.5 --props=./props/draft.json",
+    "still": "remotion still src/index.ts Reel",
+    "typecheck": "tsc --noEmit",
+    "deliver": "ffmpeg -y -loglevel error -i out/video.mp4 -c:v copy -af loudnorm=I=-16:TP=-1.5:LRA=11 -ar 48000 -c:a aac -b:a 256k -movflags +faststart out/delivery.mp4",
+    "stills": "node tools/stills.mjs"
+  }
+}

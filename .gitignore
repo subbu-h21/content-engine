@@ -1,0 +1,4 @@
+node_modules/
+__pycache__/
+# local machine settings (workspace path, tool locations)
+settings.json
