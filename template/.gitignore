@@ -20,3 +20,7 @@ references/*.webm
 # content engine connection (machine-specific)
 .mcp.json
 .claude/settings.local.json
+# the video's skills (make-video, dropped style/skill files) belong in its history, even with a global .claude/ ignore
+!.claude/
+.claude/*
+!.claude/skills/
