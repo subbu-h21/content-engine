@@ -103,8 +103,9 @@ export function describe(dir, state) {
   };
 }
 
-/** One compact paragraph, for the hook that prefixes each prompt. */
-export function contextText(d) {
+/** One compact paragraph, for the hook that prefixes each prompt. view = the engine page's open tab. */
+export function contextText(d, view = "editor") {
+  if (view === "brief") return "The user is on the content engine's Brief page (the plan board on the left), not watching the video in the editor. Words like this/here refer to the plan, the board or this conversation.";
   if (!d.live) return null;
   const parts = [`The user is in the video editor at ${d.timeLabel} (frame ${d.frame}, composition ${d.composition}).`];
   if (d.scene) parts.push(`Scene ${String(d.scene.number).padStart(2, "0")} "${d.scene.title}" (${d.scene.id}), ${d.scene.localTime}s into the scene.`);

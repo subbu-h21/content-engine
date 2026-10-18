@@ -4,8 +4,8 @@ One place to make explainer videos: brief → script → voice and music → Ble
 Each video is a numbered folder in a workspace you choose (`project-4-<slug>`, `project-5-<slug>`, …) and every file
 that video needs lives in that folder.
 
-Status: **Phase 2** done (website with editor + Claude). Next: Phase 3 (create page: script, music, style, uploads),
-Phase 4 (render queue).
+Status: **Phase 3** done (Brief page: make a new video with Claude). Next: Phase 4 (render queue), then a first real
+video end to end.
 
 ## The website
 
@@ -13,7 +13,20 @@ Phase 4 (render queue).
 ce app            # starts http://127.0.0.1:4100 and opens it; Ctrl+C stops it (and the Studios/terminals it started)
 ```
 
-- **Home**: the workspace, *New video* (creates the next `project-N-<slug>` and opens it), the list of videos.
+- **Home**: the workspace; **What do you want to create today?** (free text, saved as `brief/request.md`) with an
+  optional dropper for inspiration, reference or skill files (uploaded into the new project before its Brief opens);
+  Create makes the next `project-N-<slug>` and opens its Brief, where Claude starts from that request. The list of
+  videos shows each one's stage. A reusable style library (choose a look from a catalog) is planned.
+- **Brief** (`/p/<project>/brief`): Claude (same panel as the editor, one conversation) runs the project's
+  `make-video` skill: asks what you want to make, talks through idea, script, look, sound and 3D, and writes each decision
+  into the project's files, which the board on the left shows live (`brief/status.json`, `brief.md`, `script.json`,
+  `style.md`, `brief/frames/`, `project.json` voice/music, `plan.md`). One checkpoint: Claude shows the script and 2–3
+  style frames and waits for **Approve and build** (nothing paid or slow before it), then records the voice, makes
+  music, builds the scenes and quick 3D drafts, and the Editor opens with the preview.
+- **References**: drop files on the board or paste a YouTube/Instagram link (`yt-dlp`). `ce pipeline <p> refs` turns
+  each into study material in `references/_study/<file>/` (stills, contact sheet, cuts, palette, Whisper transcript;
+  the Whisper model is downloaded once into `models/`). A dropped `.md` with a `name:` front matter becomes a skill of
+  that project (`.claude/skills/<name>/`).
 - **Editor** (`/p/<project>`): the project's Remotion Studio (started on a free port from 3200), the project's Claude Code
   in a terminal on the right, and a strip under Studio showing what Claude is told about your position.
 - **How Claude knows "this"**: the template's `EngineBridge` (inside the video, active only in a Studio the engine
@@ -36,7 +49,7 @@ ce settings workspace D:\code_files\animations   # where video projects live (cu
 ce new <slug> --title "..."        # project-<N>-<slug> from the template: packages linked, git repo, ready for Studio
 ce list                            # projects in the workspace
 ce link [project]                  # create/repair node_modules links (all projects if none given)
-ce pipeline <project> <step>       # vo | music | stems | sfx | plates | captions | audio  (see pipeline/run.py)
+ce pipeline <project> <step>       # vo | music | stems | sfx | plates | captions | audio | refs  (see pipeline/run.py)
 ce blender <project> <shot>.py <args>   # run a shot script from the project's blender/ folder headless
 ce doctor                          # check node, python packages, ffmpeg, Blender, disk, project links
 ```
@@ -104,3 +117,18 @@ With project-4-phone-reel, Studio loaded in headless Chrome (Remotion's chrome-h
 
 Not exercised: a person using the editor page by hand (typing in the terminal, dragging the divider); Ctrl+C shutdown
 (the handlers exist; the tests stopped the process tree directly).
+
+## Verified, Phase 3 (2026-10-18)
+
+In a scratch workspace (`CE_WORKSPACE`, `CE_APP_PORT` override the settings for tests): a new video opens its Brief and
+the panel starts Claude with `/make-video`; after the one-time trust prompt Claude asked what to make, and after one
+answer wrote `brief.md` and set the stage to `talking` (board rendered it). Uploads: image → reference, `.md` with a
+`name:` → project skill, a `..\..\` file name stays inside `references/`; the study step made 70 stills, contact sheet,
+palette and a correct Whisper transcript of the reel. Board messages to Claude (Approve button) are submitted and
+answered (sent as a bracketed paste, then Enter). Reopening a project continues its conversation (`claude --continue`,
+which exits with code 1 after ~12 s when there is none, then a new one starts). `plates --from draft` and
+`vo --estimate` checked on the reel (estimate calibrated to its measured 2.88 words/s). Plate encodes still byte-identical.
+
+Not exercised yet: the checkpoint → build → preview-ready part of `/make-video` (Claude following the skill end to end;
+that is the first real video), link downloads (`yt-dlp` is installed), cut detection on dark footage (found no cut in
+the reel's dark phone→brain change).

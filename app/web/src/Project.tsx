@@ -1,12 +1,14 @@
-/** Editor: the project's Remotion Studio, the Claude Code terminal, and a strip showing what Claude sees. */
+/** A project: Brief or Editor on the left (Studio stays loaded while Brief is shown), Claude Code on the right. */
 import React, { useEffect, useRef, useState } from "react";
 import { api, type Context, type ProjectInfo, type StudioInfo } from "./api";
+import { BriefBoard } from "./BriefBoard";
 import { navigate } from "./nav";
 import { Terminal, type TerminalHandle } from "./Terminal";
 
 const PANEL_KEY = "ce.claudePanelWidth";
+export type Tab = "brief" | "editor";
 
-export const Editor: React.FC<{ name: string }> = ({ name }) => {
+export const Project: React.FC<{ name: string; tab: Tab }> = ({ name, tab }) => {
   const [info, setInfo] = useState<ProjectInfo | null>(null);
   const [studio, setStudio] = useState<StudioInfo>({ status: "starting" });
   const [src, setSrc] = useState<string | null>(null);
@@ -20,6 +22,7 @@ export const Editor: React.FC<{ name: string }> = ({ name }) => {
     }
   });
   const term = useRef<TerminalHandle | null>(null);
+  const go = (t: Tab) => navigate(`/p/${encodeURIComponent(name)}${t === "brief" ? "/brief" : ""}`);
 
   // open the project: connection files + Studio, then wait until Studio answers
   useEffect(() => {
@@ -47,10 +50,15 @@ export const Editor: React.FC<{ name: string }> = ({ name }) => {
     };
   }, [name]);
 
+  // tell the engine which tab is open (it changes what Claude is told with each message)
+  useEffect(() => {
+    api.view(name, tab).catch(() => undefined);
+  }, [name, tab]);
+
   // what Claude sees, refreshed a few times per second
   useEffect(() => {
     let stop = false;
-    const tick = async () => {
+    (async () => {
       while (!stop) {
         try {
           setCtx(await api.context(name));
@@ -59,8 +67,7 @@ export const Editor: React.FC<{ name: string }> = ({ name }) => {
         }
         await new Promise((r) => setTimeout(r, 600));
       }
-    };
-    tick();
+    })();
     return () => {
       stop = true;
     };
@@ -83,7 +90,7 @@ export const Editor: React.FC<{ name: string }> = ({ name }) => {
     }
   };
 
-  // drag the divider between Studio and Claude
+  // drag the divider between the left side and Claude
   const drag = (e: React.PointerEvent) => {
     e.preventDefault();
     const startX = e.clientX;
@@ -118,22 +125,33 @@ export const Editor: React.FC<{ name: string }> = ({ name }) => {
           ← Videos
         </button>
         <span className="project-title">{info?.title ?? name}</span>
+        <nav className="tabs">
+          <button className={tab === "brief" ? "on" : ""} onClick={() => go("brief")}>
+            Brief
+          </button>
+          <button className={tab === "editor" ? "on" : ""} onClick={() => go("editor")}>
+            Editor
+          </button>
+        </nav>
         <span className={`pill ${studio.status}`}>{studio.status === "ready" ? "Studio ready" : studio.status === "exited" ? "Studio stopped" : "Studio starting…"}</span>
         <span className="spacer" />
-        {studio.url ? (
+        {tab === "editor" && studio.url ? (
           <a className="quiet" href={`${studio.url}/Reel`} target="_blank" rel="noreferrer">
             Studio in new tab
           </a>
         ) : null}
-        <button className="quiet" onClick={restartStudio}>
-          Restart Studio
-        </button>
+        {tab === "editor" ? (
+          <button className="quiet" onClick={restartStudio}>
+            Restart Studio
+          </button>
+        ) : null}
       </header>
 
       {error ? <p className="error inline">{error}</p> : null}
 
       <div className="panes">
-        <div className="studio-pane">
+        {tab === "brief" ? <BriefBoard name={name} onOpenEditor={() => go("editor")} /> : null}
+        <div className="studio-pane" style={tab === "brief" ? { display: "none" } : undefined}>
           {src ? (
             <iframe title="Remotion Studio" src={src} allow="autoplay; fullscreen; clipboard-read; clipboard-write" />
           ) : (
@@ -172,7 +190,7 @@ export const Editor: React.FC<{ name: string }> = ({ name }) => {
           <div className="pane-head">
             <span>Claude</span>
             <span className="spacer" />
-            <button className="quiet" onClick={() => term.current?.restart()} title="Start a fresh Claude Code session">
+            <button className="quiet" onClick={() => term.current?.restart()} title="Start a fresh Claude Code conversation">
               Restart
             </button>
           </div>

@@ -14,12 +14,13 @@ import { fileURLToPath } from "node:url";
 import express from "express";
 import { WebSocketServer } from "ws";
 import { createProject, findProject, linkStatus, listProjects, loadSettings, RUNTIME_MODULES, saveSettings } from "../../cli/projects.mjs";
+import { briefData, downloadLink, resolveServable, saveUpload, studyReferences } from "./brief.mjs";
 import { getState, openChannel, resolveResult, updateState } from "./bridge.mjs";
 import { contextText, describe, loadProject } from "./context.mjs";
 import { ensureIntegration } from "./integration.mjs";
 import { handleMcp } from "./mcp.mjs";
 import { ensureStudio, stopAllStudios, stopStudio, studioInfo } from "./studios.mjs";
-import { attachTerminal, killAllTerminals } from "./terminals.mjs";
+import { attachTerminal, killAllTerminals, sayToTerminal } from "./terminals.mjs";
 
 const APP_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const DIST = path.join(APP_DIR, "dist");
@@ -47,7 +48,8 @@ app.use((req, res, next) => {
   next();
 });
 
-const workspace = () => loadSettings().workspace;
+// CE_WORKSPACE: test override (a scratch workspace) without touching the saved setting
+const workspace = () => process.env.CE_WORKSPACE || loadSettings().workspace;
 const project = (req, res) => {
   const dir = findProject(workspace(), req.params.name);
   if (!dir) res.status(404).json({ error: `no engine project "${req.params.name}" in the workspace` });
@@ -114,11 +116,29 @@ app.get("/api/doctor", (req, res) => {
   res.json({ runtime: fs.existsSync(path.join(RUNTIME_MODULES, "remotion")), claude, workspace: ws, workspaceExists: !!ws && fs.existsSync(ws), freeGb, onC: /^c:/i.test(ws ?? "") });
 });
 
-app.get("/api/projects", (req, res) => res.json(listProjects(workspace()).map(({ dir, ...p }) => ({ ...p, dir, studio: studioInfo(p.name).status }))));
+const stageOf = (dir) => {
+  try {
+    return JSON.parse(fs.readFileSync(path.join(dir, "brief", "status.json"), "utf8")).stage ?? null;
+  } catch {
+    return null;
+  }
+};
+app.get("/api/projects", (req, res) => res.json(listProjects(workspace()).map(({ dir, ...p }) => ({ ...p, dir, studio: studioInfo(p.name).status, stage: p.engine ? stageOf(dir) : null }))));
+/** A short working title from what the user wrote: first sentence, cut on a word boundary. Claude renames it later. */
+const workingTitle = (text) => {
+  const first = text.split(/(?<=[.!?])\s|\n/)[0].trim();
+  if (first.length <= 60) return first;
+  const cut = first.slice(0, 60);
+  return cut.slice(0, cut.lastIndexOf(" ") > 20 ? cut.lastIndexOf(" ") : 60).trim() + "…";
+};
 app.post("/api/projects", wrap((req, res) => {
-  const title = String(req.body.title ?? "").trim();
-  if (!title) return res.status(400).json({ error: "give the video a title" });
-  const dir = createProject({ workspace: workspace(), slug: req.body.slug || title, title });
+  const request = String(req.body.request ?? "").trim();
+  const title = String(req.body.title ?? "").trim() || (request ? workingTitle(request) : "");
+  if (!title) return res.status(400).json({ error: "say what you want to create" });
+  const slug = req.body.slug || title.replace(/…$/, "").split(/\s+/).slice(0, 6).join(" ");
+  const dir = createProject({ workspace: workspace(), slug, title });
+  // the user's answer to "what do you want to create?": Claude starts from it (make-video skill)
+  if (request) fs.writeFileSync(path.join(dir, "brief", "request.md"), `# What the user wants to create\n\n${request}\n`);
   res.json({ name: path.basename(dir), dir });
 }));
 
@@ -142,11 +162,59 @@ app.post("/api/projects/:name/studio/restart", wrap(async (req, res) => {
   stopStudio(req.params.name);
   res.json(await ensureStudio(req.params.name, dir, { engineUrl: ENGINE_URL, portBase: loadSettings().studioPortBase || 3200 }));
 }));
+/** which tab of the project page is open (brief | editor): changes what the prompt hook tells Claude */
+const views = new Map();
+app.post("/api/projects/:name/view", (req, res) => {
+  if (!project(req, res)) return;
+  views.set(req.params.name, req.body.tab === "brief" ? "brief" : "editor");
+  res.json({ ok: true });
+});
 app.get("/api/projects/:name/context", (req, res) => {
   const dir = project(req, res);
   if (!dir) return;
   const d = describe(dir, getState(req.params.name));
-  res.json({ ...d, text: contextText(d) });
+  const view = views.get(req.params.name) ?? "editor";
+  res.json({ ...d, view, text: contextText(d, view) });
+});
+
+// ---- Brief page
+app.get("/api/projects/:name/brief", (req, res) => {
+  const dir = project(req, res);
+  if (dir) res.json(briefData(req.params.name, dir));
+});
+app.get("/api/projects/:name/file", (req, res) => {
+  const dir = project(req, res);
+  if (!dir) return;
+  const full = resolveServable(dir, String(req.query.path ?? ""));
+  if (!full) return res.sendStatus(404);
+  res.sendFile(full);
+});
+app.put("/api/projects/:name/upload", wrap(async (req, res) => {
+  const dir = project(req, res);
+  if (!dir) return;
+  if (!req.query.name) return res.status(400).json({ error: "missing ?name=" });
+  res.json(await saveUpload(req.params.name, dir, String(req.query.name), req));
+}));
+app.post("/api/projects/:name/link", wrap(async (req, res) => {
+  const dir = project(req, res);
+  if (!dir) return;
+  const url = String(req.body.url ?? "").trim();
+  if (!/^https?:\/\//i.test(url)) return res.status(400).json({ error: "paste a full link starting with http(s)://" });
+  downloadLink(req.params.name, dir, url);
+  res.json({ started: true });
+}));
+app.post("/api/projects/:name/study", (req, res) => {
+  const dir = project(req, res);
+  if (!dir) return;
+  studyReferences(req.params.name, dir);
+  res.json({ started: true });
+});
+app.post("/api/projects/:name/say", (req, res) => {
+  const dir = project(req, res);
+  if (!dir) return;
+  const text = String(req.body.text ?? "").trim();
+  if (!text) return res.status(400).json({ error: "nothing to say" });
+  res.json({ sent: sayToTerminal(req.params.name, text) });
 });
 
 // ---- the page

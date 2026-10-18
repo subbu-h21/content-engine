@@ -1,0 +1,3 @@
+#!/bin/sh
+# ce for Git Bash / sh (ce.cmd is the Windows-shell version). Both run cli/ce.mjs.
+exec node "$(dirname "$0")/cli/ce.mjs" "$@"

@@ -1,6 +1,7 @@
 {
  "total": 5.0,
  "fps": 24,
+ "estimated": true,
  "scenes": {
   "s01_intro": {
    "start": 0.0,

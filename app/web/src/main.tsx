@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
-import { Editor } from "./Editor";
 import { Home } from "./Home";
+import { Project } from "./Project";
 import "./styles.css";
 
-
+/** "/" home; "/p/<project>" editor; "/p/<project>/brief" brief. */
 const App: React.FC = () => {
   const [path, setPath] = useState(location.pathname);
   useEffect(() => {
@@ -12,8 +12,8 @@ const App: React.FC = () => {
     window.addEventListener("popstate", on);
     return () => window.removeEventListener("popstate", on);
   }, []);
-  const m = /^\/p\/([^/]+)/.exec(path);
-  return m ? <Editor name={decodeURIComponent(m[1])} /> : <Home />;
+  const m = /^\/p\/([^/]+)(\/brief)?/.exec(path);
+  return m ? <Project name={decodeURIComponent(m[1])} tab={m[2] ? "brief" : "editor"} /> : <Home />;
 };
 
 createRoot(document.getElementById("root")!).render(<App />);

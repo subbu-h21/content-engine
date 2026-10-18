@@ -2,5 +2,7 @@ node_modules/
 __pycache__/
 # website build output (npm run build in app/)
 app/dist/
+# downloaded model weights (Whisper for reference transcripts)
+models/
 # local machine settings (workspace path, tool locations)
 settings.json

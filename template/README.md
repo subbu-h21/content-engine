@@ -44,6 +44,15 @@ moves everything with it. After re-timing, `ce pipeline <project> audio` rebuild
   Edit in `Reel`: the scene previews have no props editor.
 - **Guides**: safe areas, baseline grid, tracked 3D markers, cue readout, timecode, captions. Always off in `npm run render`.
 
+## Making it: the Brief
+
+A new video starts on the engine's **Brief** tab. Claude (right) asks what you want to make and talks it through with
+you; the board (left) fills in as decisions are made: idea (`brief.md`), script (`script.json`), look (`style.md`,
+style frames in `brief/frames/`), sound (`project.json` → `voice`, `music`), visual plan (`plan.md`), references
+(`references/`). When it's all agreed Claude shows the script and a few style frames and waits for **Approve and
+build**; only then does it record the voice, make the music and render 3D drafts. `brief/status.json` holds the stage.
+How Claude runs this is in `.claude/skills/make-video/SKILL.md`.
+
 ## In the engine website
 
 Open the video from the engine (`ce app`): Studio on the left, Claude Code on the right. Pause on a moment and talk

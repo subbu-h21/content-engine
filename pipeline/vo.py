@@ -32,6 +32,42 @@ def trim(a, sr, thresh_db=-42, pad=0.06):
     return out
 
 
+WORDS_PER_SECOND = 2.8  # calm reel narration (the phone reel measured 2.88)
+
+
+def estimate(p):
+    """Timing from word counts, no audio and no API call: lets scenes and style frames be built before the voice
+    is recorded. Same layout rules as the real timing; timing.json gets "estimated": true."""
+    v = p.manifest["voice"]
+    lead_in, gap, tail = v["leadIn"], v["gap"], v["tail"]
+    timing, tg, n = {}, 0.0, 0
+    for scene, cues in p.scenes():
+        t, cue_t = lead_in, {}
+        for i, (cue, text, pause) in enumerate(cues):
+            d = max(0.6, len(text.split()) / WORDS_PER_SECOND)
+            cue_t[cue] = {"start": round(t, 3), "end": round(t + d, 3)}
+            t += d + pause + (gap if i < len(cues) - 1 else 0)
+            n += 1
+        dur = t + tail
+        timing[scene] = {"start": round(tg, 3), "duration": round(dur, 3), "cues": cue_t}
+        tg += dur
+    p.data.mkdir(parents=True, exist_ok=True)
+    (p.data / "timing.json").write_text(json.dumps({"total": round(tg, 3), "fps": p.fps, "estimated": True, "scenes": timing}, indent=1))
+    print(f"estimated timing: {tg:.2f}s, {len(timing)} scenes, {n} cues -> src/data/timing.json (no audio)")
+
+
+def sample(p, text):
+    """One line in the current voice settings -> audio/voice_sample.wav (paid, about $0.003), to try a voice."""
+    v = p.manifest["voice"]
+    p.audio.mkdir(parents=True, exist_ok=True)
+    raw = p.audio / "voice_sample.raw.wav"
+    tts(text, raw, voice=v["voice"], style=v["style"], model=v["model"], fallback_model=v["fallbackModel"], key=api_key(p.root))
+    a, sr = read_mono(raw)
+    write_mono(p.audio / "voice_sample.wav", trim(a, sr), sr)
+    raw.unlink()
+    print(f"voice sample ({v['voice']}) -> audio/voice_sample.wav")
+
+
 def run(p, synth=True):
     vo_dir = p.audio / "vo"
     vo_dir.mkdir(parents=True, exist_ok=True)
