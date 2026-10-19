@@ -53,7 +53,8 @@ ce app            # starts http://127.0.0.1:4100 and opens it; Ctrl+C stops it (
   logged in; the result shows on the page (MCP `chrome_check_report`). Saved to `settings.json` → `publish`.
 - **Publish** (`/publish`, top menu; see below): a page of its own, not a tab inside each video. Left: every video with
   an exported file and its files; middle: the picked file and the platforms, or the History when nothing is picked;
-  right: that video's Claude panel. Old links (`/published`, `/p/<project>/publish`) redirect there.
+  right: that video's Claude panel. Old links (`/published`, `/p/<project>/publish`) redirect there. A video's tab bar
+  reads Brief · Editor · Final · Publish (the last opens this page at that video; "Open the video" goes back).
 
 ## Final render (Phase 4)
 
@@ -319,6 +320,13 @@ unknown video links (plain page instead of a Studio and panel that never start);
 finished; a broken `project.json` as a bare 500; long tracebacks as the Final tab headline (now under Details);
 one set of status words for Videos, Brief, Publish badges and History (`app/web/src/words.ts`); "See the final video"
 on the Brief at *final video ready*; long titles squeezed on Videos.
+
+UX changes chosen by the user afterwards (verified the same way): a stopped/failed/interrupted render offers Resume and
+"Start over instead" (the start form only on request); the finished video stays on the Final tab whenever
+`out/delivery.mp4` exists (with "the newer render didn't finish" when a later render stopped); a Publish step in each
+video's tab bar and "Open the video" back from the Publish page; folder names on the Videos list only on hover; the
+Brief shows the voice as "not decided" while it's still the template's voice and the brief is being talked through.
+The user's engine (4100) was restarted onto this version with nothing rendering and its Claude panels idle.
 
 Not exercised in this review: a 3D (Blender) final render (unchanged since Phase 4; the PC had ~4 GB free memory),
 the real Google and real Chrome posting (by design), Copy file path / Show in folder / Download in a real browser,

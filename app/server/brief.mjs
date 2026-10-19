@@ -119,6 +119,9 @@ export async function saveUpload(name, dir, fileName, stream) {
   return { kind: "reference", name: path.basename(target), path: path.relative(dir, target) };
 }
 
+const TEMPLATE_VOICE = readJson(path.join(ENGINE_DIR, "template", "project.json"), {}).voice ?? {};
+const isTemplateVoice = (v) => !!v && v.voice === TEMPLATE_VOICE.voice && v.style === TEMPLATE_VOICE.style;
+
 /** Everything the board shows. */
 export function briefData(name, dir) {
   const status = readJson(path.join(dir, "brief", "status.json"), { stage: "none" });
@@ -174,7 +177,8 @@ export function briefData(name, dir) {
     style: read(path.join(dir, "style.md")),
     plan: read(path.join(dir, "plan.md")),
     script: { scenes, words, estimate: Number((words / WPS).toFixed(0)), timingEstimated: !!timing?.estimated, total: timing && !timing.estimated ? timing.total : null },
-    voice: { voice: manifest.voice?.voice, style: manifest.voice?.style, sample: audio("audio/voice_sample.wav") },
+    // isDefault: still the template's voice (not chosen yet, or chosen to stay the same)
+    voice: { voice: manifest.voice?.voice, style: manifest.voice?.style, sample: audio("audio/voice_sample.wav"), isDefault: isTemplateVoice(manifest.voice) },
     music: { prompt: manifest.music?.prompt ?? "", track: audio("audio/music.mp3") },
     plates: (manifest.plates ?? []).map((p) => ({ id: p.id, from: p.from, to: p.to })),
     frames,

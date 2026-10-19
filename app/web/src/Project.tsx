@@ -161,6 +161,10 @@ const ProjectView: React.FC<{ name: string; tab: Tab }> = ({ name, tab }) => {
           <button className={tab === "final" ? "on" : ""} onClick={() => go("final")}>
             Final
           </button>
+          {/* the last step lives on the Publish page (all videos' files and history), opened at this video */}
+          <button onClick={() => navigate(`/publish/${encodeURIComponent(name)}`)} title="Publish this video (the Publish page, opened at this video)">
+            Publish
+          </button>
         </nav>
         <span className={`pill ${studio.status}`}>{studio.status === "ready" ? "Studio ready" : studio.status === "exited" ? "Studio stopped" : "Studio starting…"}</span>
         <span className="spacer" />

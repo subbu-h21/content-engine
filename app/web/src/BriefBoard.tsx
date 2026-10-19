@@ -86,6 +86,8 @@ export const BriefBoard: React.FC<{ name: string; onOpenEditor: () => void }> = 
   if (!b) return <div className="board">{loadError ? <p className="error">{loadError}</p> : <p className="hint">Loading…</p>}</div>;
   const stage = b.status.stage;
   const swatches = hexes(b.style);
+  // the template's voice counts as chosen once there's a sample or the brief is past talking it through
+  const voiceDecided = !!b.voice.voice && (!b.voice.isDefault || !!b.voice.sample || !["new", "talking", "none"].includes(stage));
   const running = b.jobs.filter((j) => j.status === "running");
   const failed = b.jobs.filter((j) => j.status === "error").slice(-2);
 
@@ -188,12 +190,16 @@ export const BriefBoard: React.FC<{ name: string; onOpenEditor: () => void }> = 
         ) : null}
       </Section>
 
-      <Section title="Sound" empty={!b.voice.voice && !b.music.prompt}>
+      <Section title="Sound" empty={!voiceDecided && !b.music.prompt}>
         <div className="kv">
           <span className="label">Voice</span>
-          <span>
-            <strong>{b.voice.voice}</strong> <span className="dim">{b.voice.style}</span>
-          </span>
+          {voiceDecided ? (
+            <span>
+              <strong>{b.voice.voice}</strong> <span className="dim">{b.voice.style}</span>
+            </span>
+          ) : (
+            <span className="dim">not decided</span>
+          )}
           {b.voice.sample ? (
             <>
               <span className="label">Sample</span>

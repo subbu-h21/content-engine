@@ -279,7 +279,12 @@ app.get("/api/projects/:name/render", (req, res) => {
   const dir = project(req, res);
   if (!dir) return;
   // files: whether the finished files are (still) there, e.g. after being moved or deleted outside the engine
-  const files = { delivery: fs.existsSync(path.join(dir, "out", "delivery.mp4")), video: fs.existsSync(path.join(dir, "out", "video.mp4")) };
+  const delivery = path.join(dir, "out", "delivery.mp4");
+  const files = {
+    delivery: fs.existsSync(delivery),
+    deliveryAt: fs.existsSync(delivery) ? new Date(fs.statSync(delivery).mtimeMs).toISOString() : null,
+    video: fs.existsSync(path.join(dir, "out", "video.mp4")),
+  };
   res.json({ plan: computePlan(dir), job: getJob(req.params.name, dir), live: liveInfo(req.params.name), files });
 });
 app.post("/api/projects/:name/render/start", wrap((req, res) => {

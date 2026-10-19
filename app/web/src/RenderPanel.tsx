@@ -72,6 +72,8 @@ export const RenderPanel: React.FC<{ name: string }> = ({ name }) => {
   const [autoFix, setAutoFix] = useState(true);
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState<string | null>(null);
+  // a stopped render offers Resume; the start form only when asked for ("Start over instead")
+  const [startOver, setStartOver] = useState(false);
 
   useEffect(() => {
     let stop = false;
@@ -90,6 +92,9 @@ export const RenderPanel: React.FC<{ name: string }> = ({ name }) => {
       stop = true;
     };
   }, [name]);
+
+  // a new or changed render closes "Start over"
+  useEffect(() => setStartOver(false), [info?.job?.id, info?.job?.status]);
 
   const act = async (fn: () => Promise<unknown>, after?: string) => {
     setBusy(true);
@@ -111,11 +116,14 @@ export const RenderPanel: React.FC<{ name: string }> = ({ name }) => {
   const warns = plan.problems.filter((p) => p.level === "warn");
   const activeJob = job && (job.status === "running" || job.status === "queued");
   const stopped = job && ["failed", "cancelled", "interrupted"].includes(job.status);
-  const fileUrl = (rel: string) => `/api/projects/${encodeURIComponent(name)}/file?path=${encodeURIComponent(rel)}&v=${encodeURIComponent(job?.endedAt ?? "")}`;
+  // the finished file on disk (an older engine doesn't say: then only after a finished render)
+  const hasFinal = info.files ? info.files.delivery : job?.status === "done";
+  const fileUrl = (rel: string) => `/api/projects/${encodeURIComponent(name)}/file?path=${encodeURIComponent(rel)}&v=${encodeURIComponent(info.files?.deliveryAt ?? job?.endedAt ?? "")}`;
 
   const startForm = (
     <div className="card">
-      <h2>{job?.status === "done" ? "Render again" : "Final render"}</h2>
+      <h2>{job?.status === "done" || hasFinal ? "Render again" : stopped ? "Start over" : "Final render"}</h2>
+      {stopped ? <p className="hint">Starting over runs every step again from the beginning; 3D frames already rendered are kept. Resume above is usually what you want.</p> : null}
       <p className="meta">
         {plan.durationSeconds ? `${dur(plan.durationSeconds)} video, ${plan.totalFrames.toLocaleString()} frames` : ""} · estimated {dur(plan.estSeconds)} · needs about {gb(plan.needBytes)} of disk
         {plan.freeBytes != null ? ` (${gb(plan.freeBytes)} free)` : ""}
@@ -179,7 +187,7 @@ export const RenderPanel: React.FC<{ name: string }> = ({ name }) => {
       </label>
       <div className="actions">
         <button className="primary" disabled={busy || !!blocks.length || !!activeJob} onClick={() => act(() => api.renderStart(name, rerender, autoFix))}>
-          {job?.status === "done" ? "Render again" : "Start final render"}
+          {job?.status === "done" || hasFinal ? "Render again" : stopped ? "Start over" : "Start final render"}
         </button>
         <span className="hint">It runs in the background: you can keep editing or close the browser. If the engine is closed or the PC restarts, it pauses; Resume continues.</span>
       </div>
@@ -243,6 +251,11 @@ export const RenderPanel: React.FC<{ name: string }> = ({ name }) => {
                     Ask Claude to fix it
                   </button>
                 ) : null}
+                {!startOver ? (
+                  <button className="quiet" disabled={busy} onClick={() => setStartOver(true)}>
+                    Start over instead
+                  </button>
+                ) : null}
               </>
             ) : null}
           </div>
@@ -256,9 +269,11 @@ export const RenderPanel: React.FC<{ name: string }> = ({ name }) => {
         </div>
       ) : null}
 
-      {job?.status === "done" && info.files?.delivery !== false ? (
+      {hasFinal && !activeJob ? (
         <div className="card">
           <h2>Finished video</h2>
+          {info.files?.deliveryAt ? <p className="meta">made {new Date(info.files.deliveryAt).toLocaleString()}</p> : null}
+          {job && job.status !== "done" ? <p className="hint">This is the last finished video: the newer render above didn't finish, so it's unchanged.</p> : null}
           <video className="final-video" controls src={fileUrl("out/delivery.mp4")} />
           <div className="actions">
             <button
@@ -276,7 +291,7 @@ export const RenderPanel: React.FC<{ name: string }> = ({ name }) => {
         </div>
       ) : null}
 
-      {!activeJob ? startForm : null}
+      {!activeJob && (!stopped || startOver) ? startForm : null}
     </div>
   );
 };

@@ -239,6 +239,9 @@ export const PublishPanel: React.FC<{ name: string; onClaude?: () => void }> = (
               <button className="quiet" onClick={() => act(() => api.revealVideo(name))}>
                 Show in folder
               </button>
+              <button className="quiet" onClick={() => navigate(`/p/${encodeURIComponent(name)}`)} title="Back to this video's Brief, Editor and Final tabs">
+                Open the video
+              </button>
               <button onClick={() => viaClaude(() => api.publishDraftWithClaude(name), "Asked Claude to draft the titles and captions: they appear here when written.")} disabled={busy}>
                 Ask Claude to draft titles &amp; captions
               </button>

@@ -48,7 +48,7 @@ export type Brief = {
   style: string | null;
   plan: string | null;
   script: { scenes: { id: string; title: string; lines: BriefLine[] }[]; words: number; estimate: number; timingEstimated: boolean; total: number | null };
-  voice: { voice: string; style: string; sample: string | null };
+  voice: { voice: string; style: string; sample: string | null; isDefault?: boolean };
   music: { prompt: string; track: string | null };
   plates: { id: string; from: string; to: string }[];
   frames: { name: string; url: string }[];
@@ -91,7 +91,7 @@ export type RenderInfo = {
   job: RenderJob | null;
   live: { queuePosition: number | null; active: boolean; step?: string; progress?: RenderStep["progress"]; logTail?: string[]; waiting?: string | null } | null;
   /** whether the finished files are there (missing in older engines: assume they are) */
-  files?: { delivery: boolean; video: boolean };
+  files?: { delivery: boolean; deliveryAt?: string | null; video: boolean };
 };
 
 

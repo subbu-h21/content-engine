@@ -150,7 +150,9 @@ export const Home: React.FC = () => {
           {projects?.map((p) => (
             <li key={p.name} className={p.engine ? "" : "legacy"}>
               <span className="num">{String(p.number).padStart(2, "0")}</span>
-              <span className="title">{p.engine ? p.title : <em>not an engine project</em>}</span>
+              <span className="title" title={`Folder: ${p.dir}`}>
+                {p.engine ? p.title : <em>not an engine project</em>}
+              </span>
               <span className="folder">
                 {(["youtube", "facebook", "instagram"] as const)
                   .filter((pl) => p.publish?.[pl])
@@ -160,7 +162,7 @@ export const Home: React.FC = () => {
                     </span>
                   ))}
                 {p.render && RENDER_LABEL(p.render) ? <span className={`stage render-${p.render.status}`}>{RENDER_LABEL(p.render)}</span> : p.stage && STAGE_WORD[p.stage] ? <span className="stage">{STAGE_WORD[p.stage].toLowerCase()}</span> : null}
-                {p.name}
+                {p.engine ? null : p.name}
               </span>
               {p.engine ? (
                 <span className="row-actions">
