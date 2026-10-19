@@ -90,14 +90,18 @@ export type RenderInfo = {
   plan: { plates: RenderPlate[]; problems: { level: "block" | "warn"; text: string; plate?: string }[]; totalFrames: number; durationSeconds: number; estSeconds: number; needBytes: number; freeBytes: number | null };
   job: RenderJob | null;
   live: { queuePosition: number | null; active: boolean; step?: string; progress?: RenderStep["progress"]; logTail?: string[]; waiting?: string | null } | null;
+  /** whether the finished files are there (missing in older engines: assume they are) */
+  files?: { delivery: boolean; video: boolean };
 };
 
 
-export type YouTubeStatus = { clientSaved: boolean; connected: boolean; channel: { id: string; title: string; url: string } | null; connectedAt: string | null };
+export type YouTubeStatus = { clientSaved: boolean; clientId?: string | null; connected: boolean; channel: { id: string; title: string; url: string } | null; connectedAt: string | null };
 export type YouTubeDraft = { title: string; description: string; tags: string[]; categoryId: string; privacy: "private" | "unlisted" | "public" | "scheduled"; publishAt: string | null; madeForKids: boolean | null; synthetic: boolean };
-export type SocialDraft = { page?: string; account?: string; format: "reel" | "post"; caption: string };
+export type SocialDraft = { page?: string; account?: string; format: "reel" | "post" | null; caption: string };
 export type PlatformState = {
   status?: string;
+  file?: string;
+  format?: "reel" | "post" | null;
   error?: string | null;
   url?: string | null;
   note?: string | null;
@@ -106,24 +110,59 @@ export type PlatformState = {
   updatedAt?: string;
   reportedAt?: string;
 };
+/** A video file in a project's out/ folder that can be published. */
+export type VideoFile = { rel: string; kind: "final" | "master" | "draft" | "render"; size: number; madeAt: string };
 export type PublishInfo = {
-  video: { exists: boolean; error?: string; path?: string; size?: number; madeAt?: string; duration?: number; width?: number; height?: number; vertical?: boolean; changedAfter?: boolean; notes?: Record<"youtube" | "facebook" | "instagram", string[]> };
+  videos: VideoFile[];
+  claude: "stopped" | "starting" | "ready" | "busy" | "question" | string;
+  video: { exists: boolean; error?: string; path?: string; rel?: string; kind?: VideoFile["kind"]; size?: number; madeAt?: string; duration?: number; width?: number; height?: number; vertical?: boolean; changedAfter?: boolean; notes?: Record<"youtube" | "facebook" | "instagram", string[]> };
   drafts: { youtube: YouTubeDraft; facebook: SocialDraft; instagram: SocialDraft };
   problems: Record<"youtube" | "facebook" | "instagram", string[]>;
   state: Partial<Record<"youtube" | "facebook" | "instagram", PlatformState>>;
   youtube: YouTubeStatus & { live: { sent?: number; total?: number; queuePosition: number | null } | null };
+  youtubeLog: string[];
 };
+
+
+export type PublishDefaults = {
+  facebookPage: string;
+  instagramAccount: string;
+  captionFooter: string;
+  youtube: { privacy: "private" | "unlisted" | "public"; categoryId: string; madeForKids: boolean | null; tags: string[]; descriptionFooter: string };
+  chromeCheck: { at: string; project?: string; extension: boolean; facebook: string; facebookPage?: string; instagram: string; note?: string } | null;
+};
+export type SettingsView = {
+  workspace: string;
+  blender: string;
+  python: string;
+  checks: { workspace: boolean; blender: boolean; python: string | null; ffmpeg: string | null };
+  publish: PublishDefaults;
+};
+export type PublishedRow = { id: string; project: string; number: number; title: string | null; platform: "youtube" | "facebook" | "instagram"; file: string; status: string; url: string | null; studio: string | null; privacy: string | null; format: string | null; at: string | null; error: string | null };
+export type PublishListRow = { project: string; number: number; title: string | null; stage: string | null; videos: VideoFile[]; selected: string | null; publish: Partial<Record<"youtube" | "facebook" | "instagram", string>> | null; uploading: boolean };
+export type PublishList = { ready: PublishListRow[]; notYet: { project: string; number: number; title: string | null; stage: string | null }[] };
+
+/** A refresh that failed: "Failed to fetch" means the engine isn't answering (stopped or restarting). */
+export const unreachable = (e: unknown) => (e instanceof TypeError ? "The engine isn't answering (stopped or restarting). This page catches up by itself when it's back." : (e as Error).message);
 
 async function call<T>(url: string, init?: RequestInit): Promise<T> {
   const r = await fetch(url, { ...init, headers: { "content-type": "application/json", ...(init?.headers ?? {}) } });
   const body = await r.json().catch(() => ({}));
-  if (!r.ok) throw new Error((body as { error?: string }).error ?? `${r.status} ${r.statusText}`);
+  // the error keeps the status and body (e.g. 409 {duplicate} when a file is already on YouTube)
+  if (!r.ok) throw Object.assign(new Error((body as { error?: string }).error ?? `${r.status} ${r.statusText}`), { status: r.status, data: body });
   return body as T;
 }
 
 export const api = {
-  settings: () => call<{ workspace: string }>("/api/settings"),
-  setWorkspace: (workspace: string) => call<{ workspace: string }>("/api/settings", { method: "PUT", body: JSON.stringify({ workspace }) }),
+  settings: () => call<SettingsView>("/api/settings"),
+  saveSettings: (patch: Partial<Omit<SettingsView, "checks" | "publish">> & { publish?: Partial<Omit<PublishDefaults, "youtube" | "chromeCheck">> & { youtube?: Partial<PublishDefaults["youtube"]> } }) =>
+    call<SettingsView>("/api/settings", { method: "PUT", body: JSON.stringify(patch) }),
+  published: () => call<PublishedRow[]>("/api/published"),
+  publishVideos: () => call<PublishList>("/api/publish/videos"),
+  publishSelect: (name: string, file: string) => call<{ video: string }>(`/api/projects/${encodeURIComponent(name)}/publish/select`, { method: "POST", body: JSON.stringify({ file }) }),
+  youtubeClientFields: (clientId: string, clientSecret: string) => call<YouTubeStatus>("/api/youtube/client-fields", { method: "POST", body: JSON.stringify({ clientId, clientSecret }) }),
+  youtubeTest: () => call<{ ok: boolean; error?: string; channel?: YouTubeStatus["channel"] }>("/api/youtube/test", { method: "POST" }),
+  chromeCheck: () => call<{ ok: boolean; pending?: boolean; reason?: string; project: string; title: string | null }>("/api/social/chrome-check", { method: "POST", body: "{}" }),
   doctor: () => call<Doctor>("/api/doctor"),
   projects: () => call<ProjectRow[]>("/api/projects"),
   /** request = the user's answer to "what do you want to create?"; title = a short working title (Claude renames it) */
@@ -153,7 +192,7 @@ export const api = {
   youtubeDisconnect: () => call<YouTubeStatus>("/api/youtube/disconnect", { method: "POST" }),
   publish: (name: string) => call<PublishInfo>(`/api/projects/${encodeURIComponent(name)}/publish`),
   saveDraft: (name: string, platform: string, patch: object) => call<object>(`/api/projects/${encodeURIComponent(name)}/publish/${platform}`, { method: "PUT", body: JSON.stringify(patch) }),
-  youtubeStart: (name: string) => call<PlatformState>(`/api/projects/${encodeURIComponent(name)}/publish/youtube/start`, { method: "POST" }),
+  youtubeStart: (name: string, again = false) => call<PlatformState>(`/api/projects/${encodeURIComponent(name)}/publish/youtube/start`, { method: "POST", body: JSON.stringify({ again }) }),
   youtubeStop: (name: string) => call<PlatformState>(`/api/projects/${encodeURIComponent(name)}/publish/youtube/stop`, { method: "POST" }),
   handoff: (name: string, platform: "facebook" | "instagram") => call<{ ok: boolean; pending?: boolean; reason?: string }>(`/api/projects/${encodeURIComponent(name)}/publish/${platform}/handoff`, { method: "POST" }),
   publishReport: (name: string, platform: string, status: string, url?: string) => call<PlatformState>(`/api/projects/${encodeURIComponent(name)}/publish/${platform}/report`, { method: "POST", body: JSON.stringify({ status, url }) }),

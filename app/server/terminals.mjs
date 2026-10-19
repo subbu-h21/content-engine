@@ -127,8 +127,8 @@ export function panelState(name) {
 }
 
 const NOT_READY = {
-  trust: "Claude is asking whether to trust this folder: open the video and answer it in the Claude panel.",
-  question: "Claude is waiting for your answer to a question in its panel: open the video and answer it.",
+  trust: "Claude is asking whether to trust this folder: answer it (Yes) in the video's Claude panel.",
+  question: "Claude is waiting for your answer to a question in the video's Claude panel: answer it there.",
   starting: "Claude's panel is still starting.",
   stopped: "Claude's panel isn't running.",
   exited: "Claude's panel closed.",

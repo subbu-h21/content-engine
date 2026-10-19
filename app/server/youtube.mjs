@@ -57,10 +57,39 @@ export function saveClient(text) {
   return status();
 }
 
+/** The same, from the two values pasted on the Settings page. */
+export function saveClientFields(id, secret) {
+  const clientId = String(id ?? "").trim();
+  const clientSecret = String(secret ?? "").trim();
+  if (!/^[\w-]+\.apps\.googleusercontent\.com$/.test(clientId)) throw new Error("The Client ID should end in .apps.googleusercontent.com");
+  if (!clientSecret) throw new Error("Paste the Client secret too (it starts with GOCSPX-).");
+  writeSecret(CLIENT_FILE, { installed: { client_id: clientId, client_secret: clientSecret } });
+  return status();
+}
+
+/** Ask YouTube which channel the saved sign-in belongs to (Settings → Test connection). */
+export async function testConnection() {
+  try {
+    const ch = await api("GET", "/youtube/v3/channels?part=snippet&mine=true");
+    const item = ch.items?.[0];
+    if (!item) return { ok: false, error: "Signed in, but this Google account has no YouTube channel." };
+    const tok = readJson(TOKEN_FILE);
+    if (tok) {
+      tok.channel = { id: item.id, title: item.snippet?.title ?? item.id, url: `https://www.youtube.com/channel/${item.id}` };
+      writeSecret(TOKEN_FILE, tok);
+    }
+    return { ok: true, channel: tok?.channel ?? null };
+  } catch (e) {
+    return { ok: false, error: e.message };
+  }
+}
+
 export function status() {
   const tok = readJson(TOKEN_FILE);
+  const c = client();
   return {
-    clientSaved: !!client(),
+    clientSaved: !!c,
+    clientId: c ? c.id.replace(/^(.{6}).*(.{30})$/, "$1…$2") : null,
     connected: !!tok?.refresh_token,
     channel: tok?.channel ?? null,
     connectedAt: tok?.connectedAt ?? null,
@@ -79,7 +108,7 @@ const pending = new Map();
 
 export function authUrl(redirectUri) {
   const c = client();
-  if (!c) throw new Error("Add your Google app file first (home page → Connected accounts → YouTube).");
+  if (!c) throw new Error("Add your Google app in Settings → YouTube first.");
   const verifier = crypto.randomBytes(48).toString("base64url");
   const challenge = crypto.createHash("sha256").update(verifier).digest("base64url");
   const state = crypto.randomBytes(16).toString("hex");
@@ -105,7 +134,7 @@ export const isOAuthCallback = (query) => typeof query.state === "string" && pen
 export async function finishAuth(query) {
   const p = pending.get(query.state);
   pending.delete(query.state);
-  if (!p) throw new Error("This sign-in link expired; start again from the home page (Connected accounts).");
+  if (!p) throw new Error("This sign-in link expired; start again from Settings → YouTube.");
   if (query.error) throw new Error(query.error === "access_denied" ? "You declined access on Google's page." : `Google returned: ${query.error}`);
   const c = client();
   const body = new URLSearchParams({ client_id: c.id, code: String(query.code), code_verifier: p.verifier, grant_type: "authorization_code", redirect_uri: p.redirectUri });
@@ -139,7 +168,7 @@ class YouTubeError extends Error {
 
 async function accessToken(force = false) {
   const tok = readJson(TOKEN_FILE);
-  if (!tok?.refresh_token) throw new YouTubeError("YouTube isn't connected: connect it on the home page (Connected accounts).");
+  if (!tok?.refresh_token) throw new YouTubeError("YouTube isn't connected: connect it in Settings → YouTube.");
   if (!force && tok.access_token && tok.expires_at > Date.now() + 60_000) return tok.access_token;
   const c = client();
   const body = new URLSearchParams({ client_id: c.id, grant_type: "refresh_token", refresh_token: tok.refresh_token });
@@ -154,7 +183,7 @@ async function accessToken(force = false) {
   if (!r.ok || !j.access_token) {
     if (j.error === "invalid_grant")
       throw new YouTubeError(
-        'YouTube sign-in expired or was revoked. Connect again on the home page (Connected accounts). (If this happens every 7 days, your Google app is still in "Testing": publish it to "In production" on the Google Auth Platform → Audience page.)',
+        'YouTube sign-in expired or was revoked. Connect again in Settings → YouTube. (If this happens every 7 days, your Google app is still in "Testing": publish it to "In production" on the Google Auth Platform → Audience page.)',
         { code: "invalid_grant" },
       );
     throw new YouTubeError(`Refreshing the YouTube sign-in failed (${r.status} ${j.error ?? ""}).`, { retry: r.status >= 500 });

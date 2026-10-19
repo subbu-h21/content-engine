@@ -1,6 +1,7 @@
-/** The Publish tab: the finished video, a draft per platform, YouTube upload (API), Facebook/Instagram (Claude in Chrome). */
+/** The Publish page's middle: the picked video file, a draft per platform, YouTube upload (API), Facebook/Instagram (Claude in Chrome). */
 import React, { useEffect, useRef, useState } from "react";
-import { api, type PublishInfo, type SocialDraft, type YouTubeDraft } from "./api";
+import { api, unreachable, type PublishInfo, type SocialDraft, type YouTubeDraft } from "./api";
+import { fileLabel } from "./History";
 import { navigate } from "./nav";
 
 type Platform = "youtube" | "facebook" | "instagram";
@@ -22,7 +23,11 @@ const toLocalInput = (iso: string | null) => {
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
 };
 
-export const PublishPanel: React.FC<{ name: string }> = ({ name }) => {
+const FINAL = "out/delivery.mp4";
+const KIND_LABEL = { final: "Final video", master: "Final video (sound not levelled yet)", draft: "Draft", render: "Render" } as const;
+
+/** onClaude: the video's Claude panel is running or about to get a message (the page shows it). */
+export const PublishPanel: React.FC<{ name: string; onClaude?: () => void }> = ({ name, onClaude }) => {
   const [info, setInfo] = useState<PublishInfo | null>(null);
   const [yt, setYt] = useState<YouTubeDraft | null>(null);
   const [fb, setFb] = useState<SocialDraft | null>(null);
@@ -30,6 +35,8 @@ export const PublishPanel: React.FC<{ name: string }> = ({ name }) => {
   const dirty = useRef<Record<Platform, boolean>>({ youtube: false, facebook: false, instagram: false });
   const timers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
   const [error, setError] = useState<string | null>(null);
+  // the page couldn't refresh (engine restarting): cleared by the next good refresh, unlike a button's error
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [note, setNote] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -40,12 +47,14 @@ export const PublishPanel: React.FC<{ name: string }> = ({ name }) => {
         try {
           const i = await api.publish(name);
           setInfo(i);
+          if (i.claude !== "stopped") onClaude?.();
           // drafts from the server (e.g. Claude wrote them) replace the form unless the user is editing that one
           if (!dirty.current.youtube) setYt(i.drafts.youtube);
           if (!dirty.current.facebook) setFb(i.drafts.facebook);
           if (!dirty.current.instagram) setIg(i.drafts.instagram);
+          setLoadError(null);
         } catch (e) {
-          setError((e as Error).message);
+          setLoadError(unreachable(e));
         }
         await new Promise((r) => setTimeout(r, 2000));
       }
@@ -92,16 +101,22 @@ export const PublishPanel: React.FC<{ name: string }> = ({ name }) => {
   };
   const viaClaude = (fn: () => Promise<{ ok: boolean; pending?: boolean; reason?: string }>, sent: string) =>
     act(async () => {
+      onClaude?.();
       const r = await fn();
       if (!r.ok && !r.pending) throw new Error(r.reason ?? "Claude couldn't be reached.");
-      if (r.pending) setNote(`Waiting to hand it to Claude: ${r.reason} It goes in by itself once you have.`);
-    }, sent);
+      // the "sent" note only when it really went in; otherwise say what it's waiting for
+      setNote(r.pending ? `Waiting to hand it to Claude: ${r.reason} It goes in by itself once you have.` : sent);
+    });
 
-  if (!info || !yt || !fb || !ig) return <div className="board">{error ? <p className="error">{error}</p> : <p className="hint">Loading…</p>}</div>;
+  if (!info || !yt || !fb || !ig) return <div className="board">{loadError ? <p className="error">{loadError}</p> : <p className="hint">Loading…</p>}</div>;
   const v = info.video;
   const yts = info.state.youtube ?? {};
   const live = info.youtube.live;
   const uploading = ["queued", "uploading"].includes(yts.status ?? "");
+  // the YouTube state belongs to the file it was started with (older states: the final video)
+  const ytFile = yts.status ? (yts.file ?? FINAL) : null;
+  const ytSameFile = ytFile === v.rel;
+  const videoSrc = v.rel ? `/api/projects/${encodeURIComponent(name)}/file?path=${encodeURIComponent(v.rel)}` : "";
   const sent = live?.sent ?? yts.progress?.sent ?? 0;
   const total = live?.total ?? yts.progress?.total ?? v.size ?? 0;
 
@@ -111,7 +126,13 @@ export const PublishPanel: React.FC<{ name: string }> = ({ name }) => {
     return (
       <section className="card publish-card">
         <h2>{label}</h2>
-        <p className="meta">Posted by Claude in your Chrome (the profile where you're logged in). Claude fills everything in and stops before the final Post: you click it.</p>
+        <p className="meta">
+          Posted by Claude in your Chrome (the profile where you're logged in). Claude fills everything in and stops before the final Post: you click it. Page, account and caption ending come from{" "}
+          <a href="/settings" onClick={(e) => (e.preventDefault(), navigate("/settings"))}>
+            Settings
+          </a>
+          .
+        </p>
         <div className="form">
           <label>
             {platform === "facebook" ? "Page link" : "Account"}
@@ -151,12 +172,18 @@ export const PublishPanel: React.FC<{ name: string }> = ({ name }) => {
           <button className="primary" disabled={busy || !v.exists || info.problems[platform].length > 0} onClick={() => viaClaude(() => api.handoff(name, platform), "Handed to Claude: watch its panel on the right and your Chrome.")}>
             {st.status === "handed" || st.status === "ready-to-post" ? "Hand to Claude again" : "Hand to Claude in Chrome"}
           </button>
+          {st.status ? (
+            <button className="quiet" disabled={busy} onClick={() => window.confirm(`Clear the ${label} status on this page? (Nothing is deleted on ${label}.)`) && act(() => api.publishReport(name, platform, "none"))}>
+              Reset
+            </button>
+          ) : null}
           {st.status && st.status !== "posted" ? (
             <button
               disabled={busy}
               onClick={() => {
-                const url = window.prompt("Link to the post (optional):", "") ?? undefined;
-                act(() => api.publishReport(name, platform, "posted", url || undefined));
+                const url = window.prompt(`Mark it as posted on ${label}? Paste the post's link if you have it (optional), then OK.`, "");
+                if (url === null) return; // Cancel: nothing changes
+                act(() => api.publishReport(name, platform, "posted", url.trim() || undefined));
               }}
             >
               Mark as posted
@@ -167,6 +194,7 @@ export const PublishPanel: React.FC<{ name: string }> = ({ name }) => {
             {st.status === "ready-to-post" && "Ready in Chrome: check it and click Post."}
             {st.status === "posted" && (st.url ? <a href={st.url} target="_blank" rel="noreferrer">Posted ↗</a> : "Posted.")}
             {st.status === "failed" && <span className="error">Not posted: {st.note ?? "see Claude's panel"}</span>}
+            {st.status && st.file && st.file !== v.rel ? <span className="dim"> ({fileLabel(st.file)})</span> : null}
           </span>
         </div>
       </section>
@@ -175,6 +203,7 @@ export const PublishPanel: React.FC<{ name: string }> = ({ name }) => {
 
   return (
     <div className="board publish-panel">
+      {loadError ? <p className="error">{loadError}</p> : null}
       {error ? <p className="error">{error}</p> : null}
       {note ? <p className="hint">{note}</p> : null}
 
@@ -182,15 +211,34 @@ export const PublishPanel: React.FC<{ name: string }> = ({ name }) => {
         {v.exists ? (
           <>
             <div className="steps">
-              <span className="on">Finished video</span>
+              <span className="on">{KIND_LABEL[v.kind ?? "render"]}</span>
+              <span>{(v.rel ?? "").split("/").pop()}</span>
               <span>
                 {v.width}×{v.height} · {secs(v.duration)} · {mb(v.size)}
               </span>
               {v.madeAt ? <span>made {new Date(v.madeAt).toLocaleString()}</span> : null}
             </div>
+            {v.kind === "draft" ? <p className="warn">This is a draft (quick preview quality). The Final tab makes the full-quality video.</p> : null}
+            {v.kind === "master" ? <p className="warn">The final render didn't finish its last step (sound levelling): Resume it on the Final tab for the upload file.</p> : null}
             {v.changedAfter ? <p className="warn">The video's scenes or settings changed after this file was made: render it again on the Final tab if those changes should be in it.</p> : null}
+            {v.error ? <p className="error">{v.error}</p> : null}
+            <video key={v.rel} className="publish-video" controls preload="metadata" src={`${videoSrc}&v=${encodeURIComponent(v.madeAt ?? "")}`} />
             <div className="actions">
-              <button onClick={() => act(() => api.revealVideo(name))}>Show the video in its folder</button>
+              <a className="button" href={`${videoSrc}&download=1`}>
+                Download
+              </a>
+              <button
+                onClick={() =>
+                  act(async () => {
+                    await navigator.clipboard.writeText(v.path ?? "");
+                  }, "File path copied: in Facebook's or Instagram's file picker, paste it into the File name box and press Enter.")
+                }
+              >
+                Copy file path
+              </button>
+              <button className="quiet" onClick={() => act(() => api.revealVideo(name))}>
+                Show in folder
+              </button>
               <button onClick={() => viaClaude(() => api.publishDraftWithClaude(name), "Asked Claude to draft the titles and captions: they appear here when written.")} disabled={busy}>
                 Ask Claude to draft titles &amp; captions
               </button>
@@ -198,7 +246,7 @@ export const PublishPanel: React.FC<{ name: string }> = ({ name }) => {
           </>
         ) : (
           <>
-            <p className="note">There's no finished video yet.</p>
+            <p className="note">This video has no exported file yet.</p>
             <div className="actions">
               <button className="primary" onClick={() => navigate(`/p/${encodeURIComponent(name)}/final`)}>
                 Go to the Final tab
@@ -208,121 +256,145 @@ export const PublishPanel: React.FC<{ name: string }> = ({ name }) => {
         )}
       </div>
 
-      <section className="card publish-card">
-        <h2>YouTube</h2>
-        {info.youtube.connected ? (
-          <p className="meta">
-            Uploads to <a href={info.youtube.channel?.url} target="_blank" rel="noreferrer">{info.youtube.channel?.title ?? "your channel"}</a> through the YouTube API.
-          </p>
-        ) : (
-          <p className="warn">
-            YouTube isn't connected yet: <a href="/" onClick={(e) => (e.preventDefault(), navigate("/"))}>connect it on the home page</a> (Connected accounts).
-          </p>
-        )}
-        <div className="form">
-          <label className="wide">
-            <span>
-              Title <span className="dim">{yt.title.length}/100</span>
-            </span>
-            <input value={yt.title} onChange={(e) => edit<YouTubeDraft>("youtube", setYt, { title: e.target.value })} />
-          </label>
-          <label className="wide">
-            Description
-            <textarea rows={6} value={yt.description} onChange={(e) => edit<YouTubeDraft>("youtube", setYt, { description: e.target.value })} />
-          </label>
-          <label className="wide">
-            <span>
-              Tags <span className="dim">comma separated</span>
-            </span>
-            <input value={yt.tags.join(", ")} onChange={(e) => edit<YouTubeDraft>("youtube", setYt, { tags: e.target.value.split(",").map((t) => t.trim()).filter(Boolean) })} />
-          </label>
-          <label>
-            Category
-            <select value={yt.categoryId} onChange={(e) => edit<YouTubeDraft>("youtube", setYt, { categoryId: e.target.value })}>
-              {CATEGORIES.map(([id, l]) => (
-                <option key={id} value={id}>
-                  {l}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label>
-            Visibility
-            <select value={yt.privacy} onChange={(e) => edit<YouTubeDraft>("youtube", setYt, { privacy: e.target.value as YouTubeDraft["privacy"] })}>
-              <option value="private">Private (check it, then publish in YouTube Studio)</option>
-              <option value="unlisted">Unlisted</option>
-              <option value="public">Public</option>
-              <option value="scheduled">Scheduled</option>
-            </select>
-          </label>
-          {yt.privacy === "scheduled" ? (
-            <label>
-              Publish at
-              <input type="datetime-local" value={toLocalInput(yt.publishAt)} onChange={(e) => edit<YouTubeDraft>("youtube", setYt, { publishAt: e.target.value ? new Date(e.target.value).toISOString() : null })} />
-            </label>
-          ) : null}
-          <label>
-            Made for kids?
-            <span className="seg">
-              <button type="button" className={yt.madeForKids === false ? "on" : ""} onClick={() => edit<YouTubeDraft>("youtube", setYt, { madeForKids: false })}>
-                No
-              </button>
-              <button type="button" className={yt.madeForKids === true ? "on" : ""} onClick={() => edit<YouTubeDraft>("youtube", setYt, { madeForKids: true })}>
-                Yes
-              </button>
-            </span>
-          </label>
-          <label className="check wide">
-            <input type="checkbox" checked={yt.synthetic} onChange={(e) => edit<YouTubeDraft>("youtube", setYt, { synthetic: e.target.checked })} />
-            Altered or synthetic content that looks realistic (YouTube asks for this disclosure; an animated explainer with an AI voice usually doesn't need it)
-          </label>
-        </div>
-        {(v.notes?.youtube ?? []).map((n) => (
-          <p key={n} className="warn">
-            {n}
-          </p>
-        ))}
-        {info.problems.youtube.map((p) => (
-          <p key={p} className="hint">
-            · {p}
-          </p>
-        ))}
-        {uploading || yts.status === "failed" || yts.status === "stopped" || yts.status === "interrupted" ? (
-          <div className="step running">
-            <div className="body">
-              <div className="label">
-                {yts.status === "queued" ? `Queued${live?.queuePosition ? ` (#${live.queuePosition})` : ""}` : yts.status === "uploading" ? "Uploading" : yts.status === "failed" ? "Upload stopped by an error" : yts.status === "interrupted" ? "Upload interrupted" : "Upload stopped"}
-              </div>
-              <div className="bar">
-                <span style={{ width: `${total ? Math.round((sent / total) * 100) : 0}%` }} />
-              </div>
-              <div className="meta">
-                {mb(sent)} of {mb(total)}
-              </div>
-              {yts.error ? <div className="error">{yts.error}</div> : null}
+      {/* the platforms only once there's a file to publish */}
+      {v.exists ? (
+        <>
+          <section className="card publish-card">
+            <h2>YouTube</h2>
+            {info.youtube.connected ? (
+              <p className="meta">
+                Uploads to <a href={info.youtube.channel?.url} target="_blank" rel="noreferrer">{info.youtube.channel?.title ?? "your channel"}</a> through the YouTube API.
+              </p>
+            ) : (
+              <p className="warn">
+                YouTube isn't connected yet: <a href="/settings" onClick={(e) => (e.preventDefault(), navigate("/settings"))}>connect it in Settings</a>.
+              </p>
+            )}
+            <div className="form">
+              <label className="wide">
+                <span>
+                  Title <span className="dim">{yt.title.length}/100</span>
+                </span>
+                <input value={yt.title} onChange={(e) => edit<YouTubeDraft>("youtube", setYt, { title: e.target.value })} />
+              </label>
+              <label className="wide">
+                Description
+                <textarea rows={6} value={yt.description} onChange={(e) => edit<YouTubeDraft>("youtube", setYt, { description: e.target.value })} />
+              </label>
+              <label className="wide">
+                <span>
+                  Tags <span className="dim">comma separated</span>
+                </span>
+                <input value={yt.tags.join(", ")} onChange={(e) => edit<YouTubeDraft>("youtube", setYt, { tags: e.target.value.split(",").map((t) => t.trim()).filter(Boolean) })} />
+              </label>
+              <label>
+                Category
+                <select value={yt.categoryId} onChange={(e) => edit<YouTubeDraft>("youtube", setYt, { categoryId: e.target.value })}>
+                  {CATEGORIES.map(([id, l]) => (
+                    <option key={id} value={id}>
+                      {l}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                Visibility
+                <select value={yt.privacy} onChange={(e) => edit<YouTubeDraft>("youtube", setYt, { privacy: e.target.value as YouTubeDraft["privacy"] })}>
+                  <option value="private">Private (check it, then publish in YouTube Studio)</option>
+                  <option value="unlisted">Unlisted</option>
+                  <option value="public">Public</option>
+                  <option value="scheduled">Scheduled</option>
+                </select>
+              </label>
+              {yt.privacy === "scheduled" ? (
+                <label>
+                  Publish at
+                  <input type="datetime-local" value={toLocalInput(yt.publishAt)} onChange={(e) => edit<YouTubeDraft>("youtube", setYt, { publishAt: e.target.value ? new Date(e.target.value).toISOString() : null })} />
+                </label>
+              ) : null}
+              <label>
+                Made for kids?
+                <span className="seg">
+                  <button type="button" className={yt.madeForKids === false ? "on" : ""} onClick={() => edit<YouTubeDraft>("youtube", setYt, { madeForKids: false })}>
+                    No
+                  </button>
+                  <button type="button" className={yt.madeForKids === true ? "on" : ""} onClick={() => edit<YouTubeDraft>("youtube", setYt, { madeForKids: true })}>
+                    Yes
+                  </button>
+                </span>
+              </label>
+              <label className="check wide">
+                <input type="checkbox" checked={yt.synthetic} onChange={(e) => edit<YouTubeDraft>("youtube", setYt, { synthetic: e.target.checked })} />
+                Altered or synthetic content that looks realistic (YouTube asks for this disclosure; an animated explainer with an AI voice usually doesn't need it)
+              </label>
             </div>
-          </div>
-        ) : null}
-        <div className="actions">
-          {uploading ? (
-            <button disabled={busy} onClick={() => act(() => api.youtubeStop(name), "Stopped. Resume continues the same upload.")}>
-              Stop
-            </button>
-          ) : (
-            <button className="primary" disabled={busy || !v.exists || !info.youtube.connected || info.problems.youtube.length > 0} onClick={() => act(() => api.youtubeStart(name), "Uploading in the background: you can leave this page.")}>
-              {["failed", "stopped", "interrupted"].includes(yts.status ?? "") ? "Resume upload" : yts.status === "done" ? "Upload again" : "Upload to YouTube"}
-            </button>
-          )}
-          {yts.status === "done" && yts.result ? (
-            <span className="hint">
-              On YouTube ({yts.result.privacy}): <a href={yts.result.url} target="_blank" rel="noreferrer">{yts.result.url}</a> · <a href={yts.result.studio} target="_blank" rel="noreferrer">open in YouTube Studio</a>
-            </span>
-          ) : null}
-        </div>
-      </section>
+            {(v.notes?.youtube ?? []).map((n) => (
+              <p key={n} className="warn">
+                {n}
+              </p>
+            ))}
+            {info.problems.youtube.map((p) => (
+              <p key={p} className="hint">
+                · {p}
+              </p>
+            ))}
+            {uploading || yts.status === "failed" || yts.status === "stopped" || yts.status === "interrupted" ? (
+              <div className="step running">
+                <div className="body">
+                  <div className="label">
+                    {yts.status === "queued" ? `Queued${live?.queuePosition ? ` (#${live.queuePosition})` : ""}` : yts.status === "uploading" ? "Uploading" : yts.status === "failed" ? "Upload stopped by an error" : yts.status === "interrupted" ? "Upload interrupted" : "Upload stopped"}
+                    {ytFile && !ytSameFile ? <span className="dim"> · {fileLabel(ytFile)}</span> : null}
+                  </div>
+                  <div className="bar">
+                    <span style={{ width: `${total ? Math.round((sent / total) * 100) : 0}%` }} />
+                  </div>
+                  <div className="meta">
+                    {mb(sent)} of {mb(total)}
+                  </div>
+                  {yts.error ? <div className="error">{yts.error}</div> : null}
+                </div>
+              </div>
+            ) : null}
+            <div className="actions">
+              {uploading ? (
+                <button disabled={busy} onClick={() => act(() => api.youtubeStop(name), "Stopped. Resume continues the same upload.")}>
+                  Stop
+                </button>
+              ) : (
+                <button className="primary" disabled={busy || !v.exists || !info.youtube.connected || info.problems.youtube.length > 0} onClick={() =>
+                    act(async () => {
+                      try {
+                        await api.youtubeStart(name);
+                      } catch (e) {
+                        const dup = (e as { data?: { duplicate?: string } }).data?.duplicate;
+                        if (!dup) throw e;
+                        if (!window.confirm(`This file is already on YouTube:\n${dup}\n\nUpload it again as a second video?`)) return;
+                        await api.youtubeStart(name, true);
+                      }
+                    }, "Uploading in the background: you can leave this page.")
+                  }
+                >
+                  {!ytSameFile ? "Upload to YouTube" : ["failed", "stopped", "interrupted"].includes(yts.status ?? "") ? "Resume upload" : yts.status === "done" ? "Upload again" : "Upload to YouTube"}
+                </button>
+              )}
+              {info.youtubeLog.length ? (
+                <details className="log">
+                  <summary>Details</summary>
+                  <pre>{info.youtubeLog.join("\n")}</pre>
+                </details>
+              ) : null}
+              {yts.status === "done" && yts.result ? (
+                <span className="hint">
+                  {ytSameFile ? "On YouTube" : `${fileLabel(ytFile ?? "")} is on YouTube`} ({yts.result.privacy}): <a href={yts.result.url} target="_blank" rel="noreferrer">{yts.result.url}</a> · <a href={yts.result.studio} target="_blank" rel="noreferrer">open in YouTube Studio</a>
+                </span>
+              ) : null}
+            </div>
+          </section>
 
-      {social("facebook", fb, setFb)}
-      {social("instagram", ig, setIg)}
+          {social("facebook", fb, setFb)}
+          {social("instagram", ig, setIg)}
+        </>
+      ) : null}
     </div>
   );
 };

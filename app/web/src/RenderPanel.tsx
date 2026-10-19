@@ -1,6 +1,7 @@
 /** The Final tab: what a final render involves, the background job's progress, recovery, and the finished video. */
 import React, { useEffect, useState } from "react";
-import { api, type RenderInfo, type RenderStep } from "./api";
+import { api, unreachable, type RenderInfo, type RenderStep } from "./api";
+import { navigate } from "./nav";
 
 const dur = (s: number | null | undefined) => {
   if (s == null || !isFinite(s)) return "—";
@@ -10,6 +11,8 @@ const dur = (s: number | null | undefined) => {
   return h ? `${h} h ${m} min` : m ? `${m} min` : `${s} s`;
 };
 const gb = (b: number | null | undefined) => (b == null ? "?" : b >= 1e9 ? `${(b / 1e9).toFixed(b >= 1e10 ? 0 : 1)} GB` : `${Math.max(1, Math.round(b / 1e6))} MB`);
+/** A long technical error ("The sound step failed: <traceback>") → its plain first part; the rest goes under Details. */
+const shortError = (m: string) => (m.length > 140 && m.indexOf(": ") > 0 ? `${m.slice(0, m.indexOf(": "))}.` : m);
 const since = (iso: string | null) => (iso ? (Date.now() - new Date(iso).getTime()) / 1000 : null);
 
 const STATUS: Record<string, string> = {
@@ -47,7 +50,14 @@ const StepRow: React.FC<{ s: RenderStep; live: RenderInfo["live"] }> = ({ s, liv
             </div>
           </>
         ) : null}
-        {s.error ? <div className="error">{s.error}</div> : null}
+        {s.error && shortError(s.error) !== s.error ? (
+          <details className="error">
+            <summary>{shortError(s.error)} Details</summary>
+            <pre className="logtail">{s.error}</pre>
+          </details>
+        ) : s.error ? (
+          <div className="error">{s.error}</div>
+        ) : null}
       </div>
     </li>
   );
@@ -56,6 +66,8 @@ const StepRow: React.FC<{ s: RenderStep; live: RenderInfo["live"] }> = ({ s, liv
 export const RenderPanel: React.FC<{ name: string }> = ({ name }) => {
   const [info, setInfo] = useState<RenderInfo | null>(null);
   const [error, setError] = useState<string | null>(null);
+  // the page couldn't refresh (engine restarting): cleared by the next good refresh, unlike a button's error
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [rerender, setRerender] = useState<string[]>([]);
   const [autoFix, setAutoFix] = useState(true);
   const [busy, setBusy] = useState(false);
@@ -67,8 +79,9 @@ export const RenderPanel: React.FC<{ name: string }> = ({ name }) => {
       while (!stop) {
         try {
           setInfo(await api.render(name));
+          setLoadError(null);
         } catch (e) {
-          setError((e as Error).message);
+          setLoadError(unreachable(e));
         }
         await new Promise((r) => setTimeout(r, 2000));
       }
@@ -92,7 +105,7 @@ export const RenderPanel: React.FC<{ name: string }> = ({ name }) => {
     setBusy(false);
   };
 
-  if (!info) return <div className="board">{error ? <p className="error">{error}</p> : <p className="hint">Loading…</p>}</div>;
+  if (!info) return <div className="board">{loadError ? <p className="error">{loadError}</p> : <p className="hint">Loading…</p>}</div>;
   const { plan, job, live } = info;
   const blocks = plan.problems.filter((p) => p.level === "block");
   const warns = plan.problems.filter((p) => p.level === "warn");
@@ -168,13 +181,14 @@ export const RenderPanel: React.FC<{ name: string }> = ({ name }) => {
         <button className="primary" disabled={busy || !!blocks.length || !!activeJob} onClick={() => act(() => api.renderStart(name, rerender, autoFix))}>
           {job?.status === "done" ? "Render again" : "Start final render"}
         </button>
-        <span className="hint">It runs in the background: you can keep editing or close the browser. Stopping `ce app` pauses it; Resume continues.</span>
+        <span className="hint">It runs in the background: you can keep editing or close the browser. If the engine is closed or the PC restarts, it pauses; Resume continues.</span>
       </div>
     </div>
   );
 
   return (
     <div className="board render-panel">
+      {loadError ? <p className="error">{loadError}</p> : null}
       {error ? <p className="error">{error}</p> : null}
       {note ? <p className="hint">{note}</p> : null}
 
@@ -187,7 +201,7 @@ export const RenderPanel: React.FC<{ name: string }> = ({ name }) => {
             {activeJob && job.startedAt ? <span>running for {dur(since(job.startedAt))}</span> : null}
           </div>
           {live?.waiting ? <p className="note">{live.waiting}</p> : null}
-          {job.error ? <p className="note">{job.error.message}</p> : null}
+          {job.error ? <p className="note">{shortError(job.error.message)}</p> : null}
           {job.claudeNotice ? (
             <p className="hint">
               {job.claudeNotice.ok
@@ -214,8 +228,18 @@ export const RenderPanel: React.FC<{ name: string }> = ({ name }) => {
                 <button className="primary" disabled={busy || !!blocks.length} onClick={() => act(() => api.renderResume(name, autoFix))}>
                   Resume
                 </button>
-                {job.error ? (
-                  <button disabled={busy} onClick={() => act(() => api.renderAskClaude(name).then((r) => { if (!r.ok && !r.pending) throw new Error(r.reason ?? "Claude couldn't be reached"); }), "Handed to Claude: see its panel on the right.")}>
+                {job.error && job.status === "failed" ? (
+                  <button
+                    disabled={busy}
+                    onClick={() =>
+                      act(() =>
+                        api.renderAskClaude(name).then((r) => {
+                          if (!r.ok && !r.pending) throw new Error(r.reason ?? "Claude couldn't be reached");
+                          setNote(r.pending ? `Waiting to tell Claude: ${r.reason} It goes in by itself once you have.` : "Handed to Claude: see its panel on the right.");
+                        }),
+                      )
+                    }
+                  >
                     Ask Claude to fix it
                   </button>
                 ) : null}
@@ -225,13 +249,29 @@ export const RenderPanel: React.FC<{ name: string }> = ({ name }) => {
         </div>
       ) : null}
 
-      {job?.status === "done" ? (
+      {job?.status === "done" && info.files?.delivery === false ? (
+        <div className="card">
+          <h2>Finished video</h2>
+          <p className="warn">The finished file out/delivery.mp4 isn't there any more (moved or deleted). Render again below to make it.</p>
+        </div>
+      ) : null}
+
+      {job?.status === "done" && info.files?.delivery !== false ? (
         <div className="card">
           <h2>Finished video</h2>
           <video className="final-video" controls src={fileUrl("out/delivery.mp4")} />
           <div className="actions">
+            <button
+              className="primary"
+              onClick={async () => {
+                await api.publishSelect(name, "out/delivery.mp4").catch(() => undefined);
+                navigate(`/publish/${encodeURIComponent(name)}`);
+              }}
+            >
+              Publish this video
+            </button>
             <button onClick={() => act(() => api.reveal(name, "delivery"))}>Show in folder</button>
-            <span className="hint">out/delivery.mp4 (upload this) · out/video.mp4 (master)</span>
+            <span className="hint">out/delivery.mp4 (to publish) · out/video.mp4 (master)</span>
           </div>
         </div>
       ) : null}

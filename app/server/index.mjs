@@ -21,8 +21,9 @@ import { ensureIntegration } from "./integration.mjs";
 import { handleMcp } from "./mcp.mjs";
 import { ensureStudio, stopAllStudios, stopStudio, studioInfo } from "./studios.mjs";
 import { deleteInfo, recycle } from "./remove.mjs";
-import { getDraft, draftProblems, getState as publishState, handoffMessage, publishSummary, recoverUploads, report as publishReport, saveDraft, startYouTube, stopYouTube, videoInfo, youtubeLive } from "./publish.mjs";
-import { authUrl, disconnect as youtubeDisconnect, finishAuth, isOAuthCallback, saveClient as saveYouTubeClient, status as youtubeStatus } from "./youtube.mjs";
+import { activity, getDraft, draftProblems, getState as publishState, handoffMessage, listVideos, publishSummary, recoverUploads, report as publishReport, saveDraft, selectedVideo, selectVideo, startYouTube, stopYouTube, videoInfo, youtubeLive } from "./publish.mjs";
+import { authUrl, disconnect as youtubeDisconnect, finishAuth, isOAuthCallback, saveClient as saveYouTubeClient, saveClientFields, status as youtubeStatus, testConnection } from "./youtube.mjs";
+import { publishDefaults, settingsView, updateSettings } from "./settings.mjs";
 import { computePlan, failureMessage, getJob, liveInfo, noteClaude, recoverJobs, renderSummary, resumeJob, setRenderHooks, shutdownRenders, startJob, stopJob } from "./render.mjs";
 import { attachTerminal, ensureTerminal, killAllTerminals, killTerminal, panelState, sayToTerminal } from "./terminals.mjs";
 
@@ -104,11 +105,10 @@ app.all("/mcp/:name", (req, res) => res.status(405).set("allow", "POST").json({ 
 // ---- website API
 app.use("/api", express.json({ limit: "1mb" }));
 
-app.get("/api/settings", (req, res) => res.json(loadSettings()));
-app.put("/api/settings", wrap((req, res) => {
-  const ws = String(req.body.workspace ?? "").trim();
-  if (!ws || !fs.existsSync(ws) || !fs.statSync(ws).isDirectory()) return res.status(400).json({ error: `not a folder: ${ws}` });
-  res.json(saveSettings({ workspace: path.resolve(ws) }));
+app.get("/api/settings", wrap(async (req, res) => res.json(await settingsView())));
+app.put("/api/settings", wrap(async (req, res) => {
+  updateSettings(req.body ?? {});
+  res.json(await settingsView());
 }));
 
 app.get("/api/doctor", (req, res) => {
@@ -153,13 +153,18 @@ app.post("/api/projects", wrap((req, res) => {
   res.json({ name: path.basename(dir), dir });
 }));
 
-app.get("/api/projects/:name", (req, res) => {
+app.get("/api/projects/:name", wrap((req, res) => {
   const dir = project(req, res);
   if (!dir) return;
-  const manifest = JSON.parse(fs.readFileSync(path.join(dir, "project.json"), "utf8"));
+  let manifest;
+  try {
+    manifest = JSON.parse(fs.readFileSync(path.join(dir, "project.json"), "utf8"));
+  } catch (e) {
+    throw new Error(`This video's project.json can't be read (${e.message}). Ask Claude in its panel to repair it.`);
+  }
   const p = loadProject(dir);
   res.json({ name: req.params.name, dir, title: manifest.title, format: manifest.format, duration: p.total, scenes: p.scenes.length, link: linkStatus(dir), studio: studioInfo(req.params.name) });
-});
+}));
 app.post("/api/projects/:name/open", wrap(async (req, res) => {
   const dir = project(req, res);
   if (!dir) return;
@@ -207,7 +212,7 @@ app.delete("/api/projects/:name", wrap(async (req, res) => {
   if (String(req.body?.confirm ?? "").replace(/^0+/, "") !== number) return res.status(400).json({ error: `type ${number.padStart(2, "0")} to confirm` });
   const job = getJob(req.params.name, dir);
   if (job && ["running", "queued"].includes(job.status)) return res.status(409).json({ error: "A final render of this video is running or queued: stop it on its Final tab first." });
-  if (["queued", "uploading"].includes(publishState(dir).youtube?.status)) return res.status(409).json({ error: "This video is uploading to YouTube: stop it on its Publish tab first." });
+  if (["queued", "uploading"].includes(publishState(dir).youtube?.status)) return res.status(409).json({ error: "This video is uploading to YouTube: stop it on the Publish page first." });
   stopStudio(req.params.name);
   killTerminal(req.params.name);
   await new Promise((r) => setTimeout(r, 800)); // let Windows release the files
@@ -273,7 +278,9 @@ setRenderHooks({ onFailure: tellClaude });
 app.get("/api/projects/:name/render", (req, res) => {
   const dir = project(req, res);
   if (!dir) return;
-  res.json({ plan: computePlan(dir), job: getJob(req.params.name, dir), live: liveInfo(req.params.name) });
+  // files: whether the finished files are (still) there, e.g. after being moved or deleted outside the engine
+  const files = { delivery: fs.existsSync(path.join(dir, "out", "delivery.mp4")), video: fs.existsSync(path.join(dir, "out", "video.mp4")) };
+  res.json({ plan: computePlan(dir), job: getJob(req.params.name, dir), live: liveInfo(req.params.name), files });
 });
 app.post("/api/projects/:name/render/start", wrap((req, res) => {
   const dir = project(req, res);
@@ -314,6 +321,8 @@ app.post("/api/projects/:name/render/reveal", (req, res) => {
 const REDIRECT_URI = `http://127.0.0.1:${PORT}/`;
 app.get("/api/youtube", (req, res) => res.json(youtubeStatus()));
 app.put("/api/youtube/client", express.text({ type: "*/*", limit: "64kb" }), wrap((req, res) => res.json(saveYouTubeClient(String(req.body ?? "")))));
+app.post("/api/youtube/client-fields", wrap((req, res) => res.json(saveClientFields(req.body.clientId, req.body.clientSecret))));
+app.post("/api/youtube/test", wrap(async (req, res) => res.json(await testConnection())));
 app.post("/api/youtube/connect", wrap((req, res) => res.json({ url: authUrl(REDIRECT_URI) })));
 app.post("/api/youtube/disconnect", wrap((req, res) => res.json(youtubeDisconnect())));
 // Google sends the browser back to http://127.0.0.1:<port>/?code=…&state=… after sign-in
@@ -335,7 +344,24 @@ app.get("/api/projects/:name/publish", wrap(async (req, res) => {
   const dir = project(req, res);
   if (!dir) return;
   const drafts = Object.fromEntries(PLATFORMS.map((p) => [p, getDraft(dir, p)]));
-  res.json({ video: await videoInfo(dir), drafts, problems: Object.fromEntries(PLATFORMS.map((p) => [p, draftProblems(p, drafts[p])])), state: publishState(dir), youtube: { ...youtubeStatus(), live: youtubeLive(req.params.name) } });
+  const logFile = path.join(dir, "publish", "youtube.log");
+  const youtubeLog = fs.existsSync(logFile) ? fs.readFileSync(logFile, "utf8").trim().split(/\r?\n/).slice(-30) : [];
+  const { video: _picked, ...state } = publishState(dir);
+  res.json({
+    videos: listVideos(dir),
+    video: await videoInfo(dir),
+    drafts,
+    problems: Object.fromEntries(PLATFORMS.map((p) => [p, draftProblems(p, drafts[p])])),
+    state,
+    youtube: { ...youtubeStatus(), live: youtubeLive(req.params.name) },
+    youtubeLog,
+    claude: panelState(req.params.name),
+  });
+}));
+/** The Publish page picked one of the project's video files. */
+app.post("/api/projects/:name/publish/select", wrap((req, res) => {
+  const dir = project(req, res);
+  if (dir) res.json({ video: selectVideo(dir, String(req.body.file ?? "")) });
 }));
 app.put("/api/projects/:name/publish/:platform", wrap((req, res) => {
   const dir = project(req, res);
@@ -345,7 +371,14 @@ app.put("/api/projects/:name/publish/:platform", wrap((req, res) => {
 }));
 app.post("/api/projects/:name/publish/youtube/start", wrap(async (req, res) => {
   const dir = project(req, res);
-  if (dir) res.json(await startYouTube(req.params.name, dir));
+  if (!dir) return;
+  try {
+    res.json(await startYouTube(req.params.name, dir, { again: req.body?.again === true }));
+  } catch (e) {
+    // already on YouTube: the page asks whether to upload a second copy
+    if (e.duplicate) return res.status(409).json({ error: e.message, duplicate: e.duplicate });
+    throw e;
+  }
 }));
 app.post("/api/projects/:name/publish/youtube/stop", wrap((req, res) => {
   const dir = project(req, res);
@@ -356,14 +389,15 @@ app.post("/api/projects/:name/publish/:platform/handoff", wrap(async (req, res) 
   if (!dir) return;
   const platform = req.params.platform;
   if (!["facebook", "instagram"].includes(platform)) return res.status(404).json({ error: "only Facebook and Instagram go through Claude" });
-  if (!fs.existsSync(path.join(dir, "out", "delivery.mp4"))) return res.status(400).json({ error: "There's no final video yet: render it on the Final tab first." });
+  const file = selectedVideo(dir);
+  if (!file) return res.status(400).json({ error: "This video has no exported file yet: render it on its Final tab first." });
   const problems = draftProblems(platform, getDraft(dir, platform));
   if (problems.length) return res.status(400).json({ error: problems.join(" ") });
-  const r = await deliverToClaude(req.params.name, dir, `publish-${platform}`, handoffMessage(dir, platform), {
+  const r = await deliverToClaude(req.params.name, dir, `publish-${platform}`, handoffMessage(dir, platform, file), {
     stillWanted: () => !["posted", "handed"].includes(publishState(dir)[platform]?.status),
-    onLater: (x) => x.ok && publishReport(dir, platform, { status: "handed" }),
+    onLater: (x) => x.ok && publishReport(dir, platform, { status: "handed", file }),
   });
-  if (r.ok) publishReport(dir, platform, { status: "handed" });
+  if (r.ok) publishReport(dir, platform, { status: "handed", file });
   res.json(r);
 }));
 app.post("/api/projects/:name/publish/:platform/report", wrap((req, res) => {
@@ -378,12 +412,60 @@ app.post("/api/projects/:name/publish/draft", wrap(async (req, res) => {
   const message = `[content engine] Please draft the publishing text for ${which.join(", ")} in publish/<platform>.json (follow "Publish" in the make-video skill: read script.json and brief.md, keep each platform's limits, keep the fields that are already filled unless they're placeholders). Tell me briefly what you wrote.`;
   res.json(await deliverToClaude(req.params.name, dir, "publish-draft", message));
 }));
+/** Everything published or being published, across all videos (the Publish page's history), newest first. */
+app.get("/api/published", (req, res) => {
+  const rows = [];
+  for (const p of listProjects(workspace())) {
+    if (!p.engine) continue;
+    for (const r of activity(p.dir)) rows.push({ project: p.name, number: p.number, title: p.title, ...r });
+  }
+  rows.sort((a, b) => String(b.at).localeCompare(String(a.at)));
+  res.json(rows);
+});
+/** The Publish page's list: every video with at least one exported file, and those without one yet. */
+app.get("/api/publish/videos", (req, res) => {
+  const ready = [];
+  const notYet = [];
+  for (const p of listProjects(workspace())) {
+    if (!p.engine) continue;
+    const videos = listVideos(p.dir);
+    const row = { project: p.name, number: p.number, title: p.title, stage: stageOf(p.dir) };
+    if (!videos.length) {
+      notYet.push(row);
+      continue;
+    }
+    ready.push({ ...row, videos, selected: selectedVideo(p.dir), publish: publishSummary(p.dir), uploading: youtubeLive(p.name) ? true : false });
+  }
+  const newest = (r) => r.videos.reduce((m, v) => (v.madeAt > m ? v.madeAt : m), "");
+  ready.sort((a, b) => newest(b).localeCompare(newest(a)));
+  res.json({ ready, notYet });
+});
+
+/** Settings → "Check Chrome": a read-only check by Claude, in a video's panel, that posting through Chrome will work. */
+app.post("/api/social/chrome-check", wrap(async (req, res) => {
+  const projects = listProjects(workspace()).filter((p) => p.engine);
+  const chosen = req.body.project ? projects.find((p) => p.name === req.body.project) : projects.sort((a, b) => fs.statSync(b.dir).mtimeMs - fs.statSync(a.dir).mtimeMs)[0];
+  if (!chosen) return res.status(400).json({ error: "Create a video first: the check runs in a video's Claude panel." });
+  const d = publishDefaults();
+  const message = [
+    "[content engine] Please check, without posting, liking, following or changing anything, that posting through Chrome will work:",
+    "1) whether your Claude in Chrome browser tools are available in this session;",
+    `2) in a new tab, whether my Chrome is logged in to Facebook${d.facebookPage ? ` and can open the Page ${d.facebookPage}` : ""};`,
+    `3) in a new tab, whether it is logged in to Instagram${d.instagramAccount ? ` as ${d.instagramAccount}` : ""}.`,
+    "Close the tabs you opened, then call the chrome_check_report tool with what you found and tell me in one or two sentences.",
+    "If your browser tools aren't available, call chrome_check_report with extension false and tell me to turn them on with /chrome.",
+    "Never enter passwords or codes; if a login or security prompt appears, report it as not logged in.",
+  ].join(" ");
+  const r = await deliverToClaude(chosen.name, chosen.dir, "chrome-check", message);
+  res.json({ ...r, project: chosen.name, title: chosen.title });
+}));
+
 app.post("/api/projects/:name/publish/reveal", (req, res) => {
   const dir = project(req, res);
   if (!dir) return;
-  const target = path.join(dir, "out", "delivery.mp4");
-  if (!fs.existsSync(target)) return res.status(404).json({ error: "out/delivery.mp4 doesn't exist yet" });
-  execFile("explorer.exe", [`/select,${target}`], () => undefined);
+  const rel = selectedVideo(dir);
+  if (!rel) return res.status(404).json({ error: "This video has no exported file yet." });
+  execFile("explorer.exe", [`/select,${path.join(dir, rel)}`], () => undefined);
   res.json({ ok: true });
 });
 
@@ -397,6 +479,12 @@ app.get("/api/projects/:name/file", (req, res) => {
   if (!dir) return;
   const full = resolveServable(dir, String(req.query.path ?? ""));
   if (!full) return res.sendStatus(404);
+  if (req.query.download) {
+    // out/delivery.mp4 -> <slug>.mp4; other files keep their name after the slug (<slug>-draft.mp4)
+    const slug = req.params.name.replace(/^project-\d+-/, "");
+    const base = path.basename(full, path.extname(full));
+    return res.download(full, `${base === "delivery" ? slug : `${slug}-${base}`}${path.extname(full)}`);
+  }
   res.sendFile(full);
 });
 app.put("/api/projects/:name/upload", wrap(async (req, res) => {
@@ -445,6 +533,12 @@ server.on("upgrade", (req, socket, head) => {
   if (!dir || !OWN_HOSTS.has(req.headers.host ?? "") || !OWN_ORIGINS.has(req.headers.origin ?? "")) {
     socket.write("HTTP/1.1 403 Forbidden\r\n\r\n");
     return socket.destroy();
+  }
+  // the panel can be opened without the editor (Publish page): make sure Claude gets this engine's tools and hook
+  try {
+    ensureIntegration(dir, name, ENGINE_URL);
+  } catch (e) {
+    console.error(`${name}: ${e.message}`);
   }
   wss.handleUpgrade(req, socket, head, (ws) => attachTerminal(ws, name, dir, { CE_ENGINE_URL: ENGINE_URL, CE_PROJECT: name }));
 });

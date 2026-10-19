@@ -59,9 +59,10 @@ The engine's **Final** tab runs the final render in the background (3D final fra
 file `out/delivery.mp4`), shows progress, survives closing the browser, and resumes where it stopped. If a step fails,
 the error goes to Claude, who can fix it and resume. State and logs: `out/render/`.
 
-## Sharing it: the Publish tab
+## Sharing it: the Publish page
 
-The engine's **Publish** tab uploads `out/delivery.mp4` to YouTube (through its API, private by default) and hands
+The engine's **Publish** page uploads the picked video file (normally `out/delivery.mp4`; drafts in `out/` can be picked
+too) to YouTube (through its API; private unless the engine's Settings say otherwise) and hands
 Facebook Page and Instagram posts to Claude, who prepares them in your Chrome and stops before Post. Drafts and
 results: `publish/`.
 

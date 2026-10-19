@@ -1,18 +1,11 @@
 /** Home: the workspace, a "new video" form, and the list of videos. */
 import React, { useEffect, useRef, useState } from "react";
 import { api, type Doctor, type ProjectRow } from "./api";
-import { Accounts } from "./Accounts";
 import { DeleteDialog } from "./DeleteDialog";
 import { navigate } from "./nav";
+import { TopNav } from "./TopNav";
+import { PLATFORM_NAME, publishNeedsYou, publishWord, STAGE_WORD } from "./words";
 
-const STAGE_LABEL: Record<string, string> = {
-  new: "new",
-  talking: "brief",
-  "awaiting-approval": "waiting for your OK",
-  building: "building",
-  "preview-ready": "preview ready",
-  "final-ready": "final ready",
-};
 
 const RENDER_LABEL = (r: NonNullable<ProjectRow["render"]>) =>
   ({ queued: `render queued${r.queuePosition ? ` (#${r.queuePosition})` : ""}`, running: `rendering ${r.percent}%`, failed: "render stopped by an error", interrupted: "render interrupted", cancelled: "render stopped", done: "" })[r.status] ?? "";
@@ -31,8 +24,6 @@ const fmtSize = (b: number) => (b > 1e6 ? `${(b / 1e6).toFixed(1)} MB` : `${Math
 export const Home: React.FC = () => {
   const [projects, setProjects] = useState<ProjectRow[] | null>(null);
   const [doctor, setDoctor] = useState<Doctor | null>(null);
-  const [workspace, setWorkspace] = useState("");
-  const [editingWs, setEditingWs] = useState(false);
   const [request, setRequest] = useState("");
   const [files, setFiles] = useState<File[]>([]);
   const [drag, setDrag] = useState(false);
@@ -43,10 +34,7 @@ export const Home: React.FC = () => {
 
   const load = () => {
     api.projects().then(setProjects, (e) => setError(e.message));
-    api.doctor().then((d) => {
-      setDoctor(d);
-      setWorkspace(d.workspace);
-    }, (e) => setError(e.message));
+    api.doctor().then(setDoctor, (e) => setError(e.message));
   };
   useEffect(load, []);
 
@@ -78,18 +66,6 @@ export const Home: React.FC = () => {
     }
   };
 
-  const saveWs = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
-    try {
-      await api.setWorkspace(workspace);
-      setEditingWs(false);
-      load();
-    } catch (err) {
-      setError((err as Error).message);
-    }
-  };
-
   const warnings: string[] = [];
   if (doctor && !doctor.runtime) warnings.push("Engine packages are missing: run npm install in content-engine/runtime.");
   if (doctor && !doctor.claude) warnings.push("The claude command was not found on PATH; the Claude panel will not start.");
@@ -98,24 +74,7 @@ export const Home: React.FC = () => {
 
   return (
     <div className="home">
-      <header className="home-head">
-        <h1>
-          Content <em>engine</em>
-        </h1>
-        {editingWs ? (
-          <form className="ws-form" onSubmit={saveWs}>
-            <input value={workspace} onChange={(e) => setWorkspace(e.target.value)} spellCheck={false} autoFocus />
-            <button type="submit">Save</button>
-            <button type="button" className="quiet" onClick={() => setEditingWs(false)}>
-              Cancel
-            </button>
-          </form>
-        ) : (
-          <button className="ws" onClick={() => setEditingWs(true)} title="Folder where video projects are created">
-            <span className="label">Workspace</span> {doctor?.workspace || "not set"}
-          </button>
-        )}
-      </header>
+      <TopNav current="videos" />
 
       {warnings.map((w) => (
         <p key={w} className="warn">
@@ -179,6 +138,12 @@ export const Home: React.FC = () => {
 
       <section>
         <h2>Videos</h2>
+        <p className="hint">
+          In {doctor?.workspace || "(no workspace set)"} ·{" "}
+          <a href="/settings" onClick={(e) => (e.preventDefault(), navigate("/settings"))}>
+            change in Settings
+          </a>
+        </p>
         {projects === null ? <p className="hint">Loading…</p> : null}
         {projects?.length === 0 ? <p className="hint">No project folders yet.</p> : null}
         <ul className="projects">
@@ -187,9 +152,14 @@ export const Home: React.FC = () => {
               <span className="num">{String(p.number).padStart(2, "0")}</span>
               <span className="title">{p.engine ? p.title : <em>not an engine project</em>}</span>
               <span className="folder">
-                {p.publish?.youtube === "done" ? <span className="stage">on YouTube</span> : null}
-                {p.publish?.youtube === "uploading" ? <span className="stage render-running">uploading</span> : null}
-                {p.render && RENDER_LABEL(p.render) ? <span className={`stage render-${p.render.status}`}>{RENDER_LABEL(p.render)}</span> : p.stage && STAGE_LABEL[p.stage] ? <span className="stage">{STAGE_LABEL[p.stage]}</span> : null}
+                {(["youtube", "facebook", "instagram"] as const)
+                  .filter((pl) => p.publish?.[pl])
+                  .map((pl) => (
+                    <span key={pl} className={`stage ${publishNeedsYou(p.publish![pl]!) ? "render-failed" : ""}`}>
+                      {PLATFORM_NAME[pl]}: {publishWord(pl, p.publish![pl]!)}
+                    </span>
+                  ))}
+                {p.render && RENDER_LABEL(p.render) ? <span className={`stage render-${p.render.status}`}>{RENDER_LABEL(p.render)}</span> : p.stage && STAGE_WORD[p.stage] ? <span className="stage">{STAGE_WORD[p.stage].toLowerCase()}</span> : null}
                 {p.name}
               </span>
               {p.engine ? (
@@ -206,7 +176,6 @@ export const Home: React.FC = () => {
           ))}
         </ul>
       </section>
-      <Accounts />
       {deleting ? (
         <DeleteDialog
           name={deleting.name}

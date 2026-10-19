@@ -128,25 +128,28 @@ the script or the look. If you can't fix it, explain the problem in two or three
 
 ## Publish (after the final video)
 
-The **Publish** tab posts `out/delivery.mp4`: YouTube through its API (the engine uploads; `youtube_upload` only when the
-user asks), a Facebook Page and Instagram through Claude in Chrome (you, in the user's logged-in Chrome profile).
+The engine's **Publish** page posts the video file the user picked there (usually `out/delivery.mp4` from the Final render;
+it can be a draft or another render in `out/`: `publish_status` shows which): YouTube through its API (the engine uploads;
+`youtube_upload` only when the user asks), a Facebook Page and Instagram through Claude in Chrome (you, in the user's
+logged-in Chrome profile). Your panel is on the right of that page.
 
 **Drafting** (when asked, or by the tab's button): write `publish/youtube.json`, `publish/facebook.json`,
 `publish/instagram.json` from `script.json` and `brief.md`; keep fields the user already filled in. The tab reloads them.
 - YouTube `{"title", "description", "tags": [], "categoryId": "27", "privacy", "publishAt", "madeForKids", "synthetic"}`:
   title ≤ 100 characters, no `<` `>`; description: two or three plain lines on what the viewer learns, then chapters
   if the video has 3+ scenes of 10 s or more (`0:00 Hook` first, times from `src/data/timing.json` scene starts), then
-  2–3 hashtags; tags: 5–10 short phrases; leave `privacy` (default private) and `madeForKids` to the user unless they
+  2–3 hashtags; tags: 5–10 short phrases; leave `privacy` (its default comes from the engine's Settings) and `madeForKids` to the user unless they
   told you.
 - Facebook `{"page", "format": "reel"|"post", "caption"}` and Instagram `{"account", "format", "caption"}`: a hook
   line, one or two sentences, a question or call to action, 3–5 relevant hashtags (Instagram ≤ 2,200 characters,
-  ≤ 30 hashtags). Don't change `page`, `account` or `format` unless asked.
+  ≤ 30 hashtags). Don't change `page`, `account` or `format` unless asked (`format` "reel" | "post" is the user's choice
+  each time; leave it null if they haven't made it).
 - `publish_status` shows the video's facts and per-platform notes (Short/Reel length, shape) and draft problems.
 
 **Posting through Chrome** (a message starting `[content engine] Please post this video…`): use the Claude in Chrome
 tools (if they aren't available, tell the user to turn them on with `/chrome`). Open a new tab, go to the Page or
-account, start a Reel or post as asked, attach the video (if your tools can't attach a file from disk, ask the user to
-drag it into the upload box — the Publish tab's "Show the video in its folder" helps), paste the caption exactly,
+account, start a Reel or post as asked, attach the video (if your tools can't attach a file from disk, ask the user to add
+it: the Publish page's "Copy file path" button copies the path, which they paste into the file picker's File name box), paste the caption exactly,
 keep other defaults. **Stop before the final Post/Share/Publish button**, call `publish_report` with status
 `ready-to-post`, and tell the user to check it and click Post. Never click it yourself. After they've posted, find the
 post's link if you can and report `posted` with the url; if it couldn't be done, report `failed` with a short note.

@@ -42,6 +42,18 @@ ce app            # starts http://127.0.0.1:4100 and opens it; Ctrl+C stops it (
 - **Safety**: the server listens on 127.0.0.1 only, rejects foreign `Host` headers (DNS rebinding) and foreign `Origin`s;
   the terminal socket only accepts the engine's own page.
 - First time in a project, Claude Code asks once whether you trust the folder: choose *Yes*.
+- **Settings** (`/settings`, top menu): everything that used to need `settings.json` or the file explorer. *General*:
+  workspace, Blender and Python paths, each checked when saved (folder exists, `blender.exe` exists, `python --version`
+  runs), plus whether ffmpeg is found. *YouTube*: setup steps with links, then paste the Client ID and secret (or choose
+  the downloaded JSON file), Connect, Test connection, Switch channel, Disconnect, and defaults for new videos
+  (visibility, made for kids, category, tags, description ending). *Facebook & Instagram*: Page link and Instagram
+  account (a page name or profile URL is normalised), caption ending (Reel or post has no default: it's chosen on the
+  Publish page each time), and **Check Chrome**: asks
+  the most recently used video's Claude to check, read-only, that Claude in Chrome is connected and both accounts are
+  logged in; the result shows on the page (MCP `chrome_check_report`). Saved to `settings.json` → `publish`.
+- **Publish** (`/publish`, top menu; see below): a page of its own, not a tab inside each video. Left: every video with
+  an exported file and its files; middle: the picked file and the platforms, or the History when nothing is picked;
+  right: that video's Claude panel. Old links (`/published`, `/p/<project>/publish`) redirect there.
 
 ## Final render (Phase 4)
 
@@ -79,16 +91,26 @@ puts it in the engine's queue (`app/server/render.mjs`), one heavy job at a time
 
 ## Publish (Phase 5)
 
-The **Publish** tab (`/p/<project>/publish`) posts `out/delivery.mp4`:
+The **Publish** page (`/publish`, top menu) is where every video is published. The left side lists each video that has
+an exported file, with its files: the Final render's `out/delivery.mp4` ("Final") first, then other video files in
+`out/` and one folder below (a name with "draft" → "Draft", others "Render"; `out/video.mp4` only when there's no
+delivery file yet; `out/render/` and `out/check/` are skipped). Videos without one are listed under *Not exported yet*
+with a link to their Final tab. Picking a file stores it in `publish/state.json` → `video`; everything below uses the
+picked file. With nothing picked the middle shows the **History** (`publish/history.json` of each video: every finished
+upload or post with its file, plus anything under way). The right side is the video's Claude panel, opened when it's
+already running, when a post or a draft request is handed to it, or with "Open Claude now" (opening it writes the
+project's `.mcp.json`/hook like the editor does).
 
-- **YouTube, through the YouTube Data API** (`app/server/youtube.mjs`). One-time setup on the home page under
-  *Connected accounts*: a Google Cloud project with the YouTube Data API v3, a **Desktop app** OAuth client (its JSON
-  file is added on the page), the Google Auth Platform app published to *In production* (in *Testing* the sign-in
+- **YouTube, through the YouTube Data API** (`app/server/youtube.mjs`). One-time setup in **Settings → YouTube**:
+  a Google Cloud project with the YouTube Data API v3, a **Desktop app** OAuth client (Client ID and secret pasted on
+  the page, or its JSON file chosen), the Google Auth Platform app published to *In production* (in *Testing* the sign-in
   expires every 7 days). Sign-in uses PKCE and a loopback redirect to the engine (`http://127.0.0.1:<port>/`); scopes
   `youtube.upload` + `youtube.readonly` (to show which channel). Client file and tokens are in `secrets/` (git-ignored).
   Uploads use the resumable protocol in 8 MB chunks from a background queue: a dropped connection or a 5xx asks YouTube
   how much arrived and continues from there; the access token is refreshed when needed; Stop/Resume and an engine
-  restart continue in the same upload session (sessions last about a week). Default visibility is **private** (the
+  restart continue in the same upload session (sessions last about a week) for the same, unchanged file; another file
+  starts a new upload. A file that's already on YouTube (same path and modified time, latest upload or anywhere in the
+  history) is refused with its link; the page then asks whether to upload a second copy (`again`). Default visibility is **private** (the
   user publishes in YouTube Studio); unlisted, public and scheduled (`publishAt`) are available. "Made for kids" must be
   answered; an AI-content disclosure checkbox maps to `containsSyntheticMedia`. Checked 2026-10-19 against Google's
   docs: uploads from unverified API projects are not restricted to private; videos.insert is 1 unit of a 100/day
@@ -98,12 +120,18 @@ The **Publish** tab (`/p/<project>/publish`) posts `out/delivery.mp4`:
   post, **stops before the final Post**, reports `ready-to-post` with the `publish_report` tool, and the user clicks
   Post. If the browser tools can't attach a file from disk, Claude asks the user to drag it in ("Show the video in its
   folder" helps). After posting, Claude (or the user, "Mark as posted") records the link.
-- Drafts are `publish/youtube.json`, `facebook.json`, `instagram.json` (edited on the tab, or drafted by Claude from the
+- Reel or post has no default: Facebook and Instagram can't be handed over until one is chosen.
+- The page also has the picked file in a player (a draft gets a "quick preview quality" warning), **Download** (saved as
+  `<slug>.mp4` for the final, `<slug>-<name>.mp4` otherwise), **Copy file path** (for a
+  browser's file picker), **Show in folder**, a **Reset** per platform (start that platform over), and the YouTube upload
+  log under *Details*, so nothing needs the file explorer.
+- Drafts are `publish/youtube.json`, `facebook.json`, `instagram.json` (edited on the page, or drafted by Claude from the
   script: "Ask Claude to draft titles & captions"); state in `publish/state.json`, upload log `publish/youtube.log`.
-  The Facebook Page link and Instagram account are remembered for the next video (`settings.json` → `publish`).
+  New drafts start from the defaults in Settings (Page, account, tags, visibility, footers).
 - Format notes (soft): vertical ≤ 3 min becomes a YouTube Short; over 15 min needs a verified channel; Facebook/Instagram
   Reel length limits change, so the notes say "about"; a warning if the video's sources changed after the final file.
-- Claude's tools: `publish_status`, `publish_report`, `youtube_upload` (only when the user asks).
+- Claude's tools: `publish_status` (picked file, all files, drafts, state), `publish_report`, `youtube_upload` (only when
+  the user asks; `again` for a second copy), `chrome_check_report`. Facts about a file (ffprobe) are cached per version.
 - Test-only overrides: `CE_SECRETS_DIR`, `CE_SETTINGS_FILE`, `CE_GOOGLE_AUTH_URL`, `CE_GOOGLE_TOKEN_URL`, `CE_YOUTUBE_API`.
 
 ## Commands
@@ -231,6 +259,23 @@ faults) and a scratch engine, with a 30 MB vertical test video:
 - Screenshots: Publish tab (YouTube result with links, Facebook "ready in Chrome", Instagram "posted"), Connected
   accounts.
 
+Settings and Published pages (2026-10-19, same fake Google, scratch `settings.json`): wrong workspace, Blender, Page
+name and Instagram handle rejected with the reason; `skyexplained` → `https://www.facebook.com/skyexplained`,
+an Instagram profile URL → `@sky.explained`; a new video's drafts took the defaults (unlisted, tags, footers, post);
+Client ID/secret pasted (bad ID and empty secret rejected) → Connect → Test connection → upload as unlisted; Download
+header `attachment; filename=why-the-sky-is-blue.mp4`; Reset; Published table rows; Check Chrome waited for the
+(untrusted) panel and `chrome_check_report` saved a result; the real `settings.json` was untouched; no page errors.
+
+Publish page (2026-10-19, same setup, a vertical final + a horizontal 100 s draft + temp/check files): only final and
+draft listed (final first, default pick), a video without files under *Not exported yet*; old Reel/post settings
+ignored, Facebook/Instagram hand-off refused until Reel or post is chosen, a bad format not stored; picking a path outside
+the list (or a temp file) refused; notes and download name follow the picked file; YouTube: draft uploaded, same file
+again → 409 with the link, final stopped part-way and resumed in the same session, an unchanged draft refused from the
+history even after another upload, changed draft → new upload, confirmed second copy uploads; history rows carry their
+files, a repeated "posted" updates its row, Reset removes it; MCP `publish_status` shows the picked file; the Claude panel
+opened from the page writes `.mcp.json`; old `/published` and `/p/<p>/publish` links redirect; no Publish tab in the
+project bar; no page errors. (Stop/resume checks depend on timing: one of three runs finished the upload before Stop.)
+
 Not exercised: the real Google sign-in and a real upload (needs the user's Google Cloud setup), Claude actually
 posting in Chrome (deliberately not run against the user's accounts), whether Claude in Chrome can attach a local
 file (unknown; the hand-off covers both cases).
@@ -238,3 +283,43 @@ file (unknown; the hand-off covers both cases).
 Not exercised yet (Phase 4): a long real 3D final render (project-7), Ctrl+C shutdown of `ce app` during a render (handler
 exists; the tests killed the process tree, the harder case), a disk-space block (logic only), link downloads (`yt-dlp` is installed), cut detection on dark footage (found no cut in
 the reel's dark phone→brain change).
+
+## Verified, whole-pipeline review (2026-10-19)
+
+On a scratch engine (port 4170, workspace `D:\tmp\ce-x`) with the fake Google and a **fake Claude** (a stand-in
+`claude.cmd` first on the engine's PATH that draws a trust question, Claude Code's prompt footer, and a permission
+question on demand, and logs every message it receives), driven through the website in headless Chrome:
+- Videos: create without and with dropped files (skill `.md` → project skill, style guide and image → references);
+  Brief: Claude's files show on the board; Approve refused (and the reason stays visible) while the panel shows a
+  question, typed once it's answered; building → preview ready → Editor with Studio and "Claude sees".
+- Final: start, stop during the video render, resume (sound step not redone), finished card → Publish; a broken step
+  handed to Claude only after the user answered the panel's question, Claude's `render_resume` finished it; two
+  videos queued; the engine killed mid-render → both *interrupted* → Resume finished both.
+- Settings: bad workspace/Blender/Python refused with the reason; Client ID/secret → Connect → Test → Disconnect →
+  Connect; Page name and Instagram URL normalised; defaults reach new drafts; Check Chrome waits for a trust question,
+  `chrome_check_report` shows on the page; the real `settings.json` untouched.
+- Publish: History when nothing is picked; final and draft per video, *Not exported yet*; upload (metadata from the
+  defaults), duplicate → Cancel uploads nothing, OK uploads a second copy; Stop then Resume at once; engine killed
+  mid-upload → *interrupted* → Resume continued in the same YouTube session; Facebook/Instagram hand-off (picked file,
+  Reel/post), waiting while the panel shows a question and delivered by itself after the answer; ready-to-post /
+  posted via MCP; Mark as posted (Cancel changes nothing); Reset; the picked file vanishing falls back to the final.
+- Back/forward across pages and tabs, old links, unknown video links, Delete (wrong number, refused while rendering or
+  uploading, Recycle Bin), a deleted finished file, a source changed after the final, a broken `project.json` /
+  `script.json`, the engine restarting under open pages.
+- The real Claude Code (current version) in the panel: its trust screen ("No, exit" is the default) is detected as a
+  question and its prompt as ready, so the never-type-into-a-question rule still holds.
+
+Fixed in this review: a second engine's Studio port check (Windows let an IPv4 bind succeed on a port another engine's
+Studio held, so the editor could show another project's Studio; now checked dual-stack, and "ready" needs Studio's own
+"Server ready" line); YouTube Stop + immediate Resume stuck in *queued*; a stopped queued upload left a ghost entry;
+"Handed to Claude" shown while the hand-off was only waiting (Publish, Final tab); Mark as posted on Cancel; the
+Brief board's refresh erasing button errors; stale "Failed to fetch" after an engine restart (Final, Publish);
+Settings saves taking 2–5 s (tool checks now remembered for a minute; YouTube state updates at once; "saving…");
+unknown video links (plain page instead of a Studio and panel that never start); a deleted finished file shown as
+finished; a broken `project.json` as a bare 500; long tracebacks as the Final tab headline (now under Details);
+one set of status words for Videos, Brief, Publish badges and History (`app/web/src/words.ts`); "See the final video"
+on the Brief at *final video ready*; long titles squeezed on Videos.
+
+Not exercised in this review: a 3D (Blender) final render (unchanged since Phase 4; the PC had ~4 GB free memory),
+the real Google and real Chrome posting (by design), Copy file path / Show in folder / Download in a real browser,
+link downloads, Studio interactions and the editor MCP tools, the real Claude running `/make-video`.

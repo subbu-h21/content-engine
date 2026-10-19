@@ -9,8 +9,9 @@ import { command, getState, waitForState } from "./bridge.mjs";
 import { describe, loadProject, parseTime, timelineText } from "./context.mjs";
 import { renderFrame } from "./frames.mjs";
 import { computePlan, getJob, liveInfo, resumeJob, startJob, stopJob } from "./render.mjs";
-import { draftProblems, getDraft, getState as publishState, report as publishReport, startYouTube, videoInfo, youtubeLive } from "./publish.mjs";
+import { draftProblems, getDraft, getState as publishState, listVideos, report as publishReport, startYouTube, videoInfo, youtubeLive } from "./publish.mjs";
 import { status as youtubeStatus } from "./youtube.mjs";
+import { saveChromeCheck } from "./settings.mjs";
 
 const text = (t) => ({ content: [{ type: "text", text: t }] });
 const json = (o) => text(JSON.stringify(o, null, 2));
@@ -218,23 +219,26 @@ function buildServer(name, dir) {
     },
   );
 
-  // ---- publishing (the user sees it on the Publish tab)
+  // ---- publishing (the user sees it on the Publish page)
   server.registerTool(
     "publish_status",
     {
       title: "Publishing status",
       description:
-        "The finished video (out/delivery.mp4: length, shape, notes per platform), the drafts in publish/<platform>.json with their problems, " +
-        "and what happened per platform: YouTube upload progress/result, Facebook/Instagram reports. YouTube connection and channel.",
+        "The video file picked on the Publish page (`video`: path, length, shape, notes per platform; usually out/delivery.mp4 from the Final render, " +
+        "but the user can pick a draft or another render in out/, all listed in `videos`), the drafts in publish/<platform>.json with their problems, " +
+        "and what's happening per platform (with the file each one used): YouTube upload progress/result, Facebook/Instagram reports. YouTube connection and channel.",
       inputSchema: {},
     },
     async () => {
       const drafts = Object.fromEntries(["youtube", "facebook", "instagram"].map((p) => [p, getDraft(dir, p)]));
+      const { video: _picked, ...state } = publishState(dir);
       return json({
         video: await videoInfo(dir),
+        videos: listVideos(dir),
         drafts,
         problems: Object.fromEntries(Object.entries(drafts).map(([p, d]) => [p, draftProblems(p, d)])),
-        state: publishState(dir),
+        state,
         youtube: { ...youtubeStatus(), live: youtubeLive(name) },
       });
     },
@@ -246,7 +250,7 @@ function buildServer(name, dir) {
       title: "Report a Facebook/Instagram post",
       description:
         'Record what happened when posting through Chrome: status "ready-to-post" (everything filled in, waiting for the user to click Post), ' +
-        '"posted" (with the post url if you can find it), or "failed" (with a short note). The Publish tab shows it.',
+        '"posted" (with the post url if you can find it), or "failed" (with a short note). The Publish page shows it.',
       inputSchema: {
         platform: z.enum(["facebook", "instagram"]),
         status: z.enum(["ready-to-post", "posted", "failed"]),
@@ -258,17 +262,36 @@ function buildServer(name, dir) {
   );
 
   server.registerTool(
+    "chrome_check_report",
+    {
+      title: "Report the Chrome check",
+      description: "Result of the Settings page's Chrome check (the engine asks for it): whether your Claude in Chrome tools work and whether Chrome is logged in to Facebook / Instagram. Shown on the Settings page.",
+      inputSchema: {
+        extension: z.boolean().describe("your browser tools are available and work"),
+        facebook: z.enum(["logged-in", "logged-out", "not-checked"]),
+        facebookPage: z.enum(["reachable", "not-reachable", "not-checked"]).optional(),
+        instagram: z.enum(["logged-in", "logged-out", "not-checked"]),
+        note: z.string().optional(),
+      },
+    },
+    async (r) => {
+      saveChromeCheck({ project: name, ...r });
+      return text("Saved: the Settings page shows it.");
+    },
+  );
+
+  server.registerTool(
     "youtube_upload",
     {
-      title: "Upload the finished video to YouTube",
+      title: "Upload the picked video to YouTube",
       description:
-        "Starts (or resumes) the YouTube upload of out/delivery.mp4 with the draft in publish/youtube.json, in the engine's background queue. " +
-        "Only call this when the user has asked for the upload.",
-      inputSchema: {},
+        "Starts (or resumes) the YouTube upload of the video file picked on the Publish page (see publish_status) with the draft in publish/youtube.json, in the engine's background queue. " +
+        "Only call this when the user has asked for the upload. If that file is already on YouTube it refuses; again: true uploads a second copy (only if the user said so).",
+      inputSchema: { again: z.boolean().optional() },
     },
-    async () => {
+    async ({ again }) => {
       try {
-        return json(await startYouTube(name, dir));
+        return json(await startYouTube(name, dir, { again: again === true }));
       } catch (e) {
         return text(`Not started: ${e.message}`);
       }

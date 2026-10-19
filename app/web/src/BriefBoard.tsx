@@ -2,16 +2,9 @@
 import React, { useEffect, useRef, useState } from "react";
 import { api, type Brief, type Stage } from "./api";
 import { Markdown } from "./Markdown";
+import { navigate } from "./nav";
+import { STAGE_WORD as STAGES } from "./words";
 
-const STAGES: Record<Stage, string> = {
-  new: "Starting",
-  talking: "Talking it through",
-  "awaiting-approval": "Waiting for your OK",
-  building: "Building the preview",
-  "preview-ready": "Preview ready",
-  "final-ready": "Final video ready",
-  none: "No brief",
-};
 const ORDER: Stage[] = ["talking", "awaiting-approval", "building", "preview-ready", "final-ready"];
 
 const fmt = (s: number) => (s >= 60 ? `${Math.floor(s / 60)}:${String(Math.round(s % 60)).padStart(2, "0")}` : `${s.toFixed(s < 10 ? 1 : 0)} s`);
@@ -26,6 +19,9 @@ const Section: React.FC<{ title: string; empty?: boolean; hint?: string; childre
 
 export const BriefBoard: React.FC<{ name: string; onOpenEditor: () => void }> = ({ name, onOpenEditor }) => {
   const [b, setB] = useState<Brief | null>(null);
+  // loadError: the board couldn't be read (cleared by the next good refresh); error: a button or upload didn't work
+  // (stays until the next action, so the reason can be read)
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [link, setLink] = useState("");
   const [busy, setBusy] = useState<string | null>(null);
@@ -38,9 +34,9 @@ export const BriefBoard: React.FC<{ name: string; onOpenEditor: () => void }> = 
       while (!stop) {
         try {
           setB(await api.brief(name));
-          setError(null);
+          setLoadError(null);
         } catch (e) {
-          setError((e as Error).message);
+          setLoadError((e as Error).message);
         }
         await new Promise((r) => setTimeout(r, 1500));
       }
@@ -51,6 +47,7 @@ export const BriefBoard: React.FC<{ name: string; onOpenEditor: () => void }> = 
   }, [name]);
 
   const upload = async (files: FileList | File[]) => {
+    setError(null);
     for (const f of Array.from(files)) {
       setBusy(`Uploading ${f.name}…`);
       try {
@@ -69,6 +66,7 @@ export const BriefBoard: React.FC<{ name: string; onOpenEditor: () => void }> = 
   const addLink = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!link.trim()) return;
+    setError(null);
     try {
       await api.link(name, link.trim());
       setLink("");
@@ -77,9 +75,15 @@ export const BriefBoard: React.FC<{ name: string; onOpenEditor: () => void }> = 
     }
   };
 
-  const say = (text: string) => api.say(name, text).then((r) => !r.sent && setError(`Not sent: ${r.reason ?? "the Claude panel isn't at its prompt."}`));
+  const say = (text: string) => {
+    setError(null);
+    return api.say(name, text).then(
+      (r) => !r.sent && setError(`Not sent: ${r.reason ?? "the Claude panel isn't at its prompt."}`),
+      (e) => setError((e as Error).message),
+    );
+  };
 
-  if (!b) return <div className="board">{error ? <p className="error">{error}</p> : <p className="hint">Loading…</p>}</div>;
+  if (!b) return <div className="board">{loadError ? <p className="error">{loadError}</p> : <p className="hint">Loading…</p>}</div>;
   const stage = b.status.stage;
   const swatches = hexes(b.style);
   const running = b.jobs.filter((j) => j.status === "running");
@@ -123,9 +127,17 @@ export const BriefBoard: React.FC<{ name: string; onOpenEditor: () => void }> = 
             </button>
           </div>
         ) : null}
+        {stage === "final-ready" ? (
+          <div className="actions">
+            <button className="primary" onClick={() => navigate(`/p/${encodeURIComponent(name)}/final`)}>
+              See the final video
+            </button>
+          </div>
+        ) : null}
         {stage === "new" || stage === "talking" || stage === "none" ? <p className="hint">Talk to Claude on the right. Drop reference videos, images or a style/skill file anywhere here.</p> : null}
       </div>
 
+      {loadError ? <p className="error">{loadError}</p> : null}
       {error ? <p className="error">{error}</p> : null}
 
       <Section title="Idea" empty={!b.brief}>

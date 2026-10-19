@@ -11,13 +11,16 @@ import { linkProject } from "../../cli/projects.mjs";
 /** name -> { port, url, status: "starting"|"ready"|"exited", proc, log: string[], error } */
 const studios = new Map();
 
-const portFree = (port) =>
+const portFreeOn = (port, host) =>
   new Promise((resolve) => {
     const s = net.createServer();
     s.once("error", () => resolve(false));
     s.once("listening", () => s.close(() => resolve(true)));
-    s.listen(port, "0.0.0.0");
+    s.listen(port, host);
   });
+// Windows lets an IPv4-only bind succeed on a port another program holds dual-stack (e.g. another engine's Studio),
+// so check the way Studio itself binds (dual-stack, no host) as well as IPv4
+const portFree = async (port) => (await portFreeOn(port)) && (await portFreeOn(port, "0.0.0.0"));
 
 async function freePort(base) {
   const used = new Set([...studios.values()].map((s) => s.port));
@@ -51,12 +54,13 @@ export async function ensureStudio(name, dir, { engineUrl, portBase }) {
     s.status = "exited";
     if (code) s.error = `Studio exited with code ${code}`;
   });
-  // ready when it answers HTTP
+  // ready when it says so on its port and answers HTTP (an answer alone could come from another program's server)
+  const announced = () => s.log.some((l) => /Server ready/i.test(l) && l.includes(`:${port}`));
   (async () => {
     for (let i = 0; i < 240 && s.status === "starting"; i++) {
       try {
         const r = await fetch(`http://127.0.0.1:${port}/`, { signal: AbortSignal.timeout(2000) });
-        if (r.ok) {
+        if (r.ok && announced() && proc.exitCode === null && s.status === "starting") {
           s.status = "ready";
           return;
         }

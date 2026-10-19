@@ -205,7 +205,8 @@ em {
 }
 .projects li {
   display: grid;
-  grid-template-columns: 40px 1fr auto auto;
+  /* the title keeps its room; status labels wrap within their column instead of squeezing it */
+  grid-template-columns: 40px minmax(200px, 1fr) minmax(0, 46%) auto;
   align-items: center;
   gap: 16px;
   padding: 12px 0;
@@ -221,6 +222,7 @@ em {
 .projects .folder {
   color: var(--dim);
   font-size: 12px;
+  text-align: right;
 }
 .projects li.legacy .title {
   color: var(--dim);
@@ -389,6 +391,8 @@ button.primary:hover {
 .home .stage {
   color: var(--ice);
   margin-right: 10px;
+  white-space: nowrap;
+  display: inline-block;
 }
 
 /* ---- brief board */
@@ -821,9 +825,10 @@ label.check {
   background: #000;
   display: block;
 }
+/* in progress reads calm; ember is kept for something that stopped */
 .home .stage.render-running,
 .home .stage.render-queued {
-  color: var(--ember);
+  color: var(--ice);
 }
 .home .stage.render-failed,
 .home .stage.render-interrupted {
@@ -907,4 +912,276 @@ ol.setup {
   margin: 8px 0;
   padding-left: 22px;
   line-height: 1.7;
+}
+
+/* ---- settings, published, top menu */
+.topnav {
+  display: flex;
+  gap: 4px;
+}
+.topnav a {
+  color: var(--ash);
+  text-decoration: none;
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: 1px solid transparent;
+}
+.topnav a.on {
+  color: var(--bone);
+  border-color: var(--line);
+  background: var(--ink-3);
+}
+.topnav a:hover {
+  color: var(--bone);
+}
+.settings h3 {
+  font: italic 400 18px/1.2 var(--display);
+  margin: 22px 0 8px;
+}
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin: 12px 0;
+  color: var(--ash);
+  font-size: 13px;
+}
+.field input,
+.field textarea,
+.field select {
+  font: 14px/1.4 var(--body);
+  color: var(--bone);
+  background: var(--ink-2);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 8px 10px;
+}
+.okmark {
+  color: var(--ice);
+}
+.badmark {
+  color: var(--ember);
+}
+.form2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  gap: 8px;
+  margin: 10px 0;
+}
+.form2 input {
+  color: var(--bone);
+}
+button.linkish {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--ice);
+  text-decoration: underline;
+}
+.checklist {
+  list-style: none;
+  padding: 0;
+  margin: 8px 0;
+  line-height: 1.8;
+}
+.settings .account {
+  margin: 12px 0;
+}
+.settings .actions,
+.account .actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+.settings a,
+.home .hint a {
+  color: var(--ice);
+}
+table.published {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+table.published th,
+table.published td {
+  text-align: left;
+  padding: 8px 10px 8px 0;
+  border-bottom: 1px solid var(--ink-3);
+  vertical-align: top;
+}
+table.published th {
+  color: var(--ash);
+  font-weight: 400;
+}
+table.published a {
+  color: var(--ice);
+}
+.publish-video {
+  display: block;
+  max-height: 46vh;
+  max-width: 100%;
+  margin: 12px 0 4px;
+  border-radius: 8px;
+  background: #000;
+}
+a.button {
+  display: inline-block;
+  background: var(--ink-3);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 6px 14px;
+  color: var(--bone);
+  text-decoration: none;
+}
+a.button:hover {
+  border-color: var(--ash);
+}
+details.log pre {
+  white-space: pre-wrap;
+  font-size: 11px;
+  color: var(--ash);
+  background: var(--ink);
+  padding: 8px 10px;
+  border-radius: 6px;
+  max-height: 220px;
+  overflow: auto;
+}
+
+/* ---- Publish page: video list | picked video | Claude */
+.topbar {
+  gap: 18px;
+  padding: 0 14px;
+}
+.topbar .brand {
+  font: 400 19px/1 var(--display);
+  color: var(--bone);
+  text-decoration: none;
+  flex: 1;
+}
+.topbar .topnav a {
+  padding: 3px 12px;
+}
+.video-list {
+  width: 300px;
+  flex: none;
+  overflow-y: auto;
+  border-right: 1px solid var(--line);
+  padding: 14px 12px 40px;
+}
+.video-list h3 {
+  font: italic 400 16px/1.2 var(--display);
+  color: var(--ash);
+  margin: 18px 4px 8px;
+}
+.history-link {
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: 1px solid transparent;
+  color: var(--ash);
+}
+.history-link.on {
+  color: var(--bone);
+  border-color: var(--line);
+  background: var(--ink-3);
+}
+.vcard {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 10px;
+  margin-bottom: 10px;
+  background: var(--ink-2);
+}
+.vcard.on {
+  border-color: var(--ash);
+}
+.vtitle {
+  font: italic 400 16px/1.25 var(--display);
+  margin-bottom: 6px;
+}
+.video-list .num {
+  color: var(--dim);
+  font: 12px var(--body);
+  margin-right: 4px;
+}
+.badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  font-size: 11px;
+  color: var(--ice);
+  margin-bottom: 6px;
+}
+.badge.bad {
+  color: var(--ember);
+}
+.vfile {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  padding: 5px;
+  margin-top: 4px;
+  color: var(--bone);
+}
+.vfile:hover {
+  border-color: var(--line);
+}
+.vfile.on {
+  border-color: var(--bone);
+  background: var(--ink-3);
+}
+.vfile video {
+  width: 64px;
+  height: 64px;
+  object-fit: cover;
+  border-radius: 4px;
+  background: #000;
+  flex: none;
+  pointer-events: none;
+}
+.vinfo {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  font-size: 12px;
+  line-height: 1.4;
+}
+.vinfo .dim {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.kind {
+  font-size: 13px;
+}
+.kind-draft,
+.kind-master {
+  color: var(--ember);
+}
+.notyet {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 13px;
+  padding: 4px;
+  color: var(--ash);
+}
+.claude-off {
+  padding: 24px 20px;
+  color: var(--ash);
+  font-size: 13px;
+}
+.claude-off p {
+  margin: 0 0 14px;
+}
+.board.history h2 {
+  font: italic 400 24px/1.2 var(--display);
+  margin: 0 auto 14px;
 }
