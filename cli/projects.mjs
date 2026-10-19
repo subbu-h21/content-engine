@@ -11,7 +11,7 @@ import { fileURLToPath } from "node:url";
 export const ENGINE_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 export const TEMPLATE_DIR = path.join(ENGINE_DIR, "template");
 export const RUNTIME_MODULES = path.join(ENGINE_DIR, "runtime", "node_modules");
-const SETTINGS_FILE = path.join(ENGINE_DIR, "settings.json");
+const SETTINGS_FILE = process.env.CE_SETTINGS_FILE || path.join(ENGINE_DIR, "settings.json"); // override: tests
 
 const DEFAULT_SETTINGS = {
   workspace: "",

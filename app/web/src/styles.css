@@ -829,3 +829,82 @@ label.check {
 .home .stage.render-interrupted {
   color: var(--ember);
 }
+
+/* ---- publish tab + accounts */
+.publish-card .form {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px 18px;
+  margin: 10px 0;
+}
+.publish-card .form label {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  color: var(--ash);
+  font-size: 13px;
+}
+.publish-card .form label.wide {
+  grid-column: 1 / -1;
+}
+.publish-card .form label.check {
+  flex-direction: row;
+  align-items: flex-start;
+}
+.publish-card textarea,
+.publish-card select {
+  font: 14px/1.45 var(--body);
+  color: var(--bone);
+  background: var(--ink-2);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 8px 10px;
+  resize: vertical;
+}
+.publish-card input {
+  color: var(--bone);
+}
+.seg {
+  display: flex;
+  gap: 2px;
+}
+.seg button {
+  padding: 5px 14px;
+  color: var(--ash);
+}
+.seg button.on {
+  color: var(--ink);
+  background: var(--bone);
+  border-color: var(--bone);
+}
+.publish-panel .actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 12px;
+  flex-wrap: wrap;
+}
+.publish-panel a,
+.accounts a {
+  color: var(--ice);
+}
+.accounts {
+  display: grid;
+  gap: 14px;
+}
+.account {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 14px 16px;
+}
+.acc-head {
+  display: flex;
+  gap: 12px;
+  align-items: baseline;
+  margin-bottom: 6px;
+}
+ol.setup {
+  margin: 8px 0;
+  padding-left: 22px;
+  line-height: 1.7;
+}

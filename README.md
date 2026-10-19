@@ -4,7 +4,7 @@ One place to make explainer videos: brief → script → voice and music → Ble
 Each video is a numbered folder in a workspace you choose (`project-4-<slug>`, `project-5-<slug>`, …) and every file
 that video needs lives in that folder.
 
-Status: **Phase 4** done (final render queue). Version zero is complete end to end: brief → preview → edit → final.
+Status: **Phase 5** done (publishing). Version zero is complete end to end: brief → preview → edit → final → publish.
 
 ## The website
 
@@ -76,6 +76,35 @@ puts it in the engine's queue (`app/server/render.mjs`), one heavy job at a time
 - Shot script contract (also in the skill): `final <f0> <f1>` renders plate-local frames f0..f1 (1-based) at full
   resolution into `renders/<id>/final/f_####.png`; the plate has `round(duration × fps) + 1` frames; frames without 3D
   still need a file. A plate entry may name its script with `"shot"` (default `blender/shot_<id>.py`).
+
+## Publish (Phase 5)
+
+The **Publish** tab (`/p/<project>/publish`) posts `out/delivery.mp4`:
+
+- **YouTube, through the YouTube Data API** (`app/server/youtube.mjs`). One-time setup on the home page under
+  *Connected accounts*: a Google Cloud project with the YouTube Data API v3, a **Desktop app** OAuth client (its JSON
+  file is added on the page), the Google Auth Platform app published to *In production* (in *Testing* the sign-in
+  expires every 7 days). Sign-in uses PKCE and a loopback redirect to the engine (`http://127.0.0.1:<port>/`); scopes
+  `youtube.upload` + `youtube.readonly` (to show which channel). Client file and tokens are in `secrets/` (git-ignored).
+  Uploads use the resumable protocol in 8 MB chunks from a background queue: a dropped connection or a 5xx asks YouTube
+  how much arrived and continues from there; the access token is refreshed when needed; Stop/Resume and an engine
+  restart continue in the same upload session (sessions last about a week). Default visibility is **private** (the
+  user publishes in YouTube Studio); unlisted, public and scheduled (`publishAt`) are available. "Made for kids" must be
+  answered; an AI-content disclosure checkbox maps to `containsSyntheticMedia`. Checked 2026-10-19 against Google's
+  docs: uploads from unverified API projects are not restricted to private; videos.insert is 1 unit of a 100/day
+  "Video Uploads" quota.
+- **Facebook Page and Instagram, through Claude in Chrome**: "Hand to Claude in Chrome" types a message into the video's
+  Claude panel (same never-into-a-question rule); Claude posts in the user's logged-in Chrome profile as a Reel or a
+  post, **stops before the final Post**, reports `ready-to-post` with the `publish_report` tool, and the user clicks
+  Post. If the browser tools can't attach a file from disk, Claude asks the user to drag it in ("Show the video in its
+  folder" helps). After posting, Claude (or the user, "Mark as posted") records the link.
+- Drafts are `publish/youtube.json`, `facebook.json`, `instagram.json` (edited on the tab, or drafted by Claude from the
+  script: "Ask Claude to draft titles & captions"); state in `publish/state.json`, upload log `publish/youtube.log`.
+  The Facebook Page link and Instagram account are remembered for the next video (`settings.json` → `publish`).
+- Format notes (soft): vertical ≤ 3 min becomes a YouTube Short; over 15 min needs a verified channel; Facebook/Instagram
+  Reel length limits change, so the notes say "about"; a warning if the video's sources changed after the final file.
+- Claude's tools: `publish_status`, `publish_report`, `youtube_upload` (only when the user asks).
+- Test-only overrides: `CE_SECRETS_DIR`, `CE_SETTINGS_FILE`, `CE_GOOGLE_AUTH_URL`, `CE_GOOGLE_TOKEN_URL`, `CE_YOUTUBE_API`.
 
 ## Commands
 
@@ -185,6 +214,27 @@ crash at a chosen frame):
   `delivery.mp4` held open → "close it and press Resume", then Resume redid only that step (5 s).
 - Final tab screenshots: plan/blocked, running (frames, time left, log tail, Stop), finished (video player).
 
-Not exercised yet: a long real 3D final render (project-7), Ctrl+C shutdown of `ce app` during a render (handler
+## Verified, Phase 5 (2026-10-19)
+
+Against a fake Google on the PC (OAuth with PKCE check, token refresh, channels.list, resumable upload with injectable
+faults) and a scratch engine, with a 30 MB vertical test video:
+- Setup: wrong client files rejected with the reason; sign-in through the loopback redirect, channel shown; tokens in
+  the scratch secrets folder.
+- Uploads: problems block the start ("made for kids" unanswered, `<`/`>`); a connection dropped mid-chunk → asked
+  YouTube, continued from 20 of 30 MB, done; a 503 → waited, continued; the access token expiring mid-upload →
+  refreshed silently; Stop at 24 MB → Resume continued in the same session; engine killed mid-upload → *interrupted*
+  after restart → Resume continued in the same session; a revoked sign-in → clear "connect again" message; the same
+  file twice → refused with the link. Metadata arrived as set (private, not for kids, title, part snippet,status).
+- Facebook/Instagram: draft problems block the hand-off; with the panel showing its trust question the hand-off waited
+  (not typed) and said why; "Mark as posted" with a link; unknown statuses refused; MCP `publish_status` /
+  `publish_report` (schema rejects bad statuses); Page/account remembered.
+- Screenshots: Publish tab (YouTube result with links, Facebook "ready in Chrome", Instagram "posted"), Connected
+  accounts.
+
+Not exercised: the real Google sign-in and a real upload (needs the user's Google Cloud setup), Claude actually
+posting in Chrome (deliberately not run against the user's accounts), whether Claude in Chrome can attach a local
+file (unknown; the hand-off covers both cases).
+
+Not exercised yet (Phase 4): a long real 3D final render (project-7), Ctrl+C shutdown of `ce app` during a render (handler
 exists; the tests killed the process tree, the harder case), a disk-space block (logic only), link downloads (`yt-dlp` is installed), cut detection on dark footage (found no cut in
 the reel's dark phone→brain change).

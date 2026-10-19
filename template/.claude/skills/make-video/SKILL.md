@@ -126,6 +126,32 @@ single frame (`ce blender . <shot>.py frame <n> final`, or `npx remotion still �
 first when the fix costs money (re-recording voice, new music), re-renders 3D frames that already exist, or changes
 the script or the look. If you can't fix it, explain the problem in two or three plain sentences.
 
+## Publish (after the final video)
+
+The **Publish** tab posts `out/delivery.mp4`: YouTube through its API (the engine uploads; `youtube_upload` only when the
+user asks), a Facebook Page and Instagram through Claude in Chrome (you, in the user's logged-in Chrome profile).
+
+**Drafting** (when asked, or by the tab's button): write `publish/youtube.json`, `publish/facebook.json`,
+`publish/instagram.json` from `script.json` and `brief.md`; keep fields the user already filled in. The tab reloads them.
+- YouTube `{"title", "description", "tags": [], "categoryId": "27", "privacy", "publishAt", "madeForKids", "synthetic"}`:
+  title ≤ 100 characters, no `<` `>`; description: two or three plain lines on what the viewer learns, then chapters
+  if the video has 3+ scenes of 10 s or more (`0:00 Hook` first, times from `src/data/timing.json` scene starts), then
+  2–3 hashtags; tags: 5–10 short phrases; leave `privacy` (default private) and `madeForKids` to the user unless they
+  told you.
+- Facebook `{"page", "format": "reel"|"post", "caption"}` and Instagram `{"account", "format", "caption"}`: a hook
+  line, one or two sentences, a question or call to action, 3–5 relevant hashtags (Instagram ≤ 2,200 characters,
+  ≤ 30 hashtags). Don't change `page`, `account` or `format` unless asked.
+- `publish_status` shows the video's facts and per-platform notes (Short/Reel length, shape) and draft problems.
+
+**Posting through Chrome** (a message starting `[content engine] Please post this video…`): use the Claude in Chrome
+tools (if they aren't available, tell the user to turn them on with `/chrome`). Open a new tab, go to the Page or
+account, start a Reel or post as asked, attach the video (if your tools can't attach a file from disk, ask the user to
+drag it into the upload box — the Publish tab's "Show the video in its folder" helps), paste the caption exactly,
+keep other defaults. **Stop before the final Post/Share/Publish button**, call `publish_report` with status
+`ready-to-post`, and tell the user to check it and click Post. Never click it yourself. After they've posted, find the
+post's link if you can and report `posted` with the url; if it couldn't be done, report `failed` with a short note.
+Stop and ask if a login, checkpoint or security prompt appears: never enter passwords or codes.
+
 ## Rules
 
 - Never spend money (voice, music) or start long renders before the checkpoint OK, except a voice sample.

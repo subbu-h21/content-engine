@@ -6,3 +6,5 @@ app/dist/
 models/
 # local machine settings (workspace path, tool locations)
 settings.json
+# YouTube sign-in (OAuth client + tokens): never in git
+secrets/

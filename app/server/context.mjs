@@ -106,6 +106,7 @@ export function describe(dir, state) {
 /** One compact paragraph, for the hook that prefixes each prompt. view = the engine page's open tab. */
 export function contextText(d, view = "editor") {
   if (view === "brief") return "The user is on the content engine's Brief page (the plan board on the left), not watching the video in the editor. Words like this/here refer to the plan, the board or this conversation.";
+  if (view === "publish") return "The user is on the content engine's Publish tab (YouTube upload, Facebook Page and Instagram drafts in publish/<platform>.json). The publish_status tool shows what they see.";
   if (view === "final") return "The user is on the content engine's Final tab (the final render queue: steps, progress, errors). The render_status tool shows what they see.";
   if (!d.live) return null;
   const parts = [`The user is in the video editor at ${d.timeLabel} (frame ${d.frame}, composition ${d.composition}).`];

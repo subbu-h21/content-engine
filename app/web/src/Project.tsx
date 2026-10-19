@@ -2,12 +2,13 @@
 import React, { useEffect, useRef, useState } from "react";
 import { api, type Context, type ProjectInfo, type StudioInfo } from "./api";
 import { BriefBoard } from "./BriefBoard";
+import { PublishPanel } from "./PublishPanel";
 import { RenderPanel } from "./RenderPanel";
 import { navigate } from "./nav";
 import { Terminal, type TerminalHandle } from "./Terminal";
 
 const PANEL_KEY = "ce.claudePanelWidth";
-export type Tab = "brief" | "editor" | "final";
+export type Tab = "brief" | "editor" | "final" | "publish";
 
 export const Project: React.FC<{ name: string; tab: Tab }> = ({ name, tab }) => {
   const [info, setInfo] = useState<ProjectInfo | null>(null);
@@ -136,6 +137,9 @@ export const Project: React.FC<{ name: string; tab: Tab }> = ({ name, tab }) => 
           <button className={tab === "final" ? "on" : ""} onClick={() => go("final")}>
             Final
           </button>
+          <button className={tab === "publish" ? "on" : ""} onClick={() => go("publish")}>
+            Publish
+          </button>
         </nav>
         <span className={`pill ${studio.status}`}>{studio.status === "ready" ? "Studio ready" : studio.status === "exited" ? "Studio stopped" : "Studio starting…"}</span>
         <span className="spacer" />
@@ -156,6 +160,7 @@ export const Project: React.FC<{ name: string; tab: Tab }> = ({ name, tab }) => 
       <div className="panes">
         {tab === "brief" ? <BriefBoard name={name} onOpenEditor={() => go("editor")} /> : null}
         {tab === "final" ? <RenderPanel name={name} /> : null}
+        {tab === "publish" ? <PublishPanel name={name} /> : null}
         <div className="studio-pane" style={tab !== "editor" ? { display: "none" } : undefined}>
           {src ? (
             <iframe title="Remotion Studio" src={src} allow="autoplay; fullscreen; clipboard-read; clipboard-write" />

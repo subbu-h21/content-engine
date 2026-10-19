@@ -10,6 +10,7 @@ export type ProjectRow = {
   studio: string;
   stage: string | null;
   render: { status: string; percent: number; step: string | null; queuePosition: number | null } | null;
+  publish: Partial<Record<"youtube" | "facebook" | "instagram", string>> | null;
 };
 export type StudioInfo = { status: "stopped" | "starting" | "ready" | "exited"; port?: number; url?: string; error?: string | null; log?: string[] };
 export type ProjectInfo = { name: string; dir: string; title: string; format: { width: number; height: number; fps: number }; duration: number; scenes: number; link: string; studio: StudioInfo };
@@ -91,6 +92,28 @@ export type RenderInfo = {
   live: { queuePosition: number | null; active: boolean; step?: string; progress?: RenderStep["progress"]; logTail?: string[]; waiting?: string | null } | null;
 };
 
+
+export type YouTubeStatus = { clientSaved: boolean; connected: boolean; channel: { id: string; title: string; url: string } | null; connectedAt: string | null };
+export type YouTubeDraft = { title: string; description: string; tags: string[]; categoryId: string; privacy: "private" | "unlisted" | "public" | "scheduled"; publishAt: string | null; madeForKids: boolean | null; synthetic: boolean };
+export type SocialDraft = { page?: string; account?: string; format: "reel" | "post"; caption: string };
+export type PlatformState = {
+  status?: string;
+  error?: string | null;
+  url?: string | null;
+  note?: string | null;
+  progress?: { sent: number; total: number } | null;
+  result?: { id: string; url: string; studio: string; privacy: string } | null;
+  updatedAt?: string;
+  reportedAt?: string;
+};
+export type PublishInfo = {
+  video: { exists: boolean; error?: string; path?: string; size?: number; madeAt?: string; duration?: number; width?: number; height?: number; vertical?: boolean; changedAfter?: boolean; notes?: Record<"youtube" | "facebook" | "instagram", string[]> };
+  drafts: { youtube: YouTubeDraft; facebook: SocialDraft; instagram: SocialDraft };
+  problems: Record<"youtube" | "facebook" | "instagram", string[]>;
+  state: Partial<Record<"youtube" | "facebook" | "instagram", PlatformState>>;
+  youtube: YouTubeStatus & { live: { sent?: number; total?: number; queuePosition: number | null } | null };
+};
+
 async function call<T>(url: string, init?: RequestInit): Promise<T> {
   const r = await fetch(url, { ...init, headers: { "content-type": "application/json", ...(init?.headers ?? {}) } });
   const body = await r.json().catch(() => ({}));
@@ -119,8 +142,25 @@ export const api = {
   renderStop: (name: string) => call<RenderJob>(`/api/projects/${encodeURIComponent(name)}/render/stop`, { method: "POST" }),
   renderAskClaude: (name: string) => call<{ ok: boolean; pending?: boolean; reason?: string }>(`/api/projects/${encodeURIComponent(name)}/render/ask-claude`, { method: "POST" }),
   reveal: (name: string, which: "delivery" | "video" | "folder") => call<{ ok: boolean }>(`/api/projects/${encodeURIComponent(name)}/render/reveal`, { method: "POST", body: JSON.stringify({ which }) }),
+  youtube: () => call<YouTubeStatus>("/api/youtube"),
+  youtubeClient: async (file: File) => {
+    const r = await fetch("/api/youtube/client", { method: "PUT", headers: { "content-type": "text/plain" }, body: await file.text() });
+    const body = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error((body as { error?: string }).error ?? `${r.status}`);
+    return body as YouTubeStatus;
+  },
+  youtubeConnect: () => call<{ url: string }>("/api/youtube/connect", { method: "POST" }),
+  youtubeDisconnect: () => call<YouTubeStatus>("/api/youtube/disconnect", { method: "POST" }),
+  publish: (name: string) => call<PublishInfo>(`/api/projects/${encodeURIComponent(name)}/publish`),
+  saveDraft: (name: string, platform: string, patch: object) => call<object>(`/api/projects/${encodeURIComponent(name)}/publish/${platform}`, { method: "PUT", body: JSON.stringify(patch) }),
+  youtubeStart: (name: string) => call<PlatformState>(`/api/projects/${encodeURIComponent(name)}/publish/youtube/start`, { method: "POST" }),
+  youtubeStop: (name: string) => call<PlatformState>(`/api/projects/${encodeURIComponent(name)}/publish/youtube/stop`, { method: "POST" }),
+  handoff: (name: string, platform: "facebook" | "instagram") => call<{ ok: boolean; pending?: boolean; reason?: string }>(`/api/projects/${encodeURIComponent(name)}/publish/${platform}/handoff`, { method: "POST" }),
+  publishReport: (name: string, platform: string, status: string, url?: string) => call<PlatformState>(`/api/projects/${encodeURIComponent(name)}/publish/${platform}/report`, { method: "POST", body: JSON.stringify({ status, url }) }),
+  publishDraftWithClaude: (name: string) => call<{ ok: boolean; pending?: boolean; reason?: string }>(`/api/projects/${encodeURIComponent(name)}/publish/draft`, { method: "POST", body: "{}" }),
+  revealVideo: (name: string) => call<{ ok: boolean }>(`/api/projects/${encodeURIComponent(name)}/publish/reveal`, { method: "POST" }),
   brief: (name: string) => call<Brief>(`/api/projects/${encodeURIComponent(name)}/brief`),
-  view: (name: string, tab: "brief" | "editor" | "final") => call<{ ok: boolean }>(`/api/projects/${encodeURIComponent(name)}/view`, { method: "POST", body: JSON.stringify({ tab }) }),
+  view: (name: string, tab: "brief" | "editor" | "final" | "publish") => call<{ ok: boolean }>(`/api/projects/${encodeURIComponent(name)}/view`, { method: "POST", body: JSON.stringify({ tab }) }),
   link: (name: string, url: string) => call<{ started: boolean }>(`/api/projects/${encodeURIComponent(name)}/link`, { method: "POST", body: JSON.stringify({ url }) }),
   study: (name: string) => call<{ started: boolean }>(`/api/projects/${encodeURIComponent(name)}/study`, { method: "POST" }),
   say: (name: string, text: string) => call<{ sent: boolean; reason?: string }>(`/api/projects/${encodeURIComponent(name)}/say`, { method: "POST", body: JSON.stringify({ text }) }),

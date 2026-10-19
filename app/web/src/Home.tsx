@@ -1,6 +1,7 @@
 /** Home: the workspace, a "new video" form, and the list of videos. */
 import React, { useEffect, useRef, useState } from "react";
 import { api, type Doctor, type ProjectRow } from "./api";
+import { Accounts } from "./Accounts";
 import { DeleteDialog } from "./DeleteDialog";
 import { navigate } from "./nav";
 
@@ -186,6 +187,8 @@ export const Home: React.FC = () => {
               <span className="num">{String(p.number).padStart(2, "0")}</span>
               <span className="title">{p.engine ? p.title : <em>not an engine project</em>}</span>
               <span className="folder">
+                {p.publish?.youtube === "done" ? <span className="stage">on YouTube</span> : null}
+                {p.publish?.youtube === "uploading" ? <span className="stage render-running">uploading</span> : null}
                 {p.render && RENDER_LABEL(p.render) ? <span className={`stage render-${p.render.status}`}>{RENDER_LABEL(p.render)}</span> : p.stage && STAGE_LABEL[p.stage] ? <span className="stage">{STAGE_LABEL[p.stage]}</span> : null}
                 {p.name}
               </span>
@@ -203,6 +206,7 @@ export const Home: React.FC = () => {
           ))}
         </ul>
       </section>
+      <Accounts />
       {deleting ? (
         <DeleteDialog
           name={deleting.name}

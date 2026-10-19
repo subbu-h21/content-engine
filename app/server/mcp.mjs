@@ -9,6 +9,8 @@ import { command, getState, waitForState } from "./bridge.mjs";
 import { describe, loadProject, parseTime, timelineText } from "./context.mjs";
 import { renderFrame } from "./frames.mjs";
 import { computePlan, getJob, liveInfo, resumeJob, startJob, stopJob } from "./render.mjs";
+import { draftProblems, getDraft, getState as publishState, report as publishReport, startYouTube, videoInfo, youtubeLive } from "./publish.mjs";
+import { status as youtubeStatus } from "./youtube.mjs";
 
 const text = (t) => ({ content: [{ type: "text", text: t }] });
 const json = (o) => text(JSON.stringify(o, null, 2));
@@ -212,6 +214,63 @@ function buildServer(name, dir) {
         return text("Stopped. Finished frames are kept; resume continues where it stopped.");
       } catch (e) {
         return text(e.message);
+      }
+    },
+  );
+
+  // ---- publishing (the user sees it on the Publish tab)
+  server.registerTool(
+    "publish_status",
+    {
+      title: "Publishing status",
+      description:
+        "The finished video (out/delivery.mp4: length, shape, notes per platform), the drafts in publish/<platform>.json with their problems, " +
+        "and what happened per platform: YouTube upload progress/result, Facebook/Instagram reports. YouTube connection and channel.",
+      inputSchema: {},
+    },
+    async () => {
+      const drafts = Object.fromEntries(["youtube", "facebook", "instagram"].map((p) => [p, getDraft(dir, p)]));
+      return json({
+        video: await videoInfo(dir),
+        drafts,
+        problems: Object.fromEntries(Object.entries(drafts).map(([p, d]) => [p, draftProblems(p, d)])),
+        state: publishState(dir),
+        youtube: { ...youtubeStatus(), live: youtubeLive(name) },
+      });
+    },
+  );
+
+  server.registerTool(
+    "publish_report",
+    {
+      title: "Report a Facebook/Instagram post",
+      description:
+        'Record what happened when posting through Chrome: status "ready-to-post" (everything filled in, waiting for the user to click Post), ' +
+        '"posted" (with the post url if you can find it), or "failed" (with a short note). The Publish tab shows it.',
+      inputSchema: {
+        platform: z.enum(["facebook", "instagram"]),
+        status: z.enum(["ready-to-post", "posted", "failed"]),
+        url: z.string().optional(),
+        note: z.string().optional(),
+      },
+    },
+    async ({ platform, status, url, note }) => json(publishReport(dir, platform, { status, url: url ?? null, note: note ?? null })),
+  );
+
+  server.registerTool(
+    "youtube_upload",
+    {
+      title: "Upload the finished video to YouTube",
+      description:
+        "Starts (or resumes) the YouTube upload of out/delivery.mp4 with the draft in publish/youtube.json, in the engine's background queue. " +
+        "Only call this when the user has asked for the upload.",
+      inputSchema: {},
+    },
+    async () => {
+      try {
+        return json(await startYouTube(name, dir));
+      } catch (e) {
+        return text(`Not started: ${e.message}`);
       }
     },
   );

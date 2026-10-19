@@ -17,6 +17,9 @@
   stages are the contract between them: change both together.
 - Test against a scratch workspace: `CE_WORKSPACE=D:\tmp\<dir>` and `CE_APP_PORT=<port>` (not 4190 or other ports
   browsers block) override the settings, so the user's own `ce app` on 4100 keeps running.
+- Never run tests that let a Claude panel receive a "post this video" message: it would act in the user's real Chrome
+  and accounts. YouTube is tested against a fake Google (`CE_GOOGLE_AUTH_URL`, `CE_GOOGLE_TOKEN_URL`,
+  `CE_YOUTUBE_API`) with `CE_SECRETS_DIR` and `CE_SETTINGS_FILE` pointing into the scratch folder.
 - Test the website headlessly with Remotion's chrome-headless-shell (`runtime/node_modules/.remotion/...`) over the
   DevTools protocol (`ws` is in `app/node_modules`); an MCP client is in `@modelcontextprotocol/sdk`.
 - Pipeline steps must stay deterministic and idempotent, and must never make a paid API call for a file that exists.

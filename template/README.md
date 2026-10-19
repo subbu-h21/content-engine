@@ -59,6 +59,12 @@ The engine's **Final** tab runs the final render in the background (3D final fra
 file `out/delivery.mp4`), shows progress, survives closing the browser, and resumes where it stopped. If a step fails,
 the error goes to Claude, who can fix it and resume. State and logs: `out/render/`.
 
+## Sharing it: the Publish tab
+
+The engine's **Publish** tab uploads `out/delivery.mp4` to YouTube (through its API, private by default) and hands
+Facebook Page and Instagram posts to Claude, who prepares them in your Chrome and stops before Post. Drafts and
+results: `publish/`.
+
 ## In the engine website
 
 Open the video from the engine (`ce app`): Studio on the left, Claude Code on the right. Pause on a moment and talk

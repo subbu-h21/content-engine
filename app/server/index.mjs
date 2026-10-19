@@ -21,6 +21,8 @@ import { ensureIntegration } from "./integration.mjs";
 import { handleMcp } from "./mcp.mjs";
 import { ensureStudio, stopAllStudios, stopStudio, studioInfo } from "./studios.mjs";
 import { deleteInfo, recycle } from "./remove.mjs";
+import { getDraft, draftProblems, getState as publishState, handoffMessage, publishSummary, recoverUploads, report as publishReport, saveDraft, startYouTube, stopYouTube, videoInfo, youtubeLive } from "./publish.mjs";
+import { authUrl, disconnect as youtubeDisconnect, finishAuth, isOAuthCallback, saveClient as saveYouTubeClient, status as youtubeStatus } from "./youtube.mjs";
 import { computePlan, failureMessage, getJob, liveInfo, noteClaude, recoverJobs, renderSummary, resumeJob, setRenderHooks, shutdownRenders, startJob, stopJob } from "./render.mjs";
 import { attachTerminal, ensureTerminal, killAllTerminals, killTerminal, panelState, sayToTerminal } from "./terminals.mjs";
 
@@ -132,7 +134,7 @@ const stageOf = (dir) => {
     return null;
   }
 };
-app.get("/api/projects", (req, res) => res.json(listProjects(workspace()).map(({ dir, ...p }) => ({ ...p, dir, studio: studioInfo(p.name).status, stage: p.engine ? stageOf(dir) : null, render: p.engine ? renderSummary(p.name, dir) : null }))));
+app.get("/api/projects", (req, res) => res.json(listProjects(workspace()).map(({ dir, ...p }) => ({ ...p, dir, studio: studioInfo(p.name).status, stage: p.engine ? stageOf(dir) : null, render: p.engine ? renderSummary(p.name, dir) : null, publish: p.engine ? publishSummary(dir) : null }))));
 /** A short working title from what the user wrote: first sentence, cut on a word boundary. Claude renames it later. */
 const workingTitle = (text) => {
   const first = text.split(/(?<=[.!?])\s|\n/)[0].trim();
@@ -175,7 +177,7 @@ app.post("/api/projects/:name/studio/restart", wrap(async (req, res) => {
 const views = new Map();
 app.post("/api/projects/:name/view", (req, res) => {
   if (!project(req, res)) return;
-  views.set(req.params.name, ["brief", "final"].includes(req.body.tab) ? req.body.tab : "editor");
+  views.set(req.params.name, ["brief", "final", "publish"].includes(req.body.tab) ? req.body.tab : "editor");
   res.json({ ok: true });
 });
 app.get("/api/projects/:name/context", (req, res) => {
@@ -205,6 +207,7 @@ app.delete("/api/projects/:name", wrap(async (req, res) => {
   if (String(req.body?.confirm ?? "").replace(/^0+/, "") !== number) return res.status(400).json({ error: `type ${number.padStart(2, "0")} to confirm` });
   const job = getJob(req.params.name, dir);
   if (job && ["running", "queued"].includes(job.status)) return res.status(409).json({ error: "A final render of this video is running or queued: stop it on its Final tab first." });
+  if (["queued", "uploading"].includes(publishState(dir).youtube?.status)) return res.status(409).json({ error: "This video is uploading to YouTube: stop it on its Publish tab first." });
   stopStudio(req.params.name);
   killTerminal(req.params.name);
   await new Promise((r) => setTimeout(r, 800)); // let Windows release the files
@@ -214,18 +217,18 @@ app.delete("/api/projects/:name", wrap(async (req, res) => {
 
 // ---- final render (Phase 4)
 const termEnv = (name) => ({ CE_ENGINE_URL: ENGINE_URL, CE_PROJECT: name });
-/** name -> timer of a failure message waiting for the Claude panel to be at its prompt */
+/** "<project>:<topic>" -> timer of a message waiting for the Claude panel to be at its prompt */
 const pendingDelivery = new Map();
 const DELIVERY_WINDOW_MS = 15 * 60 * 1000;
 
 /**
- * Hand a render failure to the project's Claude panel (started in the background if needed). The message is only
- * typed when the panel is at its prompt; if it's showing a question (trust, a startup choice, a permission prompt)
- * the user answers it first and the message follows on its own, for up to 15 minutes.
+ * Hand a message to the project's Claude panel (started in the background if needed). It is only typed when the panel
+ * is at its prompt; if it's showing a question (trust, a startup choice, a permission prompt) the user answers it first
+ * and the message follows on its own, for up to 15 minutes, unless stillWanted() turns false meanwhile.
+ * Returns {ok:true} | {ok:false, pending:true, reason}; onLater({ok, reason}) reports the delayed outcome.
  */
-async function tellClaude(name, dir, job, { automatic }) {
+async function deliverToClaude(name, dir, topic, message, { stillWanted = () => true, onLater = () => undefined } = {}) {
   ensureIntegration(dir, name, ENGINE_URL);
-  const message = failureMessage(job, { automatic });
   const ready = await ensureTerminal(name, dir, termEnv(name));
   let reason = ready.reason;
   if (ready.ok) {
@@ -233,26 +236,37 @@ async function tellClaude(name, dir, job, { automatic }) {
     if (r.sent) return { ok: true };
     reason = r.reason;
   }
-  clearInterval(pendingDelivery.get(name));
+  const key = `${name}:${topic}`;
+  clearInterval(pendingDelivery.get(key));
   const t0 = Date.now();
   const timer = setInterval(() => {
-    const cur = getJob(name, dir);
-    const stale = !cur || cur.id !== job.id || cur.status !== "failed";
-    if (stale || Date.now() - t0 > DELIVERY_WINDOW_MS) {
+    const wanted = stillWanted();
+    if (!wanted || Date.now() - t0 > DELIVERY_WINDOW_MS) {
       clearInterval(timer);
-      pendingDelivery.delete(name);
-      if (!stale) noteClaude(name, dir, { ok: false, automatic, reason: `${reason} The message wasn't delivered; use "Ask Claude to fix it" once that's done.` });
+      pendingDelivery.delete(key);
+      if (wanted) onLater({ ok: false, reason: `${reason} The message wasn't delivered; use the button again once that's done.` });
       return;
     }
     if (panelState(name) !== "ready") return;
     if (sayToTerminal(name, message).sent) {
       clearInterval(timer);
-      pendingDelivery.delete(name);
-      noteClaude(name, dir, { ok: true, automatic });
+      pendingDelivery.delete(key);
+      onLater({ ok: true });
     }
   }, 5000);
-  pendingDelivery.set(name, timer);
+  pendingDelivery.set(key, timer);
   return { ok: false, pending: true, reason };
+}
+
+/** A render failure -> the project's Claude panel. */
+async function tellClaude(name, dir, job, { automatic }) {
+  return deliverToClaude(name, dir, "render", failureMessage(job, { automatic }), {
+    stillWanted: () => {
+      const cur = getJob(name, dir);
+      return !!cur && cur.id === job.id && cur.status === "failed";
+    },
+    onLater: (r) => noteClaude(name, dir, { ...r, automatic }),
+  });
 }
 setRenderHooks({ onFailure: tellClaude });
 
@@ -293,6 +307,83 @@ app.post("/api/projects/:name/render/reveal", (req, res) => {
   const target = path.join(dir, which);
   if (!fs.existsSync(target)) return res.status(404).json({ error: `${which} doesn't exist yet` });
   execFile("explorer.exe", fs.statSync(target).isDirectory() ? [target] : [`/select,${target}`], () => undefined);
+  res.json({ ok: true });
+});
+
+// ---- publishing (Phase 5): YouTube through its API, Facebook/Instagram through Claude in Chrome
+const REDIRECT_URI = `http://127.0.0.1:${PORT}/`;
+app.get("/api/youtube", (req, res) => res.json(youtubeStatus()));
+app.put("/api/youtube/client", express.text({ type: "*/*", limit: "64kb" }), wrap((req, res) => res.json(saveYouTubeClient(String(req.body ?? "")))));
+app.post("/api/youtube/connect", wrap((req, res) => res.json({ url: authUrl(REDIRECT_URI) })));
+app.post("/api/youtube/disconnect", wrap((req, res) => res.json(youtubeDisconnect())));
+// Google sends the browser back to http://127.0.0.1:<port>/?code=…&state=… after sign-in
+app.get("/", async (req, res, next) => {
+  if (!isOAuthCallback(req.query)) return next();
+  const page = (title, body) =>
+    `<!doctype html><meta charset="utf-8"><title>${title}</title><body style="background:#08070a;color:#ede3d1;font:16px Segoe UI,sans-serif;padding:48px"><h2 style="font-family:Georgia,serif;font-weight:400">${title}</h2><p>${body}</p><p><a style="color:#94d1ff" href="/">Back to the content engine</a></p>`;
+  const esc = (t) => String(t).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+  try {
+    const st = await finishAuth(req.query);
+    res.send(page("YouTube connected", st.channel ? `Uploads go to the channel <b>${esc(st.channel.title)}</b>.` : "Connected. (The channel name couldn't be read.)"));
+  } catch (e) {
+    res.status(400).send(page("YouTube not connected", esc(e.message)));
+  }
+});
+
+const PLATFORMS = ["youtube", "facebook", "instagram"];
+app.get("/api/projects/:name/publish", wrap(async (req, res) => {
+  const dir = project(req, res);
+  if (!dir) return;
+  const drafts = Object.fromEntries(PLATFORMS.map((p) => [p, getDraft(dir, p)]));
+  res.json({ video: await videoInfo(dir), drafts, problems: Object.fromEntries(PLATFORMS.map((p) => [p, draftProblems(p, drafts[p])])), state: publishState(dir), youtube: { ...youtubeStatus(), live: youtubeLive(req.params.name) } });
+}));
+app.put("/api/projects/:name/publish/:platform", wrap((req, res) => {
+  const dir = project(req, res);
+  if (!dir) return;
+  if (!PLATFORMS.includes(req.params.platform)) return res.status(404).json({ error: "unknown platform" });
+  res.json(saveDraft(dir, req.params.platform, req.body ?? {}));
+}));
+app.post("/api/projects/:name/publish/youtube/start", wrap(async (req, res) => {
+  const dir = project(req, res);
+  if (dir) res.json(await startYouTube(req.params.name, dir));
+}));
+app.post("/api/projects/:name/publish/youtube/stop", wrap((req, res) => {
+  const dir = project(req, res);
+  if (dir) res.json(stopYouTube(req.params.name, dir));
+}));
+app.post("/api/projects/:name/publish/:platform/handoff", wrap(async (req, res) => {
+  const dir = project(req, res);
+  if (!dir) return;
+  const platform = req.params.platform;
+  if (!["facebook", "instagram"].includes(platform)) return res.status(404).json({ error: "only Facebook and Instagram go through Claude" });
+  if (!fs.existsSync(path.join(dir, "out", "delivery.mp4"))) return res.status(400).json({ error: "There's no final video yet: render it on the Final tab first." });
+  const problems = draftProblems(platform, getDraft(dir, platform));
+  if (problems.length) return res.status(400).json({ error: problems.join(" ") });
+  const r = await deliverToClaude(req.params.name, dir, `publish-${platform}`, handoffMessage(dir, platform), {
+    stillWanted: () => !["posted", "handed"].includes(publishState(dir)[platform]?.status),
+    onLater: (x) => x.ok && publishReport(dir, platform, { status: "handed" }),
+  });
+  if (r.ok) publishReport(dir, platform, { status: "handed" });
+  res.json(r);
+}));
+app.post("/api/projects/:name/publish/:platform/report", wrap((req, res) => {
+  const dir = project(req, res);
+  if (!dir) return;
+  res.json(publishReport(dir, req.params.platform, { status: String(req.body.status ?? ""), url: req.body.url ? String(req.body.url) : null, note: req.body.note ? String(req.body.note) : null }));
+}));
+app.post("/api/projects/:name/publish/draft", wrap(async (req, res) => {
+  const dir = project(req, res);
+  if (!dir) return;
+  const which = (Array.isArray(req.body.platforms) ? req.body.platforms : PLATFORMS).filter((p) => PLATFORMS.includes(p));
+  const message = `[content engine] Please draft the publishing text for ${which.join(", ")} in publish/<platform>.json (follow "Publish" in the make-video skill: read script.json and brief.md, keep each platform's limits, keep the fields that are already filled unless they're placeholders). Tell me briefly what you wrote.`;
+  res.json(await deliverToClaude(req.params.name, dir, "publish-draft", message));
+}));
+app.post("/api/projects/:name/publish/reveal", (req, res) => {
+  const dir = project(req, res);
+  if (!dir) return;
+  const target = path.join(dir, "out", "delivery.mp4");
+  if (!fs.existsSync(target)) return res.status(404).json({ error: "out/delivery.mp4 doesn't exist yet" });
+  execFile("explorer.exe", [`/select,${target}`], () => undefined);
   res.json({ ok: true });
 });
 
@@ -369,6 +460,7 @@ for (const sig of ["SIGINT", "SIGTERM", "SIGHUP", "SIGBREAK"]) process.on(sig, s
 
 server.listen(PORT, "127.0.0.1", () => {
   console.log(`content engine: ${ENGINE_URL}`);
+  recoverUploads(listProjects(workspace()).filter((p) => p.engine));
   const n = recoverJobs(workspace());
   if (n) console.log(`${n} final render(s) were interrupted when the engine last stopped: Resume them on their Final tab.`);
 });
