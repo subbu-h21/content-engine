@@ -1,6 +1,16 @@
 /** Typed calls to the engine server (same origin). */
 
-export type ProjectRow = { name: string; dir: string; number: number; engine: boolean; title: string | null; link: string | null; studio: string; stage: string | null };
+export type ProjectRow = {
+  name: string;
+  dir: string;
+  number: number;
+  engine: boolean;
+  title: string | null;
+  link: string | null;
+  studio: string;
+  stage: string | null;
+  render: { status: string; percent: number; step: string | null; queuePosition: number | null } | null;
+};
 export type StudioInfo = { status: "stopped" | "starting" | "ready" | "exited"; port?: number; url?: string; error?: string | null; log?: string[] };
 export type ProjectInfo = { name: string; dir: string; title: string; format: { width: number; height: number; fps: number }; duration: number; scenes: number; link: string; studio: StudioInfo };
 export type Doctor = { runtime: boolean; claude: string | null; workspace: string; workspaceExists: boolean; freeGb: number | null; onC: boolean };
@@ -15,7 +25,7 @@ export type Context = {
   elements?: { path: string; kind: string; text: string; visible: boolean | null }[];
 };
 
-export type Stage = "new" | "talking" | "awaiting-approval" | "building" | "preview-ready" | "none";
+export type Stage = "new" | "talking" | "awaiting-approval" | "building" | "preview-ready" | "final-ready" | "none";
 export type BriefLine = { id: string; text: string; estimate: number; seconds: number | null; pause: number };
 export type Reference = {
   file: string;
@@ -46,6 +56,41 @@ export type Brief = {
   jobs: Job[];
 };
 
+
+export type RenderStep = {
+  id: string;
+  kind: string;
+  plate?: string;
+  label: string;
+  status: "pending" | "running" | "done" | "failed" | "skipped";
+  attempts: number;
+  progress: { done: number; total: number; unit: string; secPerFrame?: number | null; etaSeconds?: number | null; remaining?: string | null; phase?: string } | null;
+  error: string | null;
+  startedAt: string | null;
+  endedAt: string | null;
+  log: string;
+};
+export type RenderJob = {
+  id: string;
+  status: "queued" | "running" | "done" | "failed" | "cancelled" | "interrupted";
+  createdAt: string;
+  startedAt: string | null;
+  endedAt: string | null;
+  options: { rerender: string[]; autoFix: boolean };
+  autoFixUsed: number;
+  steps: RenderStep[];
+  error: { step: string | null; message: string } | null;
+  estimate: { seconds: number; bytes: number };
+  outputs: { video: string; delivery: string } | null;
+  claudeNotice?: { at: string; ok: boolean; pending?: boolean; reason: string | null; automatic: boolean } | null;
+};
+export type RenderPlate = { id: string; from: string; to: string; shot: string; shotExists: boolean; need: number | null; present: number; missing: number; state: string; stale: boolean; unknownOrigin: boolean; secPerFrame: number; estSeconds: number };
+export type RenderInfo = {
+  plan: { plates: RenderPlate[]; problems: { level: "block" | "warn"; text: string; plate?: string }[]; totalFrames: number; durationSeconds: number; estSeconds: number; needBytes: number; freeBytes: number | null };
+  job: RenderJob | null;
+  live: { queuePosition: number | null; active: boolean; step?: string; progress?: RenderStep["progress"]; logTail?: string[]; waiting?: string | null } | null;
+};
+
 async function call<T>(url: string, init?: RequestInit): Promise<T> {
   const r = await fetch(url, { ...init, headers: { "content-type": "application/json", ...(init?.headers ?? {}) } });
   const body = await r.json().catch(() => ({}));
@@ -65,11 +110,20 @@ export const api = {
   studio: (name: string) => call<StudioInfo>(`/api/projects/${encodeURIComponent(name)}/studio`),
   restartStudio: (name: string) => call<StudioInfo>(`/api/projects/${encodeURIComponent(name)}/studio/restart`, { method: "POST" }),
   context: (name: string) => call<Context>(`/api/projects/${encodeURIComponent(name)}/context`),
+  deleteInfo: (name: string) =>
+    call<{ title: string; folder: string; path: string; bytes: number; files: number; hasFinalVideo: boolean; hasRenders: boolean; studio: string }>(`/api/projects/${encodeURIComponent(name)}/delete-info`),
+  remove: (name: string, confirm: string) => call<{ deleted: string }>(`/api/projects/${encodeURIComponent(name)}`, { method: "DELETE", body: JSON.stringify({ confirm }) }),
+  render: (name: string) => call<RenderInfo>(`/api/projects/${encodeURIComponent(name)}/render`),
+  renderStart: (name: string, rerender: string[], autoFix: boolean) => call<RenderJob>(`/api/projects/${encodeURIComponent(name)}/render/start`, { method: "POST", body: JSON.stringify({ rerender, autoFix }) }),
+  renderResume: (name: string, autoFix?: boolean) => call<RenderJob>(`/api/projects/${encodeURIComponent(name)}/render/resume`, { method: "POST", body: JSON.stringify({ autoFix }) }),
+  renderStop: (name: string) => call<RenderJob>(`/api/projects/${encodeURIComponent(name)}/render/stop`, { method: "POST" }),
+  renderAskClaude: (name: string) => call<{ ok: boolean; pending?: boolean; reason?: string }>(`/api/projects/${encodeURIComponent(name)}/render/ask-claude`, { method: "POST" }),
+  reveal: (name: string, which: "delivery" | "video" | "folder") => call<{ ok: boolean }>(`/api/projects/${encodeURIComponent(name)}/render/reveal`, { method: "POST", body: JSON.stringify({ which }) }),
   brief: (name: string) => call<Brief>(`/api/projects/${encodeURIComponent(name)}/brief`),
-  view: (name: string, tab: "brief" | "editor") => call<{ ok: boolean }>(`/api/projects/${encodeURIComponent(name)}/view`, { method: "POST", body: JSON.stringify({ tab }) }),
+  view: (name: string, tab: "brief" | "editor" | "final") => call<{ ok: boolean }>(`/api/projects/${encodeURIComponent(name)}/view`, { method: "POST", body: JSON.stringify({ tab }) }),
   link: (name: string, url: string) => call<{ started: boolean }>(`/api/projects/${encodeURIComponent(name)}/link`, { method: "POST", body: JSON.stringify({ url }) }),
   study: (name: string) => call<{ started: boolean }>(`/api/projects/${encodeURIComponent(name)}/study`, { method: "POST" }),
-  say: (name: string, text: string) => call<{ sent: boolean }>(`/api/projects/${encodeURIComponent(name)}/say`, { method: "POST", body: JSON.stringify({ text }) }),
+  say: (name: string, text: string) => call<{ sent: boolean; reason?: string }>(`/api/projects/${encodeURIComponent(name)}/say`, { method: "POST", body: JSON.stringify({ text }) }),
   upload: async (name: string, file: File) => {
     const r = await fetch(`/api/projects/${encodeURIComponent(name)}/upload?name=${encodeURIComponent(file.name)}`, { method: "PUT", headers: { "content-type": "application/octet-stream" }, body: file });
     const body = await r.json().catch(() => ({}));

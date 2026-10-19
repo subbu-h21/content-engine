@@ -21,6 +21,12 @@ ROOT = os.path.dirname(HERE)  # the project; timing is in src/data/timing.json
 
 Run them with `ce blender <project> <shot>.py <args>`.
 
+**Contract the engine's final render queue relies on**: `final <f0> <f1>` renders plate-local frames f0..f1 (1-based)
+at full resolution into `renders/<id>/final/f_####.png` (or `f_#####`); the plate has `round(duration × fps) + 1`
+frames (frame 1 = the plate's first scene start); frames without 3D still need a file (a black PNG); `draft` does the
+same at 25 % into `renders/<id>/draft/`. The queue asks only for missing frames, in chunks of 200, so skipping existing
+frames is optional.
+
 ## Blender 5.1 notes
 
 - `action.fcurves` is gone: iterate `action.layers[].strips[].channelbags[].fcurves`, or set

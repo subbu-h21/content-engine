@@ -1,6 +1,7 @@
 /** Home: the workspace, a "new video" form, and the list of videos. */
 import React, { useEffect, useRef, useState } from "react";
 import { api, type Doctor, type ProjectRow } from "./api";
+import { DeleteDialog } from "./DeleteDialog";
 import { navigate } from "./nav";
 
 const STAGE_LABEL: Record<string, string> = {
@@ -9,7 +10,11 @@ const STAGE_LABEL: Record<string, string> = {
   "awaiting-approval": "waiting for your OK",
   building: "building",
   "preview-ready": "preview ready",
+  "final-ready": "final ready",
 };
+
+const RENDER_LABEL = (r: NonNullable<ProjectRow["render"]>) =>
+  ({ queued: `render queued${r.queuePosition ? ` (#${r.queuePosition})` : ""}`, running: `rendering ${r.percent}%`, failed: "render stopped by an error", interrupted: "render interrupted", cancelled: "render stopped", done: "" })[r.status] ?? "";
 
 /** A short working title from what the user wrote: first sentence, cut on a word boundary. Claude renames it later. */
 const workingTitle = (text: string) => {
@@ -32,6 +37,7 @@ export const Home: React.FC = () => {
   const [drag, setDrag] = useState(false);
   const [busy, setBusy] = useState<string | null>(null);
   const fileInput = useRef<HTMLInputElement>(null);
+  const [deleting, setDeleting] = useState<ProjectRow | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const load = () => {
@@ -180,11 +186,16 @@ export const Home: React.FC = () => {
               <span className="num">{String(p.number).padStart(2, "0")}</span>
               <span className="title">{p.engine ? p.title : <em>not an engine project</em>}</span>
               <span className="folder">
-                {p.stage && STAGE_LABEL[p.stage] ? <span className="stage">{STAGE_LABEL[p.stage]}</span> : null}
+                {p.render && RENDER_LABEL(p.render) ? <span className={`stage render-${p.render.status}`}>{RENDER_LABEL(p.render)}</span> : p.stage && STAGE_LABEL[p.stage] ? <span className="stage">{STAGE_LABEL[p.stage]}</span> : null}
                 {p.name}
               </span>
               {p.engine ? (
-                <button onClick={() => navigate(`/p/${encodeURIComponent(p.name)}${p.stage && p.stage !== "preview-ready" ? "/brief" : ""}`)}>{p.studio === "ready" ? "Return" : "Open"}</button>
+                <span className="row-actions">
+                  <button onClick={() => navigate(`/p/${encodeURIComponent(p.name)}${p.render && p.render.status !== "done" ? "/final" : p.stage === "final-ready" ? "/final" : p.stage && p.stage !== "preview-ready" ? "/brief" : ""}`)}>{p.studio === "ready" ? "Return" : "Open"}</button>
+                  <button className="quiet" title="Move this video's folder to the Recycle Bin" onClick={() => setDeleting(p)}>
+                    Delete
+                  </button>
+                </span>
               ) : (
                 <span />
               )}
@@ -192,6 +203,17 @@ export const Home: React.FC = () => {
           ))}
         </ul>
       </section>
+      {deleting ? (
+        <DeleteDialog
+          name={deleting.name}
+          number={deleting.number}
+          onClose={() => setDeleting(null)}
+          onDeleted={() => {
+            setDeleting(null);
+            load();
+          }}
+        />
+      ) : null}
     </div>
   );
 };

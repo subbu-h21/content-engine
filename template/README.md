@@ -53,6 +53,12 @@ style frames in `brief/frames/`), sound (`project.json` → `voice`, `music`), v
 build**; only then does it record the voice, make the music and render 3D drafts. `brief/status.json` holds the stage.
 How Claude runs this is in `.claude/skills/make-video/SKILL.md`.
 
+## Finishing it: the Final tab
+
+The engine's **Final** tab runs the final render in the background (3D final frames, plate encoding, video, upload
+file `out/delivery.mp4`), shows progress, survives closing the browser, and resumes where it stopped. If a step fails,
+the error goes to Claude, who can fix it and resume. State and logs: `out/render/`.
+
 ## In the engine website
 
 Open the video from the engine (`ce app`): Studio on the left, Claude Code on the right. Pause on a moment and talk

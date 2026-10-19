@@ -6,7 +6,7 @@
  *   /mcp/<project>    MCP endpoint for Claude Code (tools: editor_state, timeline, view_frame, seek, playback, show_setting)
  *   /ws/terminal/<p>  the Claude Code terminal
  */
-import { execFileSync } from "node:child_process";
+import { execFile, execFileSync } from "node:child_process";
 import fs from "node:fs";
 import http from "node:http";
 import path from "node:path";
@@ -20,7 +20,9 @@ import { contextText, describe, loadProject } from "./context.mjs";
 import { ensureIntegration } from "./integration.mjs";
 import { handleMcp } from "./mcp.mjs";
 import { ensureStudio, stopAllStudios, stopStudio, studioInfo } from "./studios.mjs";
-import { attachTerminal, killAllTerminals, sayToTerminal } from "./terminals.mjs";
+import { deleteInfo, recycle } from "./remove.mjs";
+import { computePlan, failureMessage, getJob, liveInfo, noteClaude, recoverJobs, renderSummary, resumeJob, setRenderHooks, shutdownRenders, startJob, stopJob } from "./render.mjs";
+import { attachTerminal, ensureTerminal, killAllTerminals, killTerminal, panelState, sayToTerminal } from "./terminals.mjs";
 
 const APP_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const DIST = path.join(APP_DIR, "dist");
@@ -55,7 +57,14 @@ const project = (req, res) => {
   if (!dir) res.status(404).json({ error: `no engine project "${req.params.name}" in the workspace` });
   return dir;
 };
-const wrap = (fn) => (req, res) => Promise.resolve(fn(req, res)).catch((e) => res.status(500).json({ error: e.message }));
+/** Route wrapper: errors become JSON. Errors thrown on purpose (a message for the user) are 400; system errors
+ *  (with a code like ENOENT/EBUSY) are 500. Synchronous throws are caught too. */
+const wrap = (fn) => (req, res) =>
+  Promise.resolve()
+    .then(() => fn(req, res))
+    .catch((e) => {
+      if (!res.headersSent) res.status(e.code ? 500 : 400).json({ error: e.message });
+    });
 
 // ---- bridge (Studio -> engine); bodies are text/plain JSON to avoid CORS preflights
 app.post("/api/bridge/:name/state", express.text({ type: "*/*", limit: "2mb" }), (req, res) => {
@@ -123,7 +132,7 @@ const stageOf = (dir) => {
     return null;
   }
 };
-app.get("/api/projects", (req, res) => res.json(listProjects(workspace()).map(({ dir, ...p }) => ({ ...p, dir, studio: studioInfo(p.name).status, stage: p.engine ? stageOf(dir) : null }))));
+app.get("/api/projects", (req, res) => res.json(listProjects(workspace()).map(({ dir, ...p }) => ({ ...p, dir, studio: studioInfo(p.name).status, stage: p.engine ? stageOf(dir) : null, render: p.engine ? renderSummary(p.name, dir) : null }))));
 /** A short working title from what the user wrote: first sentence, cut on a word boundary. Claude renames it later. */
 const workingTitle = (text) => {
   const first = text.split(/(?<=[.!?])\s|\n/)[0].trim();
@@ -166,7 +175,7 @@ app.post("/api/projects/:name/studio/restart", wrap(async (req, res) => {
 const views = new Map();
 app.post("/api/projects/:name/view", (req, res) => {
   if (!project(req, res)) return;
-  views.set(req.params.name, req.body.tab === "brief" ? "brief" : "editor");
+  views.set(req.params.name, ["brief", "final"].includes(req.body.tab) ? req.body.tab : "editor");
   res.json({ ok: true });
 });
 app.get("/api/projects/:name/context", (req, res) => {
@@ -174,7 +183,117 @@ app.get("/api/projects/:name/context", (req, res) => {
   if (!dir) return;
   const d = describe(dir, getState(req.params.name));
   const view = views.get(req.params.name) ?? "editor";
-  res.json({ ...d, view, text: contextText(d, view) });
+  let text = contextText(d, view);
+  // a failed final render Claude hasn't been told about yet rides along with the user's next message
+  const job = getJob(req.params.name, dir);
+  if (job?.status === "failed" && !job.claudeNotice?.ok) {
+    const step = job.steps.find((s) => s.id === job.error?.step);
+    text = `${text ? text + " " : ""}Note: the final render of this video failed at "${step?.label ?? job.error?.step}": ${job.error?.message} (log: ${step?.log ?? "out/render/logs"}; render_status / render_resume tools).`;
+  }
+  res.json({ ...d, view, text });
+});
+
+// ---- delete a project (to the Recycle Bin); the page must send the project's number as confirmation
+app.get("/api/projects/:name/delete-info", (req, res) => {
+  const dir = project(req, res);
+  if (dir) res.json({ ...deleteInfo(dir), studio: studioInfo(req.params.name).status });
+});
+app.delete("/api/projects/:name", wrap(async (req, res) => {
+  const dir = project(req, res);
+  if (!dir) return;
+  const number = /^project-(\d+)/.exec(req.params.name)[1];
+  if (String(req.body?.confirm ?? "").replace(/^0+/, "") !== number) return res.status(400).json({ error: `type ${number.padStart(2, "0")} to confirm` });
+  const job = getJob(req.params.name, dir);
+  if (job && ["running", "queued"].includes(job.status)) return res.status(409).json({ error: "A final render of this video is running or queued: stop it on its Final tab first." });
+  stopStudio(req.params.name);
+  killTerminal(req.params.name);
+  await new Promise((r) => setTimeout(r, 800)); // let Windows release the files
+  await recycle(dir);
+  res.json({ deleted: req.params.name, recycleBin: true });
+}));
+
+// ---- final render (Phase 4)
+const termEnv = (name) => ({ CE_ENGINE_URL: ENGINE_URL, CE_PROJECT: name });
+/** name -> timer of a failure message waiting for the Claude panel to be at its prompt */
+const pendingDelivery = new Map();
+const DELIVERY_WINDOW_MS = 15 * 60 * 1000;
+
+/**
+ * Hand a render failure to the project's Claude panel (started in the background if needed). The message is only
+ * typed when the panel is at its prompt; if it's showing a question (trust, a startup choice, a permission prompt)
+ * the user answers it first and the message follows on its own, for up to 15 minutes.
+ */
+async function tellClaude(name, dir, job, { automatic }) {
+  ensureIntegration(dir, name, ENGINE_URL);
+  const message = failureMessage(job, { automatic });
+  const ready = await ensureTerminal(name, dir, termEnv(name));
+  let reason = ready.reason;
+  if (ready.ok) {
+    const r = sayToTerminal(name, message);
+    if (r.sent) return { ok: true };
+    reason = r.reason;
+  }
+  clearInterval(pendingDelivery.get(name));
+  const t0 = Date.now();
+  const timer = setInterval(() => {
+    const cur = getJob(name, dir);
+    const stale = !cur || cur.id !== job.id || cur.status !== "failed";
+    if (stale || Date.now() - t0 > DELIVERY_WINDOW_MS) {
+      clearInterval(timer);
+      pendingDelivery.delete(name);
+      if (!stale) noteClaude(name, dir, { ok: false, automatic, reason: `${reason} The message wasn't delivered; use "Ask Claude to fix it" once that's done.` });
+      return;
+    }
+    if (panelState(name) !== "ready") return;
+    if (sayToTerminal(name, message).sent) {
+      clearInterval(timer);
+      pendingDelivery.delete(name);
+      noteClaude(name, dir, { ok: true, automatic });
+    }
+  }, 5000);
+  pendingDelivery.set(name, timer);
+  return { ok: false, pending: true, reason };
+}
+setRenderHooks({ onFailure: tellClaude });
+
+app.get("/api/projects/:name/render", (req, res) => {
+  const dir = project(req, res);
+  if (!dir) return;
+  res.json({ plan: computePlan(dir), job: getJob(req.params.name, dir), live: liveInfo(req.params.name) });
+});
+app.post("/api/projects/:name/render/start", wrap((req, res) => {
+  const dir = project(req, res);
+  if (!dir) return;
+  const rerender = Array.isArray(req.body.rerender) ? req.body.rerender.map(String) : [];
+  res.json(startJob(req.params.name, dir, { rerender, autoFix: req.body.autoFix !== false }));
+}));
+app.post("/api/projects/:name/render/resume", wrap((req, res) => {
+  const dir = project(req, res);
+  if (!dir) return;
+  res.json(resumeJob(req.params.name, dir, { autoFix: req.body.autoFix }));
+}));
+app.post("/api/projects/:name/render/stop", wrap((req, res) => {
+  const dir = project(req, res);
+  if (!dir) return;
+  res.json(stopJob(req.params.name, dir));
+}));
+app.post("/api/projects/:name/render/ask-claude", wrap(async (req, res) => {
+  const dir = project(req, res);
+  if (!dir) return;
+  const job = getJob(req.params.name, dir);
+  if (!job?.error) return res.status(400).json({ error: "There is no failed render to ask about." });
+  const r = await tellClaude(req.params.name, dir, job, { automatic: false });
+  noteClaude(req.params.name, dir, { ...r, automatic: false });
+  res.json(r);
+}));
+app.post("/api/projects/:name/render/reveal", (req, res) => {
+  const dir = project(req, res);
+  if (!dir) return;
+  const which = { delivery: "out/delivery.mp4", video: "out/video.mp4" }[req.body.which] ?? "out";
+  const target = path.join(dir, which);
+  if (!fs.existsSync(target)) return res.status(404).json({ error: `${which} doesn't exist yet` });
+  execFile("explorer.exe", fs.statSync(target).isDirectory() ? [target] : [`/select,${target}`], () => undefined);
+  res.json({ ok: true });
 });
 
 // ---- Brief page
@@ -214,7 +333,7 @@ app.post("/api/projects/:name/say", (req, res) => {
   if (!dir) return;
   const text = String(req.body.text ?? "").trim();
   if (!text) return res.status(400).json({ error: "nothing to say" });
-  res.json({ sent: sayToTerminal(req.params.name, text) });
+  res.json(sayToTerminal(req.params.name, text));
 });
 
 // ---- the page
@@ -240,6 +359,7 @@ server.on("upgrade", (req, socket, head) => {
 });
 
 const shutdown = () => {
+  shutdownRenders();
   stopAllStudios();
   killAllTerminals();
   process.exit(0);
@@ -247,4 +367,8 @@ const shutdown = () => {
 // Ctrl+C, Ctrl+Break, closing the console window: stop the Studios and terminals this server started
 for (const sig of ["SIGINT", "SIGTERM", "SIGHUP", "SIGBREAK"]) process.on(sig, shutdown);
 
-server.listen(PORT, "127.0.0.1", () => console.log(`content engine: ${ENGINE_URL}`));
+server.listen(PORT, "127.0.0.1", () => {
+  console.log(`content engine: ${ENGINE_URL}`);
+  const n = recoverJobs(workspace());
+  if (n) console.log(`${n} final render(s) were interrupted when the engine last stopped: Resume them on their Final tab.`);
+});

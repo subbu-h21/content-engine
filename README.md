@@ -4,8 +4,7 @@ One place to make explainer videos: brief → script → voice and music → Ble
 Each video is a numbered folder in a workspace you choose (`project-4-<slug>`, `project-5-<slug>`, …) and every file
 that video needs lives in that folder.
 
-Status: **Phase 3** done (Brief page: make a new video with Claude). Next: Phase 4 (render queue), then a first real
-video end to end.
+Status: **Phase 4** done (final render queue). Version zero is complete end to end: brief → preview → edit → final.
 
 ## The website
 
@@ -16,7 +15,10 @@ ce app            # starts http://127.0.0.1:4100 and opens it; Ctrl+C stops it (
 - **Home**: the workspace; **What do you want to create today?** (free text, saved as `brief/request.md`) with an
   optional dropper for inspiration, reference or skill files (uploaded into the new project before its Brief opens);
   Create makes the next `project-N-<slug>` and opens its Brief, where Claude starts from that request. The list of
-  videos shows each one's stage. A reusable style library (choose a look from a catalog) is planned.
+  videos shows each one's stage, with **Delete**: a warning shows the folder, its size and whether it has a finished
+  video or Blender renders, and asks for the video's number; the folder then goes to the Windows Recycle Bin
+  (its Studio and Claude panel are stopped first, the node_modules link removed so shared packages are never touched).
+  A reusable style library (choose a look from a catalog) is planned.
 - **Brief** (`/p/<project>/brief`): Claude (same panel as the editor, one conversation) runs the project's
   `make-video` skill: asks what you want to make, talks through idea, script, look, sound and 3D, and writes each decision
   into the project's files, which the board on the left shows live (`brief/status.json`, `brief.md`, `script.json`,
@@ -40,6 +42,40 @@ ce app            # starts http://127.0.0.1:4100 and opens it; Ctrl+C stops it (
 - **Safety**: the server listens on 127.0.0.1 only, rejects foreign `Host` headers (DNS rebinding) and foreign `Origin`s;
   the terminal socket only accepts the engine's own page.
 - First time in a project, Claude Code asks once whether you trust the folder: choose *Yes*.
+
+## Final render (Phase 4)
+
+The **Final** tab of a video (`/p/<project>/final`) shows what a final render involves before it starts: the 3D plates
+and how many final frames each still needs, a time and disk estimate, and anything that blocks it (narration not
+recorded, placeholder script, a missing shot script, Blender not found, not enough disk, broken package link). Start
+puts it in the engine's queue (`app/server/render.mjs`), one heavy job at a time:
+
+| Step | What | Resumes / retries |
+|---|---|---|
+| audio | `pipeline audio`: timing, stems, effects, captions from the recorded lines | retried once; missing voice lines stop it (recording costs money) |
+| blender:&lt;plate&gt; | only the missing final frames, 200 per call, via the plate's shot script `final f0 f1` | finished frames kept; half-written frames (no PNG end marker) redone; a chunk that fails twice stops the step; waits while another Blender uses the GPU |
+| plates | `pipeline plates`: bloom + encode from the final frames | retried once |
+| render | Remotion render of `Reel` with `props/final.json` → temp file → `out/video.mp4` | retried once; a locked output says "close the player, then Resume" |
+| deliver | loudness-levelled `out/delivery.mp4`, checked for length and sound | retried once |
+
+- **State** is in the project: `out/render/job.json`, logs in `out/render/logs/<step>.log`. Stop keeps everything;
+  Resume continues at the first unfinished step/frame. If the engine stops (Ctrl+C, crash, PC restart), the job comes
+  back as *interrupted* on the next start.
+- **3D frames out of date**: each plate's final folder has `.ce-final.json` with a fingerprint of the shot script,
+  `blender/lib`, `blender/assets`, the timing and the plate. If it changed, the plan flags the plate and the step
+  refuses to mix old and new frames until "re-render" is ticked (which deletes the old frames).
+- **Fallback to Claude**: when a step still fails after its retry, the engine hands the error and log path to the
+  video's Claude panel (starting it if needed) — at most twice per render, and only if the job allows it (a checkbox,
+  on by default). The message is only typed when the panel is at its prompt; if it's showing a question (trust, a
+  startup choice, a permission prompt) the engine waits up to 15 minutes for the user to answer it, and never answers
+  for them. Until Claude is told, the failure is also added to the user's next message (prompt hook). Claude has
+  `render_status`, `render_start`, `render_resume`, `render_stop` tools; the `make-video` skill says how to fix and
+  resume, and what to ask the user first (anything costing money, re-rendering existing 3D, script or look changes).
+- Board buttons (Approve, Ask Claude) use the same rule: nothing is typed into a panel that's showing a question.
+- `CE_RENDER_NO_GPU_WAIT=1` (tests) skips waiting for other Blender processes.
+- Shot script contract (also in the skill): `final <f0> <f1>` renders plate-local frames f0..f1 (1-based) at full
+  resolution into `renders/<id>/final/f_####.png`; the plate has `round(duration × fps) + 1` frames; frames without 3D
+  still need a file. A plate entry may name its script with `"shot"` (default `blender/shot_<id>.py`).
 
 ## Commands
 
@@ -129,6 +165,26 @@ answered (sent as a bracketed paste, then Enter). Reopening a project continues 
 which exits with code 1 after ~12 s when there is none, then a new one starts). `plates --from draft` and
 `vo --estimate` checked on the reel (estimate calibrated to its measured 2.88 words/s). Plate encodes still byte-identical.
 
-Not exercised yet: the checkpoint → build → preview-ready part of `/make-video` (Claude following the skill end to end;
-that is the first real video), link downloads (`yt-dlp` is installed), cut detection on dark footage (found no cut in
+Since then the user made "why the sky is blue" end to end (project-5).
+
+## Verified, Phase 4 (2026-10-19)
+
+On a scratch engine with a copy of project-5 (2D) and a small 3D test video (a spinning cube shot that can be made to
+crash at a chosen frame):
+- 2D final render: sound check, 1974-frame render, upload file; 82.3 s with sound, −15.5 LUFS / −1.5 dBTP; board stage
+  `final-ready`. A second video queued behind it (position 1) and could be stopped while queued; double start → 400.
+- 3D: stop mid-plate kept 80 frames; a half-written frame was detected and redone; killing the engine mid-render left
+  `running` in job.json, the next start reported it *interrupted*, Resume finished it; frames 1–79 were never
+  re-rendered (mtimes unchanged); 351 frames, plates, video and delivery correct; the plate visible in the video.
+- Changing the shot script after rendering → plan flags the plate, start refuses to mix frames; re-render ticked →
+  old frames deleted, a one-time Blender crash retried automatically, render finished.
+- Permanent crash → two tries, step failed, handed to Claude automatically; Claude found the cause (the test's crash
+  file), removed it, called `render_resume`, explained what it did; the render finished. (The first attempt exposed a
+  startup question swallowing the message; fixed by the panel-question rule above.)
+- Pre-start blocks on a new video (placeholder script, estimated timing); delete refused while rendering (409);
+  `delivery.mp4` held open → "close it and press Resume", then Resume redid only that step (5 s).
+- Final tab screenshots: plan/blocked, running (frames, time left, log tail, Stop), finished (video player).
+
+Not exercised yet: a long real 3D final render (project-7), Ctrl+C shutdown of `ce app` during a render (handler
+exists; the tests killed the process tree, the harder case), a disk-space block (logic only), link downloads (`yt-dlp` is installed), cut detection on dark footage (found no cut in
 the reel's dark phone→brain change).

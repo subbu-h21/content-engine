@@ -98,13 +98,33 @@ After the OK set the stage to `building` and give a one-line update after each s
    `D:\code_files\content-engine\library\blender` to `blender/lib` (brain, phone; read its README) or write new ones
    there. One shot script per plate in `blender/` (see the library README for the header), timed from
    `src/data/timing.json`. Quick drafts: `ce blender . <shot>.py draft` (25 %, low samples; tell the user roughly how
-   long). Add each plate to `project.json` → `plates` (`{"id", "from", "to"}` scene ids), then
-   `ce pipeline . plates --from draft`. Final-quality renders come later, only when the user asks.
+   long). Add each plate to `project.json` → `plates` (`{"id", "from", "to"}` scene ids; add `"shot": "<file>.py"`
+   if the script isn't `blender/shot_<id>.py`), then `ce pipeline . plates --from draft`. Final-quality renders
+   come later, only when the user asks, through the engine's **Final** tab (see *Final render* below).
+   **Shot script contract** (the final render queue relies on it): `final <f0> <f1>` renders frames f0..f1
+   (1-based, plate-local) at full resolution into `renders/<id>/final/f_####.png` (or `f_#####`); frame 1 is the
+   plate's first frame and the plate has `round(duration × fps) + 1` frames; frames the plate doesn't show in 3D
+   still need a file (a black PNG is fine); `draft` does the same at 25 % into `renders/<id>/draft/`. Skipping frames
+   that already exist is welcome but not required: the queue only asks for missing ones.
 5. **Sound effects**: `sfx.json` (events relative to cues; kinds in the engine's `pipeline/sfx_lib.py`), then
    `ce pipeline . sfx`, `ce pipeline . stems`, `ce pipeline . captions`.
 6. **Check**: `npm run typecheck`; render a still from every scene and look at each; fix what's off.
 7. Set `{"stage": "preview-ready", "note": "Preview ready: open the Editor tab."}` and tell the user what to look at
    first and the 2–3 weakest points you know of.
+
+## Final render (after the preview)
+
+When the user wants the finished video, point them to the **Final** tab (or call the `render_start` tool if they ask
+you to start it). The engine's queue runs it in the background: sound check, 3D final frames (only missing ones,
+resumable), plate encoding, the Remotion render and the loudness-levelled `out/delivery.mp4`. Don't run these steps
+yourself in the terminal: the queue survives the browser closing and resumes after a restart; your terminal doesn't.
+`render_status` shows the job and what would block a new one.
+
+**If the engine hands you a failed render** (a message starting `[content engine]`): read the step's log (path in
+the message), find the cause, fix it in the project (shot script, scene code, a missing file…), check the fix on a
+single frame (`ce blender . <shot>.py frame <n> final`, or `npx remotion still …`), then `render_resume`. Ask the user
+first when the fix costs money (re-recording voice, new music), re-renders 3D frames that already exist, or changes
+the script or the look. If you can't fix it, explain the problem in two or three plain sentences.
 
 ## Rules
 

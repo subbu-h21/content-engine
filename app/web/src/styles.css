@@ -627,3 +627,205 @@ code {
   padding: 1px 4px;
   border-radius: 3px;
 }
+
+/* ---- delete dialog */
+.row-actions {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+.row-actions .quiet {
+  color: var(--dim);
+}
+.row-actions .quiet:hover {
+  color: var(--ember);
+}
+.modal-back {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.66);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+  padding: 16px;
+}
+.modal {
+  width: 100%;
+  max-width: 520px;
+  background: var(--ink-2);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 24px 26px 20px;
+}
+.modal h2 {
+  font: italic 400 26px/1.2 var(--display);
+  margin: 0 0 6px;
+}
+.modal-title {
+  font: 400 18px/1.3 var(--display);
+  margin: 0 0 14px;
+}
+.modal dl {
+  display: grid;
+  grid-template-columns: 80px 1fr;
+  gap: 4px 12px;
+  margin: 0 0 12px;
+  font-size: 13px;
+}
+.modal dt {
+  color: var(--ash);
+}
+.modal dd {
+  margin: 0;
+  word-break: break-all;
+}
+.modal .confirm {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 16px 0 6px;
+}
+.modal .confirm input {
+  width: 90px;
+  font-size: 16px;
+}
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 16px;
+}
+button.danger {
+  background: var(--ember);
+  border-color: var(--ember);
+  color: var(--ink);
+  font-weight: 500;
+}
+button.danger:disabled {
+  background: var(--ink-3);
+  border-color: var(--line);
+  color: var(--dim);
+}
+
+/* ---- final render tab */
+.render-panel .job-steps {
+  list-style: none;
+  margin: 14px 0 0;
+  padding: 0;
+}
+.step {
+  display: flex;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--ink-3);
+}
+.step .mark {
+  width: 16px;
+  color: var(--dim);
+  flex: none;
+}
+.step.done .mark {
+  color: var(--ice);
+}
+.step.running .mark {
+  color: var(--ember);
+}
+.step.failed .mark,
+.step.failed .label {
+  color: var(--ember);
+}
+.step.pending .label {
+  color: var(--ash);
+}
+.step .body {
+  flex: 1;
+  min-width: 0;
+}
+.step .bar {
+  height: 4px;
+  background: var(--ink-3);
+  border-radius: 2px;
+  margin: 6px 0 4px;
+  overflow: hidden;
+}
+.step .bar span {
+  display: block;
+  height: 100%;
+  background: var(--bone);
+  transition: width 0.6s;
+}
+.step.done .bar span {
+  background: var(--ice);
+}
+.step .meta {
+  margin: 0;
+}
+.logtail {
+  white-space: pre-wrap;
+  font-size: 11px;
+  color: var(--dim);
+  background: var(--ink);
+  border-radius: 6px;
+  padding: 8px 10px;
+  margin: 12px 0 0;
+  max-height: 140px;
+  overflow: hidden;
+}
+.status.job-failed,
+.status.job-interrupted {
+  border-color: var(--ember);
+}
+.status.job-done {
+  border-color: #2b3a46;
+}
+.warn.block {
+  border-left-color: var(--ember);
+  color: var(--ember);
+}
+table.plates {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 13px;
+  margin: 8px 0 12px;
+}
+table.plates th,
+table.plates td {
+  text-align: left;
+  border-bottom: 1px solid var(--line);
+  padding: 6px 10px 6px 0;
+}
+table.plates th {
+  color: var(--ash);
+  font-weight: 400;
+}
+label.check {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  color: var(--ash);
+  margin: 14px 0 0;
+  font-size: 13px;
+}
+.render-panel .actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 14px;
+  flex-wrap: wrap;
+}
+.final-video {
+  max-height: 60vh;
+  max-width: 100%;
+  border-radius: 8px;
+  background: #000;
+  display: block;
+}
+.home .stage.render-running,
+.home .stage.render-queued {
+  color: var(--ember);
+}
+.home .stage.render-failed,
+.home .stage.render-interrupted {
+  color: var(--ember);
+}

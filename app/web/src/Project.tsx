@@ -2,11 +2,12 @@
 import React, { useEffect, useRef, useState } from "react";
 import { api, type Context, type ProjectInfo, type StudioInfo } from "./api";
 import { BriefBoard } from "./BriefBoard";
+import { RenderPanel } from "./RenderPanel";
 import { navigate } from "./nav";
 import { Terminal, type TerminalHandle } from "./Terminal";
 
 const PANEL_KEY = "ce.claudePanelWidth";
-export type Tab = "brief" | "editor";
+export type Tab = "brief" | "editor" | "final";
 
 export const Project: React.FC<{ name: string; tab: Tab }> = ({ name, tab }) => {
   const [info, setInfo] = useState<ProjectInfo | null>(null);
@@ -22,7 +23,7 @@ export const Project: React.FC<{ name: string; tab: Tab }> = ({ name, tab }) => 
     }
   });
   const term = useRef<TerminalHandle | null>(null);
-  const go = (t: Tab) => navigate(`/p/${encodeURIComponent(name)}${t === "brief" ? "/brief" : ""}`);
+  const go = (t: Tab) => navigate(`/p/${encodeURIComponent(name)}${t === "editor" ? "" : `/${t}`}`);
 
   // open the project: connection files + Studio, then wait until Studio answers
   useEffect(() => {
@@ -132,6 +133,9 @@ export const Project: React.FC<{ name: string; tab: Tab }> = ({ name, tab }) => 
           <button className={tab === "editor" ? "on" : ""} onClick={() => go("editor")}>
             Editor
           </button>
+          <button className={tab === "final" ? "on" : ""} onClick={() => go("final")}>
+            Final
+          </button>
         </nav>
         <span className={`pill ${studio.status}`}>{studio.status === "ready" ? "Studio ready" : studio.status === "exited" ? "Studio stopped" : "Studio starting…"}</span>
         <span className="spacer" />
@@ -151,7 +155,8 @@ export const Project: React.FC<{ name: string; tab: Tab }> = ({ name, tab }) => 
 
       <div className="panes">
         {tab === "brief" ? <BriefBoard name={name} onOpenEditor={() => go("editor")} /> : null}
-        <div className="studio-pane" style={tab === "brief" ? { display: "none" } : undefined}>
+        {tab === "final" ? <RenderPanel name={name} /> : null}
+        <div className="studio-pane" style={tab !== "editor" ? { display: "none" } : undefined}>
           {src ? (
             <iframe title="Remotion Studio" src={src} allow="autoplay; fullscreen; clipboard-read; clipboard-write" />
           ) : (

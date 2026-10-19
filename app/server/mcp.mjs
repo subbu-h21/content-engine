@@ -8,6 +8,7 @@ import { z } from "zod";
 import { command, getState, waitForState } from "./bridge.mjs";
 import { describe, loadProject, parseTime, timelineText } from "./context.mjs";
 import { renderFrame } from "./frames.mjs";
+import { computePlan, getJob, liveInfo, resumeJob, startJob, stopJob } from "./render.mjs";
 
 const text = (t) => ({ content: [{ type: "text", text: t }] });
 const json = (o) => text(JSON.stringify(o, null, 2));
@@ -127,6 +128,91 @@ function buildServer(name, dir) {
       }
       const r = await command(name, { type: "focus", path: parts });
       return text(r.ok ? `Showing ${path} in the props editor.` : `Could not show ${path}: ${r.detail}. Ask the user to press Esc in Studio and try again.`);
+    },
+  );
+
+  // ---- final render queue (the engine runs it in the background; the user sees it on the Final tab)
+  const renderState = () => {
+    const job = getJob(name, dir);
+    const plan = computePlan(dir);
+    return {
+      job: job
+        ? {
+            status: job.status,
+            error: job.error,
+            options: job.options,
+            autoFixUsed: job.autoFixUsed,
+            steps: job.steps.map((s) => ({ id: s.id, label: s.label, status: s.status, progress: s.progress, error: s.error, log: s.log })),
+            outputs: job.outputs,
+          }
+        : null,
+      live: liveInfo(name),
+      plan: { problems: plan.problems, plates: plan.plates.map(({ folder, ...p }) => p), estimatedMinutes: Math.round(plan.estSeconds / 60), diskNeededGB: Math.ceil(plan.needBytes / 1e9) },
+    };
+  };
+
+  server.registerTool(
+    "render_status",
+    {
+      title: "Final render status",
+      description:
+        "The final render of this video: the job's steps, progress, errors (with log paths in the project) and what a new render would involve " +
+        "(problems that block it, 3D plates and their frames, time and disk estimates).",
+      inputSchema: {},
+    },
+    async () => json(renderState()),
+  );
+
+  server.registerTool(
+    "render_start",
+    {
+      title: "Start the final render",
+      description:
+        "Queues the final render (3D final frames, plate encoding, video, upload file) in the engine's background queue. Can take hours with 3D. " +
+        "Only call this when the user has asked for the final render. rerender: plate ids whose existing final frames should be deleted and rendered again.",
+      inputSchema: { rerender: z.array(z.string()).optional() },
+    },
+    async ({ rerender }) => {
+      try {
+        startJob(name, dir, { rerender: rerender ?? [], autoFix: true });
+        return json({ started: true, ...renderState() });
+      } catch (e) {
+        return text(`Not started: ${e.message}`);
+      }
+    },
+  );
+
+  server.registerTool(
+    "render_resume",
+    {
+      title: "Resume the final render",
+      description: "Resumes a failed, stopped or interrupted final render where it stopped (finished frames and steps are kept). Use after fixing the cause of a failure.",
+      inputSchema: {},
+    },
+    async () => {
+      try {
+        resumeJob(name, dir);
+        return json({ resumed: true, ...renderState() });
+      } catch (e) {
+        return text(`Not resumed: ${e.message}`);
+      }
+    },
+  );
+
+  server.registerTool(
+    "render_stop",
+    {
+      title: "Stop the final render",
+      description: "Stops the running or queued final render; finished frames are kept and Resume continues later. Only when the user asks.",
+      inputSchema: {},
+    },
+    async () => {
+      try {
+        stopJob(name, dir);
+        return text("Stopped. Finished frames are kept; resume continues where it stopped.");
+      } catch (e) {
+        return text(e.message);
+      }
     },
   );
 

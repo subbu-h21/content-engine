@@ -9,9 +9,10 @@ const STAGES: Record<Stage, string> = {
   "awaiting-approval": "Waiting for your OK",
   building: "Building the preview",
   "preview-ready": "Preview ready",
+  "final-ready": "Final video ready",
   none: "No brief",
 };
-const ORDER: Stage[] = ["talking", "awaiting-approval", "building", "preview-ready"];
+const ORDER: Stage[] = ["talking", "awaiting-approval", "building", "preview-ready", "final-ready"];
 
 const fmt = (s: number) => (s >= 60 ? `${Math.floor(s / 60)}:${String(Math.round(s % 60)).padStart(2, "0")}` : `${s.toFixed(s < 10 ? 1 : 0)} s`);
 const hexes = (text: string | null) => [...new Set((text ?? "").match(/#[0-9a-fA-F]{6}\b/g) ?? [])].slice(0, 12);
@@ -54,7 +55,10 @@ export const BriefBoard: React.FC<{ name: string; onOpenEditor: () => void }> = 
       setBusy(`Uploading ${f.name}…`);
       try {
         const r = await api.upload(name, f);
-        if (r.kind === "skill") await api.say(name, `I added a skill file "${r.name}" (${r.path}). Read it; it applies to this video.`);
+        if (r.kind === "skill") {
+          const said = await api.say(name, `I added a skill file "${r.name}" (${r.path}). Read it; it applies to this video.`);
+          if (!said.sent) setError(`Added the skill file; tell Claude about it yourself (${said.reason ?? "its panel isn't at its prompt"}).`);
+        }
       } catch (e) {
         setError(`${f.name}: ${(e as Error).message}`);
       }
@@ -73,7 +77,7 @@ export const BriefBoard: React.FC<{ name: string; onOpenEditor: () => void }> = 
     }
   };
 
-  const say = (text: string) => api.say(name, text).then((r) => !r.sent && setError("The Claude panel isn't running; open it on the right first."));
+  const say = (text: string) => api.say(name, text).then((r) => !r.sent && setError(`Not sent: ${r.reason ?? "the Claude panel isn't at its prompt."}`));
 
   if (!b) return <div className="board">{error ? <p className="error">{error}</p> : <p className="hint">Loading…</p>}</div>;
   const stage = b.status.stage;
