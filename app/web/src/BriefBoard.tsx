@@ -54,7 +54,7 @@ export const BriefBoard: React.FC<{ name: string; onOpenEditor: () => void }> = 
         const r = await api.upload(name, f);
         if (r.kind === "skill") {
           const said = await api.say(name, `I added a skill file "${r.name}" (${r.path}). Read it; it applies to this video.`);
-          if (!said.sent) setError(`Added the skill file; tell Claude about it yourself (${said.reason ?? "its panel isn't at its prompt"}).`);
+          if (!said.sent) setError(`Added the skill file; tell Claude about it yourself (${said.reason ?? "Claude couldn't be reached"}).`);
         }
       } catch (e) {
         setError(`${f.name}: ${(e as Error).message}`);
@@ -78,7 +78,7 @@ export const BriefBoard: React.FC<{ name: string; onOpenEditor: () => void }> = 
   const say = (text: string) => {
     setError(null);
     return api.say(name, text).then(
-      (r) => !r.sent && setError(`Not sent: ${r.reason ?? "the Claude panel isn't at its prompt."}`),
+      (r) => !r.sent && setError(`Not sent: ${r.reason ?? "Claude couldn't be reached."}`),
       (e) => setError((e as Error).message),
     );
   };

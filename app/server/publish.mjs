@@ -465,7 +465,7 @@ export function handoffMessage(dir, platform, rel) {
     `Stop before the final Post/Share/Publish button: call publish_report with platform "${platform}" and status "ready-to-post", then tell me it's ready and let me click it. Never click it yourself.`,
     "If a login, checkpoint or security prompt appears, stop and ask me: never enter passwords or codes.",
     `After I've posted, find the post's link if you can and call publish_report with platform "${platform}", status "posted" and the url (or status "failed" with a short note if it couldn't be done).`,
-    "If your browser tools aren't available in this session, tell me to turn them on with /chrome.",
+    "If your browser tools aren't available in this session, tell me to check that the Claude in Chrome extension is installed, signed in and on in Chrome.",
   ].join(" ");
 }
 

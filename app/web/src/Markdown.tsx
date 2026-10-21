@@ -1,10 +1,11 @@
-/** Small Markdown renderer for the board (headings, paragraphs, lists, tables, code, bold/italic/code/links).
- *  Builds React elements, never HTML strings, so file contents can't inject markup. */
+/** Small Markdown renderer for the board and the Claude chat (headings, paragraphs, lists, tables, code, quotes,
+ *  bold/italic/code/links). Builds React elements, never HTML strings, so file contents can't inject markup. */
 import React from "react";
 
 const inline = (text: string, key = 0): React.ReactNode[] => {
   const out: React.ReactNode[] = [];
-  const re = /(\*\*([^*]+)\*\*|`([^`]+)`|\*([^*\s][^*]*)\*|_([^_\s][^_]*)_|\[([^\]]+)\]\((https?:[^)\s]+)\))/g;
+  // _italic_ only between non-letters, so names like editor_state or s01_intro stay as they are
+  const re = /(\*\*([^*]+)\*\*|`([^`]+)`|\*([^*\s][^*]*)\*|(?<![A-Za-z0-9])_([^_\s][^_]*)_(?![A-Za-z0-9])|\[([^\]]+)\]\((https?:[^)\s]+)\))/g;
   let last = 0;
   let m: RegExpExecArray | null;
   let k = key;
@@ -52,6 +53,12 @@ export const Markdown: React.FC<{ text: string }> = ({ text }) => {
       i++;
       continue;
     }
+    if (/^\s*>/.test(line)) {
+      const quote: string[] = [];
+      for (; i < lines.length && /^\s*>/.test(lines[i]); i++) quote.push(lines[i].replace(/^\s*>\s?/, ""));
+      blocks.push(<blockquote key={k++}>{quote.flatMap((q, j) => (j ? [<br key={`b${j}`} />, ...inline(q, j * 100)] : inline(q)))}</blockquote>);
+      continue;
+    }
     if (line.trim().startsWith("|")) {
       const rows: string[][] = [];
       for (; i < lines.length && lines[i].trim().startsWith("|"); i++) if (!/^\s*\|?[\s:|-]+\|?\s*$/.test(lines[i])) rows.push(cells(lines[i]));
@@ -79,7 +86,7 @@ export const Markdown: React.FC<{ text: string }> = ({ text }) => {
       continue;
     }
     const para: string[] = [];
-    for (; i < lines.length && lines[i].trim() && !/^(#{1,4}\s|```|\s*\||\s*([-*]|\d+\.)\s+)/.test(lines[i]); i++) para.push(lines[i].trim());
+    for (; i < lines.length && lines[i].trim() && !/^(#{1,4}\s|```|\s*\||\s*>|\s*([-*]|\d+\.)\s+)/.test(lines[i]); i++) para.push(lines[i].trim());
     blocks.push(<p key={k++}>{inline(para.join(" "))}</p>);
   }
   return <div className="md">{blocks}</div>;

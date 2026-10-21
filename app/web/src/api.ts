@@ -112,9 +112,27 @@ export type PlatformState = {
 };
 /** A video file in a project's out/ folder that can be published. */
 export type VideoFile = { rel: string; kind: "final" | "master" | "draft" | "render"; size: number; madeAt: string };
+/** The Claude chat (server: app/server/claude.mjs). */
+export type ChatStatus = "stopped" | "starting" | "idle" | "working" | "question" | "external";
+export type ChatState = { status: ChatStatus; mode: "auto" | "manual"; turnStartedAt: number | null; sessionId: string | null };
+export type ChatStep = { id: string; tool: string; kind: "command" | "read" | "edit" | "search" | "web" | "engine" | "chrome" | "agent" | "other"; label: string; status: "running" | "done" | "error"; output?: string };
+export type ChatQuestion = { question: string; header: string | null; multiSelect: boolean; options: { label: string; description: string | null }[] };
+export type ChatItem =
+  | { kind: "user"; id: string; text: string; from?: "engine"; failed?: boolean }
+  | { kind: "text"; id: string; text: string; streaming?: boolean }
+  | { kind: "tools"; id: string; steps: ChatStep[] }
+  | { kind: "question"; id: string; questions: ChatQuestion[]; answer?: Record<string, string> | "answered" | "cancelled" }
+  | { kind: "permission"; id: string; tool: string; title: string; detail: string; note: string | null; canAlways: boolean; answer?: "allow" | "always" | "deny" | "cancelled" }
+  | { kind: "notice"; id: string; text: string; tone?: "error" | "dim" };
+export type ChatEvent =
+  | { type: "snapshot"; items: ChatItem[]; trimmed: number; state: ChatState }
+  | { type: "item"; item: ChatItem }
+  | { type: "delta"; id: string; text: string }
+  | { type: "state"; state: ChatState };
+
 export type PublishInfo = {
   videos: VideoFile[];
-  claude: "stopped" | "starting" | "ready" | "busy" | "question" | string;
+  claude: ChatStatus | string;
   video: { exists: boolean; error?: string; path?: string; rel?: string; kind?: VideoFile["kind"]; size?: number; madeAt?: string; duration?: number; width?: number; height?: number; vertical?: boolean; changedAfter?: boolean; notes?: Record<"youtube" | "facebook" | "instagram", string[]> };
   drafts: { youtube: YouTubeDraft; facebook: SocialDraft; instagram: SocialDraft };
   problems: Record<"youtube" | "facebook" | "instagram", string[]>;
@@ -203,6 +221,13 @@ export const api = {
   link: (name: string, url: string) => call<{ started: boolean }>(`/api/projects/${encodeURIComponent(name)}/link`, { method: "POST", body: JSON.stringify({ url }) }),
   study: (name: string) => call<{ started: boolean }>(`/api/projects/${encodeURIComponent(name)}/study`, { method: "POST" }),
   say: (name: string, text: string) => call<{ sent: boolean; reason?: string }>(`/api/projects/${encodeURIComponent(name)}/say`, { method: "POST", body: JSON.stringify({ text }) }),
+  chatSend: (name: string, text: string) => call<{ ok: boolean; reason?: string }>(`/api/projects/${encodeURIComponent(name)}/chat/send`, { method: "POST", body: JSON.stringify({ text }) }),
+  chatAnswer: (name: string, id: string, body: { decision: "allow" | "always" | "deny" } | { answers: Record<string, string> }) =>
+    call<{ ok: boolean }>(`/api/projects/${encodeURIComponent(name)}/chat/answer`, { method: "POST", body: JSON.stringify({ id, ...body }) }),
+  chatStop: (name: string) => call<{ ok: boolean }>(`/api/projects/${encodeURIComponent(name)}/chat/stop`, { method: "POST" }),
+  chatMode: (name: string, mode: ChatState["mode"]) => call<ChatState>(`/api/projects/${encodeURIComponent(name)}/chat/mode`, { method: "POST", body: JSON.stringify({ mode }) }),
+  chatNew: (name: string) => call<{ ok: boolean }>(`/api/projects/${encodeURIComponent(name)}/chat/new`, { method: "POST" }),
+  chatTerminal: (name: string) => call<{ ok: boolean }>(`/api/projects/${encodeURIComponent(name)}/chat/terminal`, { method: "POST" }),
   upload: async (name: string, file: File) => {
     const r = await fetch(`/api/projects/${encodeURIComponent(name)}/upload?name=${encodeURIComponent(file.name)}`, { method: "PUT", headers: { "content-type": "application/octet-stream" }, body: file });
     const body = await r.json().catch(() => ({}));

@@ -1,10 +1,10 @@
 /**
  * The content engine website: http://127.0.0.1:<appPort> (only reachable from this computer).
  *   /                 projects, new video, settings
- *   /p/<project>      editor: the project's Remotion Studio + Claude Code terminal
+ *   /p/<project>      editor: the project's Remotion Studio + Claude (a chat with the project's Claude Code)
  *   /api/...          JSON API for the page; /api/bridge/... for the EngineBridge inside Studio
  *   /mcp/<project>    MCP endpoint for Claude Code (tools: editor_state, timeline, view_frame, seek, playback, show_setting)
- *   /ws/terminal/<p>  the Claude Code terminal
+ *   /ws/chat/<p>      the Claude chat's live updates
  */
 import { execFile, execFileSync } from "node:child_process";
 import fs from "node:fs";
@@ -25,10 +25,13 @@ import { activity, getDraft, draftProblems, getState as publishState, handoffMes
 import { authUrl, disconnect as youtubeDisconnect, finishAuth, isOAuthCallback, saveClient as saveYouTubeClient, saveClientFields, status as youtubeStatus, testConnection } from "./youtube.mjs";
 import { publishDefaults, settingsView, updateSettings } from "./settings.mjs";
 import { computePlan, failureMessage, getJob, liveInfo, noteClaude, recoverJobs, renderSummary, resumeJob, setRenderHooks, shutdownRenders, startJob, stopJob } from "./render.mjs";
-import { attachTerminal, ensureTerminal, killAllTerminals, killTerminal, panelState, sayToTerminal } from "./terminals.mjs";
+import { answer as answerClaude, attachChat, chatState, interrupt as interruptClaude, killAllClaude, killClaude, newConversation, openInTerminal, sendMessage, setMode as setClaudeMode } from "./claude.mjs";
 
 const APP_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const DIST = path.join(APP_DIR, "dist");
+// an `nproc` for Remotion (see server/bin/nproc.cmd): Studios, renders, frame previews and Claude panels inherit it
+process.env.PATH = `${path.join(APP_DIR, "server", "bin")};${process.env.PATH ?? ""}`;
+// CE_APP_DIST: test override (a page built elsewhere), so tests don't replace the page a running engine serves
+const DIST = process.env.CE_APP_DIST || path.join(APP_DIR, "dist");
 const PORT = Number(process.env.CE_APP_PORT || loadSettings().appPort || 4100);
 const ENGINE_URL = `http://127.0.0.1:${PORT}`;
 const OWN_ORIGINS = new Set([`http://127.0.0.1:${PORT}`, `http://localhost:${PORT}`]);
@@ -214,64 +217,28 @@ app.delete("/api/projects/:name", wrap(async (req, res) => {
   if (job && ["running", "queued"].includes(job.status)) return res.status(409).json({ error: "A final render of this video is running or queued: stop it on its Final tab first." });
   if (["queued", "uploading"].includes(publishState(dir).youtube?.status)) return res.status(409).json({ error: "This video is uploading to YouTube: stop it on the Publish page first." });
   stopStudio(req.params.name);
-  killTerminal(req.params.name);
+  killClaude(req.params.name);
   await new Promise((r) => setTimeout(r, 800)); // let Windows release the files
   await recycle(dir);
   res.json({ deleted: req.params.name, recycleBin: true });
 }));
 
 // ---- final render (Phase 4)
-const termEnv = (name) => ({ CE_ENGINE_URL: ENGINE_URL, CE_PROJECT: name });
-/** "<project>:<topic>" -> timer of a message waiting for the Claude panel to be at its prompt */
-const pendingDelivery = new Map();
-const DELIVERY_WINDOW_MS = 15 * 60 * 1000;
+const claudeEnv = (name) => ({ CE_ENGINE_URL: ENGINE_URL, CE_PROJECT: name });
 
 /**
- * Hand a message to the project's Claude panel (started in the background if needed). It is only typed when the panel
- * is at its prompt; if it's showing a question (trust, a startup choice, a permission prompt) the user answers it first
- * and the message follows on its own, for up to 15 minutes, unless stillWanted() turns false meanwhile.
- * Returns {ok:true} | {ok:false, pending:true, reason}; onLater({ok, reason}) reports the delayed outcome.
+ * Hand a message to the project's Claude (started in the background if needed). If Claude is busy or waiting for the
+ * user's answer to a question, the message waits in Claude's queue: it never answers or cancels that question.
+ * Returns {ok:true} | {ok:false, reason}.
  */
-async function deliverToClaude(name, dir, topic, message, { stillWanted = () => true, onLater = () => undefined } = {}) {
+async function deliverToClaude(name, dir, message) {
   ensureIntegration(dir, name, ENGINE_URL);
-  const ready = await ensureTerminal(name, dir, termEnv(name));
-  let reason = ready.reason;
-  if (ready.ok) {
-    const r = sayToTerminal(name, message);
-    if (r.sent) return { ok: true };
-    reason = r.reason;
-  }
-  const key = `${name}:${topic}`;
-  clearInterval(pendingDelivery.get(key));
-  const t0 = Date.now();
-  const timer = setInterval(() => {
-    const wanted = stillWanted();
-    if (!wanted || Date.now() - t0 > DELIVERY_WINDOW_MS) {
-      clearInterval(timer);
-      pendingDelivery.delete(key);
-      if (wanted) onLater({ ok: false, reason: `${reason} The message wasn't delivered; use the button again once that's done.` });
-      return;
-    }
-    if (panelState(name) !== "ready") return;
-    if (sayToTerminal(name, message).sent) {
-      clearInterval(timer);
-      pendingDelivery.delete(key);
-      onLater({ ok: true });
-    }
-  }, 5000);
-  pendingDelivery.set(key, timer);
-  return { ok: false, pending: true, reason };
+  return sendMessage(name, dir, claudeEnv(name), message, { from: "engine" });
 }
 
-/** A render failure -> the project's Claude panel. */
+/** A render failure -> the project's Claude. */
 async function tellClaude(name, dir, job, { automatic }) {
-  return deliverToClaude(name, dir, "render", failureMessage(job, { automatic }), {
-    stillWanted: () => {
-      const cur = getJob(name, dir);
-      return !!cur && cur.id === job.id && cur.status === "failed";
-    },
-    onLater: (r) => noteClaude(name, dir, { ...r, automatic }),
-  });
+  return deliverToClaude(name, dir, failureMessage(job, { automatic }));
 }
 setRenderHooks({ onFailure: tellClaude });
 
@@ -360,7 +327,7 @@ app.get("/api/projects/:name/publish", wrap(async (req, res) => {
     state,
     youtube: { ...youtubeStatus(), live: youtubeLive(req.params.name) },
     youtubeLog,
-    claude: panelState(req.params.name),
+    claude: chatState(req.params.name),
   });
 }));
 /** The Publish page picked one of the project's video files. */
@@ -398,10 +365,7 @@ app.post("/api/projects/:name/publish/:platform/handoff", wrap(async (req, res) 
   if (!file) return res.status(400).json({ error: "This video has no exported file yet: render it on its Final tab first." });
   const problems = draftProblems(platform, getDraft(dir, platform));
   if (problems.length) return res.status(400).json({ error: problems.join(" ") });
-  const r = await deliverToClaude(req.params.name, dir, `publish-${platform}`, handoffMessage(dir, platform, file), {
-    stillWanted: () => !["posted", "handed"].includes(publishState(dir)[platform]?.status),
-    onLater: (x) => x.ok && publishReport(dir, platform, { status: "handed", file }),
-  });
+  const r = await deliverToClaude(req.params.name, dir, handoffMessage(dir, platform, file));
   if (r.ok) publishReport(dir, platform, { status: "handed", file });
   res.json(r);
 }));
@@ -415,7 +379,7 @@ app.post("/api/projects/:name/publish/draft", wrap(async (req, res) => {
   if (!dir) return;
   const which = (Array.isArray(req.body.platforms) ? req.body.platforms : PLATFORMS).filter((p) => PLATFORMS.includes(p));
   const message = `[content engine] Please draft the publishing text for ${which.join(", ")} in publish/<platform>.json (follow "Publish" in the make-video skill: read script.json and brief.md, keep each platform's limits, keep the fields that are already filled unless they're placeholders). Tell me briefly what you wrote.`;
-  res.json(await deliverToClaude(req.params.name, dir, "publish-draft", message));
+  res.json(await deliverToClaude(req.params.name, dir, message));
 }));
 /** Everything published or being published, across all videos (the Publish page's history), newest first. */
 app.get("/api/published", (req, res) => {
@@ -458,10 +422,10 @@ app.post("/api/social/chrome-check", wrap(async (req, res) => {
     `2) in a new tab, whether my Chrome is logged in to Facebook${d.facebookPage ? ` and can open the Page ${d.facebookPage}` : ""};`,
     `3) in a new tab, whether it is logged in to Instagram${d.instagramAccount ? ` as ${d.instagramAccount}` : ""}.`,
     "Close the tabs you opened, then call the chrome_check_report tool with what you found and tell me in one or two sentences.",
-    "If your browser tools aren't available, call chrome_check_report with extension false and tell me to turn them on with /chrome.",
+    "If your browser tools aren't available, call chrome_check_report with extension false and tell me to check that the Claude in Chrome extension is installed, signed in and turned on in Chrome.",
     "Never enter passwords or codes; if a login or security prompt appears, report it as not logged in.",
   ].join(" ");
-  const r = await deliverToClaude(chosen.name, chosen.dir, "chrome-check", message);
+  const r = await deliverToClaude(chosen.name, chosen.dir, message);
   res.json({ ...r, project: chosen.name, title: chosen.title });
 }));
 
@@ -512,13 +476,52 @@ app.post("/api/projects/:name/study", (req, res) => {
   studyReferences(req.params.name, dir);
   res.json({ started: true });
 });
-app.post("/api/projects/:name/say", (req, res) => {
+/** A board button's message to Claude (Approve, Ask Claude to fix these…). */
+app.post("/api/projects/:name/say", wrap(async (req, res) => {
   const dir = project(req, res);
   if (!dir) return;
   const text = String(req.body.text ?? "").trim();
   if (!text) return res.status(400).json({ error: "nothing to say" });
-  res.json(sayToTerminal(req.params.name, text));
-});
+  const r = await deliverToClaude(req.params.name, dir, text);
+  res.json({ sent: r.ok, reason: r.reason });
+}));
+
+// ---- the Claude chat (live updates over /ws/chat/<project>)
+app.post("/api/projects/:name/chat/send", wrap(async (req, res) => {
+  const dir = project(req, res);
+  if (!dir) return;
+  const text = String(req.body.text ?? "").trim();
+  if (!text) return res.status(400).json({ error: "nothing to send" });
+  if (text.length > 100_000) return res.status(400).json({ error: "That message is too long." });
+  if (chatState(req.params.name) === "stopped") ensureIntegration(dir, req.params.name, ENGINE_URL);
+  res.json(await sendMessage(req.params.name, dir, claudeEnv(req.params.name), text));
+}));
+app.post("/api/projects/:name/chat/answer", wrap((req, res) => {
+  if (project(req, res)) res.json(answerClaude(req.params.name, String(req.body.id ?? ""), req.body));
+}));
+app.post("/api/projects/:name/chat/stop", wrap(async (req, res) => {
+  if (project(req, res)) res.json(await interruptClaude(req.params.name));
+}));
+app.post("/api/projects/:name/chat/mode", wrap(async (req, res) => {
+  const dir = project(req, res);
+  if (dir) res.json(await setClaudeMode(req.params.name, dir, claudeEnv(req.params.name), String(req.body.mode ?? "")));
+}));
+app.post("/api/projects/:name/chat/new", wrap(async (req, res) => {
+  const dir = project(req, res);
+  if (dir) res.json(await newConversation(req.params.name, dir, claudeEnv(req.params.name)));
+}));
+app.post("/api/projects/:name/chat/terminal", wrap(async (req, res) => {
+  const dir = project(req, res);
+  if (!dir) return;
+  ensureIntegration(dir, req.params.name, ENGINE_URL);
+  let title = null;
+  try {
+    title = JSON.parse(fs.readFileSync(path.join(dir, "project.json"), "utf8")).title;
+  } catch {
+    // the folder name will do
+  }
+  res.json(await openInTerminal(req.params.name, dir, claudeEnv(req.params.name), title));
+}));
 
 // ---- the page
 app.use(express.static(DIST, { index: false }));
@@ -528,33 +531,34 @@ app.get(/^\/(?!api\/|mcp\/|ws\/).*/, (req, res) => {
   res.sendFile(index);
 });
 
-// ---- server + terminal websocket
+// ---- server + the chat's websocket (only from the engine's own page)
 const server = http.createServer(app);
 const wss = new WebSocketServer({ noServer: true });
 server.on("upgrade", (req, socket, head) => {
-  const m = /^\/ws\/terminal\/([^/?]+)/.exec(req.url ?? "");
+  const m = /^\/ws\/chat\/([^/?]+)/.exec(req.url ?? "");
   const name = m ? decodeURIComponent(m[1]) : null;
   const dir = name ? findProject(workspace(), name) : null;
   if (!dir || !OWN_HOSTS.has(req.headers.host ?? "") || !OWN_ORIGINS.has(req.headers.origin ?? "")) {
     socket.write("HTTP/1.1 403 Forbidden\r\n\r\n");
     return socket.destroy();
   }
-  // the panel can be opened without the editor (Publish page): make sure Claude gets this engine's tools and hook
+  // the chat can be opened without the editor (Publish page): make sure Claude gets this engine's tools and hook
   try {
     ensureIntegration(dir, name, ENGINE_URL);
   } catch (e) {
     console.error(`${name}: ${e.message}`);
   }
-  wss.handleUpgrade(req, socket, head, (ws) => attachTerminal(ws, name, dir, { CE_ENGINE_URL: ENGINE_URL, CE_PROJECT: name }));
+  // a new video: Claude starts the guided /make-video conversation when its page first opens
+  wss.handleUpgrade(req, socket, head, (ws) => attachChat(ws, name, dir, claudeEnv(name), { onFirstOpen: () => stageOf(dir) === "new" }));
 });
 
 const shutdown = () => {
   shutdownRenders();
   stopAllStudios();
-  killAllTerminals();
+  killAllClaude();
   process.exit(0);
 };
-// Ctrl+C, Ctrl+Break, closing the console window: stop the Studios and terminals this server started
+// Ctrl+C, Ctrl+Break, closing the console window: stop the Studios and Claude sessions this server started
 for (const sig of ["SIGINT", "SIGTERM", "SIGHUP", "SIGBREAK"]) process.on(sig, shutdown);
 
 server.listen(PORT, "127.0.0.1", () => {

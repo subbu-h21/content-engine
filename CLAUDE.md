@@ -1,14 +1,20 @@
 # Conventions for Claude Code in the content engine
 
-- Read `README.md` first. Video projects live in the workspace (`ce settings`), not here; each has its own CLAUDE.md.
+- Read `HANDOFF.md` first (current state, the user's working rules, running engines, how to test, what's left), then `README.md`. Video projects live in the workspace (`ce settings`), not here; each has its own CLAUDE.md.
 - `template/` changes only affect projects created afterwards. Existing projects keep their copy; port a fix to one
   only when the user asks.
 - `runtime/package.json` versions are pinned and shared by every project: changing one can change existing videos.
   Ask the user first, then re-verify with the phone reel (below).
 - Keep `cli/projects.mjs` free of console output and process exits: the website imports it.
 - Website (`app/`): after changing `app/web/src`, run `npm run build` in `app/` (`ce app` only builds when `dist/` is
-  missing). Keep the server's safety checks: listen on 127.0.0.1 only, reject foreign Host/Origin, terminal socket
+  missing). Keep the server's safety checks: listen on 127.0.0.1 only, reject foreign Host/Origin, chat socket
   only from the engine's own page. `app/` has its own packages; don't add website packages to `runtime/`.
+- Testing the website while the user's engine runs: build into another folder (`node build.mjs D:\tmp\<dist>`) and
+  start the scratch engine with `CE_APP_DIST` pointing there. `npm run build` replaces the `app/dist` the user's
+  engine serves, so a new page would meet the old server until the user restarts it.
+- The Claude chat (`app/server/claude.mjs` ↔ `app/web/src/Chat.tsx`) runs Claude Code with stream-json in and out.
+  Its message shapes come from Claude Code itself (probed on 2.1.304): re-check them after a Claude Code update if the
+  chat misbehaves (`tests/e2e/t13_real_claude_chat.mjs`, `t14_tui_resume.mjs`).
 - The bridge contract (template `EngineBridge.tsx` ↔ `app/server/bridge.mjs`): POST `/api/bridge/<p>/state` and
   `/result` as text/plain JSON, commands over SSE `/api/bridge/<p>/events`. Changing it means updating both sides and
   the copy in every existing project that should keep working with the website.

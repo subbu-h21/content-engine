@@ -26,8 +26,7 @@ const toLocalInput = (iso: string | null) => {
 const FINAL = "out/delivery.mp4";
 const KIND_LABEL = { final: "Final video", master: "Final video (sound not levelled yet)", draft: "Draft", render: "Render" } as const;
 
-/** onClaude: the video's Claude panel is running or about to get a message (the page shows it). */
-export const PublishPanel: React.FC<{ name: string; onClaude?: () => void }> = ({ name, onClaude }) => {
+export const PublishPanel: React.FC<{ name: string }> = ({ name }) => {
   const [info, setInfo] = useState<PublishInfo | null>(null);
   const [yt, setYt] = useState<YouTubeDraft | null>(null);
   const [fb, setFb] = useState<SocialDraft | null>(null);
@@ -47,7 +46,6 @@ export const PublishPanel: React.FC<{ name: string; onClaude?: () => void }> = (
         try {
           const i = await api.publish(name);
           setInfo(i);
-          if (i.claude !== "stopped") onClaude?.();
           // drafts from the server (e.g. Claude wrote them) replace the form unless the user is editing that one
           if (!dirty.current.youtube) setYt(i.drafts.youtube);
           if (!dirty.current.facebook) setFb(i.drafts.facebook);
@@ -101,7 +99,6 @@ export const PublishPanel: React.FC<{ name: string; onClaude?: () => void }> = (
   };
   const viaClaude = (fn: () => Promise<{ ok: boolean; pending?: boolean; reason?: string }>, sent: string) =>
     act(async () => {
-      onClaude?.();
       const r = await fn();
       if (!r.ok && !r.pending) throw new Error(r.reason ?? "Claude couldn't be reached.");
       // the "sent" note only when it really went in; otherwise say what it's waiting for

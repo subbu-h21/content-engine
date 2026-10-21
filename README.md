@@ -9,7 +9,7 @@ Status: **Phase 5** done (publishing). Version zero is complete end to end: brie
 ## The website
 
 ```
-ce app            # starts http://127.0.0.1:4100 and opens it; Ctrl+C stops it (and the Studios/terminals it started)
+ce app            # starts http://127.0.0.1:4100 and opens it; Ctrl+C stops it (and the Studios/Claude sessions it started)
 ```
 
 - **Home**: the workspace; **What do you want to create today?** (free text, saved as `brief/request.md`) with an
@@ -29,8 +29,24 @@ ce app            # starts http://127.0.0.1:4100 and opens it; Ctrl+C stops it (
   each into study material in `references/_study/<file>/` (stills, contact sheet, cuts, palette, Whisper transcript;
   the Whisper model is downloaded once into `models/`). A dropped `.md` with a `name:` front matter becomes a skill of
   that project (`.claude/skills/<name>/`).
-- **Editor** (`/p/<project>`): the project's Remotion Studio (started on a free port from 3200), the project's Claude Code
-  in a terminal on the right, and a strip under Studio showing what Claude is told about your position.
+- **Editor** (`/p/<project>`): the project's Remotion Studio (started on a free port from 3200), the Claude chat on the
+  right, and a strip under Studio showing what Claude is told about your position.
+- **The Claude chat** (right side of Brief, Editor, Final and Publish; `app/server/claude.mjs`, `app/web/src/Chat.tsx`):
+  the project's Claude Code runs on this PC without a screen (`claude -p` with stream-json in and out,
+  `--permission-prompt-tool stdio`, `--chrome`) and the page shows it as a chat: messages, replies streaming in, the
+  steps Claude took folded into one line ("Ran 3 commands, read 2 files", click to see each step and its output).
+  - Claude starts when a message is sent (about a second) and continues the project's latest conversation (what
+    `claude --continue` would pick); earlier messages, also ones from the old terminal or VS Code, come from Claude
+    Code's saved conversation (`~/.claude/projects/<folder>/<id>.jsonl`). It closes after 15 idle minutes.
+  - Permission questions are cards with **Allow / Always allow / Deny**; Claude's own questions (AskUserQuestion) are
+    cards with option buttons and a free-text answer. The engine never answers them; a message sent meanwhile (typed, a
+    board button, a render failure, a Publish hand-off) waits in Claude's queue and doesn't answer or cancel them.
+  - Header: **Auto / Ask first** (permission mode, per video, `.claude/engine-chat.json`), **Terminal** (the same
+    conversation in a normal Claude Code window on this PC; the chat waits until that window is closed), **New**
+    (a new conversation; the old one stays saved). **Stop** stops what Claude is doing.
+  - A new video's chat starts `/make-video` by itself when its page first opens.
+  - Claude Code's built-in commands that need its screen (`/model`, `/compact`, Shift+Tab…) aren't available in the
+    chat; use **Terminal** for those.
 - **How Claude knows "this"**: the template's `EngineBridge` (inside the video, active only in a Studio the engine
   started) reports composition, playhead and props to the engine. Opening a project writes two git-ignored files into it:
   `.mcp.json` (the engine's MCP tools for that project) and `.claude/settings.local.json` (approves them and adds a
@@ -40,8 +56,9 @@ ce app            # starts http://127.0.0.1:4100 and opens it; Ctrl+C stops it (
 - **Claude's tools** (MCP `content-engine`): `editor_state`, `timeline`, `view_frame` (renders the frame as an image,
   ~20 s), `seek`, `playback`, `show_setting` (opens Studio's props editor at a path).
 - **Safety**: the server listens on 127.0.0.1 only, rejects foreign `Host` headers (DNS rebinding) and foreign `Origin`s;
-  the terminal socket only accepts the engine's own page.
-- First time in a project, Claude Code asks once whether you trust the folder: choose *Yes*.
+  the chat's socket (`/ws/chat/<project>`) only accepts the engine's own page.
+- The chat skips Claude Code's trust question (`-p` does). The **Terminal** window asks it once per video folder:
+  choose *Yes, I trust this folder* (the default is *No, exit*).
 - **Settings** (`/settings`, top menu): everything that used to need `settings.json` or the file explorer. *General*:
   workspace, Blender and Python paths, each checked when saved (folder exists, `blender.exe` exists, `python --version`
   runs), plus whether ffmpeg is found. *YouTube*: setup steps with links, then paste the Client ID and secret (or choose
@@ -53,7 +70,7 @@ ce app            # starts http://127.0.0.1:4100 and opens it; Ctrl+C stops it (
   logged in; the result shows on the page (MCP `chrome_check_report`). Saved to `settings.json` → `publish`.
 - **Publish** (`/publish`, top menu; see below): a page of its own, not a tab inside each video. Left: every video with
   an exported file and its files; middle: the picked file and the platforms, or the History when nothing is picked;
-  right: that video's Claude panel. Old links (`/published`, `/p/<project>/publish`) redirect there. A video's tab bar
+  right: that video's Claude chat. Old links (`/published`, `/p/<project>/publish`) redirect there. A video's tab bar
   reads Brief · Editor · Final · Publish (the last opens this page at that video; "Open the video" goes back).
 
 ## Final render (Phase 4)
@@ -78,13 +95,13 @@ puts it in the engine's queue (`app/server/render.mjs`), one heavy job at a time
   `blender/lib`, `blender/assets`, the timing and the plate. If it changed, the plan flags the plate and the step
   refuses to mix old and new frames until "re-render" is ticked (which deletes the old frames).
 - **Fallback to Claude**: when a step still fails after its retry, the engine hands the error and log path to the
-  video's Claude panel (starting it if needed) — at most twice per render, and only if the job allows it (a checkbox,
-  on by default). The message is only typed when the panel is at its prompt; if it's showing a question (trust, a
-  startup choice, a permission prompt) the engine waits up to 15 minutes for the user to answer it, and never answers
-  for them. Until Claude is told, the failure is also added to the user's next message (prompt hook). Claude has
+  video's Claude chat (starting Claude if needed) — at most twice per render, and only if the job allows it (a checkbox,
+  on by default). If Claude is busy or waiting for the user's answer to a question, the message waits in its queue;
+  the engine never answers questions for the user. Until Claude is told, the failure is also added to the user's next
+  message (prompt hook). Claude has
   `render_status`, `render_start`, `render_resume`, `render_stop` tools; the `make-video` skill says how to fix and
   resume, and what to ask the user first (anything costing money, re-rendering existing 3D, script or look changes).
-- Board buttons (Approve, Ask Claude) use the same rule: nothing is typed into a panel that's showing a question.
+- Board buttons (Approve, Ask Claude) send their message the same way.
 - `CE_RENDER_NO_GPU_WAIT=1` (tests) skips waiting for other Blender processes.
 - Shot script contract (also in the skill): `final <f0> <f1>` renders plate-local frames f0..f1 (1-based) at full
   resolution into `renders/<id>/final/f_####.png`; the plate has `round(duration × fps) + 1` frames; frames without 3D
@@ -98,9 +115,8 @@ an exported file, with its files: the Final render's `out/delivery.mp4` ("Final"
 delivery file yet; `out/render/` and `out/check/` are skipped). Videos without one are listed under *Not exported yet*
 with a link to their Final tab. Picking a file stores it in `publish/state.json` → `video`; everything below uses the
 picked file. With nothing picked the middle shows the **History** (`publish/history.json` of each video: every finished
-upload or post with its file, plus anything under way). The right side is the video's Claude panel, opened when it's
-already running, when a post or a draft request is handed to it, or with "Open Claude now" (opening it writes the
-project's `.mcp.json`/hook like the editor does).
+upload or post with its file, plus anything under way). The right side is the video's Claude chat (showing it doesn't
+start Claude; it writes the project's `.mcp.json`/hook like the editor does).
 
 - **YouTube, through the YouTube Data API** (`app/server/youtube.mjs`). One-time setup in **Settings → YouTube**:
   a Google Cloud project with the YouTube Data API v3, a **Desktop app** OAuth client (Client ID and secret pasted on
@@ -116,8 +132,8 @@ project's `.mcp.json`/hook like the editor does).
   answered; an AI-content disclosure checkbox maps to `containsSyntheticMedia`. Checked 2026-10-19 against Google's
   docs: uploads from unverified API projects are not restricted to private; videos.insert is 1 unit of a 100/day
   "Video Uploads" quota.
-- **Facebook Page and Instagram, through Claude in Chrome**: "Hand to Claude in Chrome" types a message into the video's
-  Claude panel (same never-into-a-question rule); Claude posts in the user's logged-in Chrome profile as a Reel or a
+- **Facebook Page and Instagram, through Claude in Chrome**: "Hand to Claude in Chrome" sends a message to the video's
+  Claude chat (it waits its turn like any other); Claude posts in the user's logged-in Chrome profile as a Reel or a
   post, **stops before the final Post**, reports `ready-to-post` with the `publish_report` tool, and the user clicks
   Post. If the browser tools can't attach a file from disk, Claude asks the user to drag it in ("Show the video in its
   folder" helps). After posting, Claude (or the user, "Mark as posted") records the link.
@@ -160,7 +176,7 @@ name in the workspace, or a project number.
 | `pipeline/` | Python steps that read a project's `project.json` / `script.json` / `sfx.json` and write into it: OpenRouter voice (verbatim-checked) and Lyria music, stems and music ducking, procedural sound effects, plate bloom + encode, captions. |
 | `library/blender/` | Reusable Blender builders (brain, phone) with their assets. A project copies what it uses into `blender/lib/`. |
 | `cli/` | `ce.mjs` (commands) and `projects.mjs` (create/list/link projects; the website reuses it). |
-| `app/` | The website: `server/` (Express API, MCP endpoint, Studio and terminal management, bridge, hook), `web/` (React page, built with esbuild into `dist/`: `npm run build`). Own packages, separate from `runtime/`. |
+| `app/` | The website: `server/` (Express API, MCP endpoint, Studio management, the Claude chat, bridge, hook), `web/` (React page, built with esbuild into `dist/`: `npm run build`). Own packages, separate from `runtime/`. |
 | `migrations/phone-reel/` | Turns the existing reel (project-3-development + project-2-expt/reel) into an engine project. |
 
 ## Rules the design follows
@@ -331,3 +347,32 @@ The user's engine (4100) was restarted onto this version with nothing rendering 
 Not exercised in this review: a 3D (Blender) final render (unchanged since Phase 4; the PC had ~4 GB free memory),
 the real Google and real Chrome posting (by design), Copy file path / Show in folder / Download in a real browser,
 link downloads, Studio interactions and the editor MCP tools, the real Claude running `/make-video`.
+
+## Verified, the Claude chat (2026-10-21)
+
+Claude Code 2.1.304, probed first in a scratch folder (stream-json in and out): skills (`/make-video`), the
+`UserPromptSubmit` hook, `--resume` (about 1 s), interrupt, `set_permission_mode`, permission questions and
+AskUserQuestion answered by the host (`--permission-prompt-tool stdio` plus an `initialize` request; without them
+permission questions are silently denied and AskUserQuestion is missing), "always allow" (`updatedPermissions`, saved
+to the folder's `settings.local.json`), deny, streaming text, `--chrome` (the Chrome tools, including `file_upload`).
+A message sent while a permission question waits is queued: the question is neither answered nor cancelled.
+
+Scratch engine, fake Claude (`tests/e2e/t12_chat.mjs`, 60 checks): a new video starts `/make-video` by itself (first
+reply 0.5 s after the page opened); messages, streamed replies, tool steps folded and opened; a permission card, a board
+message sent meanwhile waits and doesn't answer it, Allow / Always allow / Deny; a question card; Stop (no error line);
+Auto / Ask first saved per video and passed on restart; reload keeps the conversation; a crash is reported and the next
+message resumes the same conversation; idle close and resume; New conversation; Terminal (a window of its own, sending
+refused meanwhile, the chat back when it closes); earlier messages from a copied real conversation (0.8 MB and 23.6 MB:
+shown in about 0.3 s, no Claude started just by looking, the first message resumes it); the chat socket and the send API
+refuse foreign origins. The older tests (t1–t11) were updated to the chat (Approve, render failures and Publish hand-offs
+sent while Claude waits for an answer are queued and the question stays the user's).
+
+Real Claude Code on the scratch engine (`t13_real_claude_chat.mjs`, `t14_tui_resume.mjs`): `/make-video` started by
+itself (first words after 15 s), the engine's MCP tools connected (`editor_state` used), the hook's note arrived, Ask
+first showed a real permission card and the command ran after Allow, AskUserQuestion became a card and Claude got
+"Blue", Stop; a conversation made in Claude Code's normal terminal showed in the chat and the chat's Claude remembered
+it; the Terminal button ran `claude.exe --resume <id>` in a window of its own and the chat came back when it closed.
+
+Not exercised: a person using the chat by hand in a normal browser; the real Claude posting through Chrome (by design);
+a whole `/make-video` → Approve run with the real Claude (Approve costs money); how the chat behaves after a future
+Claude Code update changes its stream-json messages.

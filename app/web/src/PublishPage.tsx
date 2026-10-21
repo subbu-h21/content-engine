@@ -3,12 +3,12 @@
  * the picked one in the middle (player, YouTube / Facebook / Instagram), its Claude panel on the right (Claude posts to
  * Facebook and Instagram in Chrome). With nothing picked, the middle shows the history.
  */
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { api, type PublishList, type VideoFile } from "./api";
+import { Chat } from "./Chat";
 import { History } from "./History";
 import { navigate } from "./nav";
 import { PublishPanel } from "./PublishPanel";
-import { Terminal, type TerminalHandle } from "./Terminal";
 import { TopNav } from "./TopNav";
 import { PLATFORM_NAME, publishNeedsYou, publishWord } from "./words";
 
@@ -21,7 +21,6 @@ const fileName = (rel: string) => rel.split("/").pop() ?? rel;
 export const PublishPage: React.FC<{ name: string | null }> = ({ name }) => {
   const [list, setList] = useState<PublishList | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [claudeOn, setClaudeOn] = useState(false);
   const [width, setWidth] = useState(() => {
     try {
       return Number(localStorage.getItem(PANEL_KEY)) || 520;
@@ -29,8 +28,6 @@ export const PublishPage: React.FC<{ name: string | null }> = ({ name }) => {
       return 520;
     }
   });
-  const term = useRef<TerminalHandle | null>(null);
-
   useEffect(() => {
     let stop = false;
     (async () => {
@@ -49,9 +46,7 @@ export const PublishPage: React.FC<{ name: string | null }> = ({ name }) => {
     };
   }, []);
 
-  // a different video: its Claude panel opens when it's already running or when something is handed to it
   useEffect(() => {
-    setClaudeOn(false);
     if (name) api.view(name, "publish").catch(() => undefined);
   }, [name]);
 
@@ -155,29 +150,14 @@ export const PublishPage: React.FC<{ name: string | null }> = ({ name }) => {
           ) : null}
         </aside>
 
-        {name && known ? <PublishPanel key={name} name={name} onClaude={() => setClaudeOn(true)} /> : name ? <div className="board"><p className="error">There's no video called {name} in the workspace.</p></div> : <History />}
+        {name && known ? <PublishPanel key={name} name={name} /> : name ? <div className="board"><p className="error">There's no video called {name} in the workspace.</p></div> : <History />}
 
+        {/* the video's Claude (posts to Facebook and Instagram in Chrome); showing it doesn't start Claude */}
         {name && known ? (
           <>
             <div className="divider" onPointerDown={drag} />
             <aside className="claude-pane" style={{ width }}>
-              <div className="pane-head">
-                <span>Claude</span>
-                <span className="spacer" />
-                {claudeOn ? (
-                  <button className="quiet" onClick={() => term.current?.restart()} title="Start a fresh Claude Code conversation">
-                    Restart
-                  </button>
-                ) : null}
-              </div>
-              {claudeOn ? (
-                <Terminal project={name} handle={term} />
-              ) : (
-                <div className="claude-off">
-                  <p>Claude posts to Facebook and Instagram for you, in your Chrome. Its panel for this video opens here when you hand a post to it or ask it to draft the texts.</p>
-                  <button onClick={() => setClaudeOn(true)}>Open Claude now</button>
-                </div>
-              )}
+              <Chat key={name} project={name} />
             </aside>
           </>
         ) : null}

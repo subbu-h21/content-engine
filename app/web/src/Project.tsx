@@ -1,10 +1,10 @@
-/** A project: Brief or Editor on the left (Studio stays loaded while Brief is shown), Claude Code on the right. */
-import React, { useEffect, useRef, useState } from "react";
+/** A project: Brief or Editor on the left (Studio stays loaded while Brief is shown), Claude on the right. */
+import React, { useEffect, useState } from "react";
 import { api, type Context, type ProjectInfo, type StudioInfo } from "./api";
 import { BriefBoard } from "./BriefBoard";
+import { Chat } from "./Chat";
 import { RenderPanel } from "./RenderPanel";
 import { navigate } from "./nav";
-import { Terminal, type TerminalHandle } from "./Terminal";
 import { TopNav } from "./TopNav";
 
 const PANEL_KEY = "ce.claudePanelWidth";
@@ -47,7 +47,6 @@ const ProjectView: React.FC<{ name: string; tab: Tab }> = ({ name, tab }) => {
       return 560;
     }
   });
-  const term = useRef<TerminalHandle | null>(null);
   const go = (t: Tab) => navigate(`/p/${encodeURIComponent(name)}${t === "editor" ? "" : `/${t}`}`);
 
   // open the project: connection files + Studio, then wait until Studio answers
@@ -221,14 +220,7 @@ const ProjectView: React.FC<{ name: string; tab: Tab }> = ({ name, tab }) => {
         </div>
         <div className="divider" onPointerDown={drag} />
         <aside className="claude-pane" style={{ width }}>
-          <div className="pane-head">
-            <span>Claude</span>
-            <span className="spacer" />
-            <button className="quiet" onClick={() => term.current?.restart()} title="Start a fresh Claude Code conversation">
-              Restart
-            </button>
-          </div>
-          <Terminal project={name} handle={term} />
+          <Chat project={name} />
         </aside>
       </div>
     </div>

@@ -249,7 +249,7 @@ export const Settings: React.FC = () => {
           <strong>Is Chrome ready?</strong>
           {cc ? (
             <ul className="checklist">
-              <li>{cc.extension ? <span className="okmark">✓</span> : <span className="badmark">✕</span>} Claude's browser tools {cc.extension ? "work" : "aren't on (type /chrome in a video's Claude panel)"}</li>
+              <li>{cc.extension ? <span className="okmark">✓</span> : <span className="badmark">✕</span>} Claude's browser tools {cc.extension ? "work" : "aren't working (check that the Claude in Chrome extension is installed, signed in and on in Chrome)"}</li>
               <li>{cc.facebook === "logged-in" ? <span className="okmark">✓</span> : <span className="badmark">✕</span>} Facebook: {cc.facebook}{cc.facebookPage ? `, Page ${cc.facebookPage}` : ""}</li>
               <li>{cc.instagram === "logged-in" ? <span className="okmark">✓</span> : <span className="badmark">✕</span>} Instagram: {cc.instagram}</li>
               {cc.note ? <li className="dim">{cc.note}</li> : null}

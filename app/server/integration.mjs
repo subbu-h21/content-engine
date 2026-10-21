@@ -3,6 +3,7 @@
  *   .mcp.json                    the engine's MCP tools for this project
  *   .claude/settings.local.json  approves that server, and adds the hook that tells Claude where the user is
  * Both depend on this machine (absolute paths, port), so they are git-ignored. Existing settings are merged, not replaced.
+ * (.claude/engine-chat.json, the chat's Auto / Ask first choice, is git-ignored for the same reason.)
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -41,6 +42,6 @@ export function ensureIntegration(dir, name, engineUrl) {
 
   const gi = path.join(dir, ".gitignore");
   const lines = fs.existsSync(gi) ? fs.readFileSync(gi, "utf8").split(/\r?\n/) : [];
-  const want = [".mcp.json", ".claude/settings.local.json"].filter((l) => !lines.includes(l));
+  const want = [".mcp.json", ".claude/settings.local.json", ".claude/engine-chat.json"].filter((l) => !lines.includes(l));
   if (want.length) fs.appendFileSync(gi, `${lines.length && lines[lines.length - 1] !== "" ? "\n" : ""}# content engine connection (machine-specific)\n${want.join("\n")}\n`);
 }

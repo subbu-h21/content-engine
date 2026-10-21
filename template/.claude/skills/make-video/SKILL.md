@@ -147,7 +147,8 @@ logged-in Chrome profile). Your panel is on the right of that page.
 - `publish_status` shows the video's facts and per-platform notes (Short/Reel length, shape) and draft problems.
 
 **Posting through Chrome** (a message starting `[content engine] Please post this video…`): use the Claude in Chrome
-tools (if they aren't available, tell the user to turn them on with `/chrome`). Open a new tab, go to the Page or
+tools (if they aren't available, tell the user to check that the Claude in Chrome extension is installed, signed in
+and on in Chrome). Open a new tab, go to the Page or
 account, start a Reel or post as asked, attach the video (if your tools can't attach a file from disk, ask the user to add
 it: the Publish page's "Copy file path" button copies the path, which they paste into the file picker's File name box), paste the caption exactly,
 keep other defaults. **Stop before the final Post/Share/Publish button**, call `publish_report` with status
