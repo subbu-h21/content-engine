@@ -146,9 +146,10 @@ in git).
    collect feedback. Open questions for the user:
    - Remove the now unused `node-pty`, `@xterm/xterm`, `@xterm/addon-fit` from `app/package.json`? (Dependency
      change: ask. `t14_tui_resume.mjs` uses node-pty to drive a real terminal.)
-   - Existing videos' `make-video` skill still says "turn them on with `/chrome`" (only the template changed); port the
-     new wording to existing projects only if the user asks.
-   - Commit everything since `dd4b82d` (nproc fix, chat, tests) only when the user asks.
+   - Done 2026-10-22 at the user's request: the new Chrome wording ported to project 8's skill (the only existing video
+     that had the old line; that project's own git repo has it uncommitted), the chat restyled like Claude.ai,
+     everything committed (`eac5246`). The user keeps Remotion Studio as it is (no Player-based editor) and keeps the
+     name "Claude" in the website.
 
 1. **Real-world checks with the user** (they said they'll do these later; guide them step by step):
    - YouTube: Settings → YouTube setup.
