@@ -5,12 +5,15 @@
  *   state.json                                    the picked file ("video") and what's happening per platform: YouTube
  *                                                 upload (resumable), Facebook/Instagram reports
  *   history.json                                  every finished upload/post (the Publish page's history)
- * YouTube goes through its API (youtube.mjs), one upload at a time; Facebook Pages and Instagram are posted by Claude in
- * the user's Chrome (Claude in Chrome), which stops before the final Post click so the user confirms it.
+ * YouTube goes through its API (youtube.mjs), one upload at a time. Facebook Pages and Instagram go through Meta's API
+ * (meta.mjs) when connected, one post at a time; otherwise (or as a backup) Claude posts them in the user's Chrome
+ * (Claude in Chrome) and stops before the final Post click so the user confirms it. A platform's state.json entry with
+ * route "api" is an API post; without it, the Chrome hand-off's reports.
  */
-import { execFile } from "node:child_process";
+import { execFile, spawn } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
+import { MetaError, status as metaStatus, pageById, pageOfInstagram, postFacebookReel, postFacebookVideo, postInstagramReel } from "./meta.mjs";
 import { publishDefaults } from "./settings.mjs";
 import { upload, YouTubeError, status as youtubeStatus } from "./youtube.mjs";
 
@@ -30,6 +33,8 @@ const writeJson = (f, o) => {
 const now = () => new Date().toISOString();
 const pub = (dir, f) => path.join(dir, "publish", f);
 const FINAL = "out/delivery.mp4";
+/** An API post (Facebook/Instagram) that is still under way. */
+export const API_ACTIVE = ["queued", "uploading", "processing", "publishing"];
 
 // ------------------------------------------------------------------ which video files can be published
 
@@ -93,20 +98,36 @@ const DEFAULTS = {
     const description = d.descriptionFooter ? `\n\n${d.descriptionFooter}` : "";
     return { title: (m.title ?? "").slice(0, 100), description, tags: [...d.tags], categoryId: d.categoryId, privacy: d.privacy, publishAt: null, madeForKids: d.madeForKids, synthetic: false };
   },
-  // Reel or post is chosen on the Publish page each time (no default)
+  // Reel or post is chosen on the Publish page each time (no default). page/account: the Chrome hand-off's target;
+  // pageId/igId: the connected Page / Instagram account the API posts to (null = the default one, see accountFor)
   facebook: () => {
     const d = publishDefaults();
-    return { page: d.facebookPage, format: null, caption: d.captionFooter ? `\n\n${d.captionFooter}` : "" };
+    return { page: d.facebookPage, pageId: null, format: null, title: "", caption: d.captionFooter ? `\n\n${d.captionFooter}` : "" };
   },
   instagram: () => {
     const d = publishDefaults();
-    return { account: d.instagramAccount, format: null, caption: d.captionFooter ? `\n\n${d.captionFooter}` : "" };
+    return { account: d.instagramAccount, igId: null, format: null, shareToFeed: true, caption: d.captionFooter ? `\n\n${d.captionFooter}` : "" };
   },
 };
 
 export function getDraft(dir, platform) {
   const m = readJson(path.join(dir, "project.json"), {});
   return { ...DEFAULTS[platform](m), ...(readJson(pub(dir, `${platform}.json`), {}) ?? {}) };
+}
+
+/**
+ * The connected account a draft posts to through the API: the one picked on the Publish page, else the one matching
+ * Settings' Page link / Instagram handle, else the first. { id, name, page } or null.
+ */
+export function accountFor(platform, d) {
+  const pages = metaStatus().pages;
+  if (platform === "facebook") {
+    const norm = (s) => String(s ?? "").toLowerCase().replace(/\/+$/, "");
+    const p = pages.find((x) => x.id === d.pageId) ?? pages.find((x) => d.page && norm(x.link) === norm(d.page)) ?? pages[0];
+    return p ? { id: p.id, name: p.name, link: p.link } : null;
+  }
+  const igs = pages.filter((x) => x.instagram).map((x) => ({ id: x.instagram.id, name: x.instagram.username ? `@${x.instagram.username}` : x.instagram.id, pageId: x.id, pageName: x.name }));
+  return igs.find((x) => x.id === d.igId) ?? igs.find((x) => d.account && x.name.toLowerCase() === String(d.account).toLowerCase()) ?? igs[0] ?? null;
 }
 
 /** Problems with a draft, in plain words (empty = fine). */
@@ -135,6 +156,40 @@ export function draftProblems(platform, d) {
   return p;
 }
 
+/**
+ * Problems before posting through Meta's API (empty = fine): the account, the text, and the limits Meta enforces for
+ * the format (Reels: Facebook 3–90 s vertical; Instagram 3 s–15 min, ≤ 300 MB, 23–60 fps). info = videoInfo().
+ */
+export function apiProblems(platform, d, info) {
+  const p = [];
+  if (platform !== "facebook" && platform !== "instagram") return p;
+  const meta = metaStatus();
+  if (!meta.connected) return ["Connect Facebook & Instagram in Settings first."];
+  const acc = accountFor(platform, d);
+  if (!acc) p.push(platform === "facebook" ? "No Facebook Page is connected: in Settings, connect again and pick your Page." : "No Instagram account is linked to your connected Pages: link it in the Page's settings (Linked accounts), then Test connection in Settings.");
+  if (!d.caption?.trim()) p.push("The caption is empty.");
+  if (platform === "facebook" && !["reel", "post"].includes(d.format)) p.push("Choose Reel or video post.");
+  if (platform === "instagram") {
+    if ((d.caption ?? "").length > 2200) p.push("Instagram captions are limited to 2,200 characters.");
+    if (((d.caption ?? "").match(/#\w+/g) ?? []).length > 30) p.push("Instagram allows at most 30 hashtags.");
+  }
+  if (info?.exists && info.duration) {
+    const s = Math.round(info.duration);
+    if (platform === "facebook" && d.format === "reel") {
+      if (info.duration < 3 || info.duration > 90) p.push(`Facebook Reels must be 3–90 seconds; this video is ${s} s (post it as a video post).`);
+      if (!info.vertical) p.push("Facebook Reels must be vertical (9:16); this video is horizontal (post it as a video post).");
+      if (info.fps && (info.fps < 23.9 || info.fps > 60.1)) p.push(`Facebook Reels need 24–60 frames per second; this video has ${Math.round(info.fps)}.`);
+    }
+    if (platform === "instagram") {
+      if (info.duration < 3 || info.duration > 15 * 60) p.push(`Instagram Reels must be 3 seconds to 15 minutes; this video is ${s} s.`);
+      if (info.size > 300 * 1024 * 1024) p.push(`Instagram accepts videos up to 300 MB; this one is ${Math.round(info.size / 1048576)} MB.`);
+      if (info.fps && (info.fps < 22.9 || info.fps > 60.1)) p.push(`Instagram needs 23–60 frames per second; this video has ${Math.round(info.fps)}.`);
+      if (info.width > 1920) p.push(`Instagram accepts videos up to 1920 pixels wide; this one is ${info.width}.`);
+    }
+  }
+  return p;
+}
+
 export function saveDraft(dir, platform, patch) {
   if (!PLATFORMS.includes(platform)) throw new Error(`Unknown platform ${platform}`);
   const cur = getDraft(dir, platform);
@@ -142,6 +197,8 @@ export function saveDraft(dir, platform, patch) {
   const next = { ...cur };
   for (const k of allowed) if (k in patch) next[k] = patch[k];
   if (platform !== "youtube" && !["reel", "post"].includes(next.format)) next.format = null;
+  if (platform === "instagram") next.shareToFeed = next.shareToFeed !== false;
+  if (platform === "facebook") next.title = String(next.title ?? "").slice(0, 255);
   if (platform === "youtube" && typeof next.tags === "string") next.tags = next.tags.split(",").map((t) => t.trim()).filter(Boolean);
   writeJson(pub(dir, `${platform}.json`), next);
   return next;
@@ -156,10 +213,11 @@ function probe(file) {
   const key = `${file}|${st.size}|${st.mtimeMs}`;
   if (probes.has(key)) return probes.get(key);
   const p = new Promise((resolve) => {
-    execFile("ffprobe", ["-v", "error", "-select_streams", "v:0", "-show_entries", "stream=width,height:format=duration,size", "-of", "json", file], (err, out) => {
+    execFile("ffprobe", ["-v", "error", "-select_streams", "v:0", "-show_entries", "stream=width,height,avg_frame_rate:format=duration,size", "-of", "json", file], (err, out) => {
       try {
         const j = JSON.parse(out);
-        resolve({ duration: Number(j.format?.duration ?? 0), size: Number(j.format?.size ?? 0), width: j.streams?.[0]?.width ?? 0, height: j.streams?.[0]?.height ?? 0 });
+        const [num, den] = String(j.streams?.[0]?.avg_frame_rate ?? "0/1").split("/").map(Number);
+        resolve({ duration: Number(j.format?.duration ?? 0), size: Number(j.format?.size ?? 0), width: j.streams?.[0]?.width ?? 0, height: j.streams?.[0]?.height ?? 0, fps: den ? num / den : 0 });
       } catch {
         probes.delete(key); // a file still being written: try again next time
         resolve(null);
@@ -205,8 +263,13 @@ export async function videoInfo(dir, rel = selectedVideo(dir)) {
     notes.facebook.push("Horizontal: fine as a video post; Reels are vertical.");
     notes.instagram.push("Horizontal: Instagram Reels are vertical; it would be cropped or letterboxed.");
   }
-  if (p.duration > 90) notes.facebook.push(`${Math.round(p.duration)} s long: Facebook Reels have been limited to about 90 s (Meta changes this); longer goes up as a video post.`);
-  if (p.duration > 180) notes.instagram.push(`${Math.round(p.duration)} s long: Instagram Reels are limited to about 3 minutes (Meta changes this); longer goes up as a video post.`);
+  if (p.duration > 90) notes.facebook.push(`${Math.round(p.duration)} s long: Facebook Reels are limited to 90 s; post it as a video post.`);
+  const ig = igPlan(st.size, p.duration, p.width);
+  if (ig)
+    notes.instagram.push(
+      `${Math.round(st.size / 1e6)} MB: posting through Meta's API sends Instagram a lighter copy (about ${Math.round(ig.bytes / 1e6)} MB, ${(ig.kbps / 1000).toFixed(1)} Mbit/s${ig.scale ? ", 720 px wide" : ""}), because its upload fails on bigger files.` +
+        (ig.kbps < 1500 ? " For a video this long that's a visible drop in quality: if it matters, post it the other way below." : " Instagram re-compresses Reels to about that anyway."),
+    );
   return {
     exists: true,
     path: file,
@@ -217,6 +280,7 @@ export async function videoInfo(dir, rel = selectedVideo(dir)) {
     duration: p.duration,
     width: p.width,
     height: p.height,
+    fps: p.fps,
     vertical,
     renderedByQueue: kind === "final" && job?.status === "done",
     changedAfter,
@@ -266,6 +330,7 @@ export function report(dir, platform, { status, url = null, note = null, file = 
   const cur = getState(dir)[platform] ?? {};
   if (status === "none") {
     if (platform === "youtube" && ["queued", "uploading"].includes(cur.status)) throw new Error("Stop the upload first.");
+    if (cur.route === "api" && API_ACTIVE.includes(cur.status)) throw new Error("This is being posted through Meta's API right now: wait until it's done.");
     forgetHistory(dir, cur.historyId);
     const s = getState(dir);
     delete s[platform];
@@ -273,9 +338,10 @@ export function report(dir, platform, { status, url = null, note = null, file = 
     return {};
   }
   if (platform === "youtube") throw new Error("YouTube's status comes from the upload itself.");
+  if (cur.route === "api" && API_ACTIVE.includes(cur.status)) throw new Error("This is being posted through Meta's API right now: wait until it's done.");
   if (status === "handed") {
-    // a new hand-off starts a new post: the previous one stays in the history
-    return setState(dir, platform, { status, url: null, note: null, historyId: null, file: file ?? selectedVideo(dir), format: getDraft(dir, platform).format, reportedAt: now() });
+    // a new hand-off starts a new post: the previous one (an API post too) stays in the history
+    return setState(dir, platform, { status, route: undefined, post: undefined, result: undefined, account: undefined, error: undefined, progress: undefined, url: null, note: null, historyId: null, file: file ?? selectedVideo(dir), format: getDraft(dir, platform).format, reportedAt: now() });
   }
   const patch = { status, url, note, reportedAt: now() };
   if (status === "posted") {
@@ -356,15 +422,24 @@ export function stopYouTube(name, dir) {
   return getState(dir).youtube;
 }
 
-/** On engine start: an upload that was running is "interrupted" (Resume continues it in the same YouTube session). */
+/** On engine start: an upload or post that was running is "interrupted" (Resume continues it where it stopped). */
 export function recoverUploads(projects) {
   for (const p of projects) {
     const s = readJson(pub(p.dir, "state.json"), null);
-    if (s?.youtube && ["queued", "uploading"].includes(s.youtube.status)) {
+    if (!s) continue;
+    let changed = false;
+    if (s.youtube && ["queued", "uploading"].includes(s.youtube.status)) {
       s.youtube.status = "interrupted";
       s.youtube.error = "The engine stopped during the upload. Resume continues where YouTube says it stopped.";
-      writeJson(pub(p.dir, "state.json"), s);
+      changed = true;
     }
+    for (const pf of ["facebook", "instagram"])
+      if (s[pf]?.route === "api" && API_ACTIVE.includes(s[pf].status)) {
+        s[pf].status = "interrupted";
+        s[pf].error = "The engine stopped while posting. Resume continues where it stopped; nothing is posted twice.";
+        changed = true;
+      }
+    if (changed) writeJson(pub(p.dir, "state.json"), s);
   }
 }
 
@@ -445,6 +520,228 @@ async function runUpload(name, u) {
     log(`failed: ${e.message}`);
     setState(dir, "youtube", { status: "failed", error: e.message, retryable: e instanceof YouTubeError ? e.retry : true, endedAt: now() });
     hooks.onFailure?.(name, dir, e.message).catch?.(() => undefined);
+  } finally {
+    forget();
+  }
+}
+
+// ------------------------------------------------------------------ Facebook / Instagram through Meta's API
+
+const posts = new Map(); // "<name>:<platform>" -> { dir, platform, rel, live }
+const postQueue = [];
+let postActive = null;
+
+export function metaLive(name, platform) {
+  const key = `${name}:${platform}`;
+  const p = posts.get(key);
+  return p ? { ...p.live, queuePosition: postQueue.indexOf(key) + 1 || null } : null;
+}
+
+/** Whether a project has an API post queued or running (delete waits for it). */
+export const metaBusy = (dir) => ["facebook", "instagram"].some((pf) => getState(dir)[pf]?.route === "api" && API_ACTIVE.includes(getState(dir)[pf].status));
+
+/**
+ * Post the picked file to Facebook or Instagram through Meta's API (queued; one post at a time). A failed or
+ * interrupted post of the same file to the same account resumes where it stopped. again: post a file that's already
+ * there once more (the user confirmed).
+ */
+export async function startMeta(name, dir, platform, { again = false } = {}) {
+  if (!["facebook", "instagram"].includes(platform)) throw new Error("only Facebook and Instagram post through Meta");
+  const rel = selectedVideo(dir);
+  const info = await videoInfo(dir, rel);
+  if (!info.exists) throw new Error("This video has no exported file yet: render it on its Final tab first.");
+  const d = getDraft(dir, platform);
+  const problems = apiProblems(platform, d, info);
+  if (problems.length) throw new Error(problems.join(" "));
+  const acc = accountFor(platform, d);
+  const s = getState(dir)[platform] ?? {};
+  if (s.route === "api" && API_ACTIVE.includes(s.status)) throw new Error("This video is already being posted there.");
+  if (s.status === "handed" || s.status === "ready-to-post") throw new Error("This post is with Claude in Chrome right now: finish or Reset it there first.");
+  const mtime = Math.round(fs.statSync(info.path).mtimeMs);
+  const format = platform === "instagram" ? "reel" : d.format;
+  // same file, same account and format, not finished: continue that post (its upload/IDs are kept)
+  const resumable = s.route === "api" && s.status !== "posted" && s.file === rel && s.account?.id === acc.id && s.format === format && s.post?.identity?.mtime === mtime;
+  const earlier = getHistory(dir).find((e) => e.platform === platform && e.route === "api" && e.account?.id === acc.id && e.file === rel && e.mtime === mtime && e.format === format);
+  if (earlier && !again && !resumable) {
+    const e = new Error(`This file is already on ${acc.name} (${earlier.url ?? "posted"}). Posting it again makes a second post.`);
+    e.duplicate = earlier.url ?? "posted";
+    throw e;
+  }
+  setState(dir, platform, {
+    route: "api",
+    status: "queued",
+    error: null,
+    url: null,
+    note: null,
+    file: rel,
+    format,
+    account: { id: acc.id, name: acc.name },
+    queuedAt: now(),
+    historyId: null,
+    result: null,
+    ...(resumable ? {} : { post: null, progress: null }),
+  });
+  const key = `${name}:${platform}`;
+  posts.set(key, { dir, platform, rel, live: {} });
+  if (!postQueue.includes(key)) postQueue.push(key);
+  kickPosts();
+  return getState(dir)[platform];
+}
+
+function kickPosts() {
+  if (postActive || !postQueue.length) return;
+  const key = postQueue.shift();
+  const p = posts.get(key);
+  if (!p) return kickPosts();
+  postActive = key;
+  runPost(key, p)
+    .catch(() => undefined)
+    .finally(() => {
+      postActive = null;
+      kickPosts();
+    });
+}
+
+// Instagram's upload server gives up ("ProcessingFailedError: Request processing failed") on bigger files, far below
+// its documented 300 MB. Tried on 2026-10-22 (real account, 1080x1920 H.264): 3, 9, 12, 28 and 31 MB went through;
+// 38, 40 and 60 MB failed every time, whatever the length or bitrate (a 27 MB file failed once while another upload
+// ran). Above IG_MAX_BYTES Instagram gets a copy re-encoded to about IG_TARGET_BYTES (it re-compresses every Reel
+// anyway); YouTube and Facebook keep the original.
+const IG_MAX_BYTES = 24_000_000;
+const IG_TARGET_BYTES = 21_000_000;
+const IG_AUDIO_KBPS = 128;
+/**
+ * How Instagram's copy is encoded: null = the file goes as it is; else video kbps (at most 3 Mbit/s), 720 px wide when
+ * that's low, and about how big the copy comes out.
+ */
+function igPlan(size, duration, width) {
+  if (!(duration > 0) || size <= IG_MAX_BYTES) return null;
+  const kbps = Math.max(300, Math.min(3000, Math.floor((IG_TARGET_BYTES * 8) / duration / 1000) - IG_AUDIO_KBPS));
+  return { kbps, scale: kbps < 1500 && width > 720, bytes: Math.round(((kbps + IG_AUDIO_KBPS) * 1000 * duration) / 8) };
+}
+
+/** Whether the MP4's index (moov) comes before its media data ("faststart"), as Instagram wants. */
+function isFaststart(file) {
+  const fd = fs.openSync(file, "r");
+  try {
+    const head = Buffer.alloc(16);
+    let pos = 0;
+    for (let i = 0; i < 20; i++) {
+      if (fs.readSync(fd, head, 0, 16, pos) < 8) break;
+      let size = head.readUInt32BE(0);
+      const type = head.toString("latin1", 4, 8);
+      if (type === "moov") return true;
+      if (type === "mdat") break;
+      if (size === 1) size = Number(head.readBigUInt64BE(8));
+      if (size < 8) break;
+      pos += size;
+    }
+  } finally {
+    fs.closeSync(fd);
+  }
+  return false;
+}
+
+/** ffmpeg in the background (the server keeps answering), reporting how many seconds of the video are done. */
+function ffmpeg(args, onTime) {
+  return new Promise((resolve, reject) => {
+    const proc = spawn("ffmpeg", ["-y", "-loglevel", "error", "-nostats", "-progress", "pipe:1", ...args], { windowsHide: true });
+    let err = "";
+    proc.stderr.on("data", (d) => (err = (err + d).slice(-2000)));
+    proc.stdout.on("data", (d) => {
+      const us = /out_time_us=(\d+)/.exec(String(d));
+      if (us) onTime?.(Number(us[1]) / 1e6);
+    });
+    proc.on("error", reject);
+    proc.on("close", (code) => (code === 0 ? resolve() : reject(new Error(`ffmpeg couldn't prepare the video for Instagram: ${err.trim().split("\n").pop() || `exit ${code}`}`))));
+  });
+}
+
+/**
+ * The file Instagram gets: the video itself when it's light enough and faststart, else a copy in publish/.upload/
+ * (re-encoded lighter, or only its index moved to the front). The copy is named after the video's version and kept
+ * until the post is done, so Resume reuses it.
+ */
+async function instagramFile(dir, file, identity, log, onPrepare) {
+  const facts = await probe(file);
+  const duration = facts?.duration ?? 0;
+  const heavy = igPlan(identity.size, duration, facts?.width ?? 0);
+  if (!heavy && isFaststart(file)) return file;
+  const tmp = pub(dir, path.join(".upload", `${path.basename(file, path.extname(file))}-${identity.mtime}-instagram.mp4`));
+  if (fs.existsSync(tmp)) return tmp;
+  fs.rmSync(path.dirname(tmp), { recursive: true, force: true }); // copies of other versions
+  fs.mkdirSync(path.dirname(tmp), { recursive: true });
+  if (heavy) log(`making a lighter copy for Instagram: ${identity.size} bytes → about ${heavy.bytes} (video ${heavy.kbps} kbit/s${heavy.scale ? ", 720 px wide" : ""})`);
+  else log("moving the video's index to the front (faststart) for upload");
+  // two-pass would hit the size more exactly but takes twice as long; capped VBR lands within a few percent
+  const encode = heavy
+    ? [
+        ...["-map", "0:v:0", "-map", "0:a:0?", "-c:v", "libx264", "-preset", "medium", "-b:v", `${heavy.kbps}k`, "-maxrate", `${Math.round(heavy.kbps * 1.3)}k`, "-bufsize", `${heavy.kbps * 2}k`],
+        ...(heavy.scale ? ["-vf", "scale=720:-2"] : []),
+        ...["-pix_fmt", "yuv420p", "-c:a", "aac", "-b:a", `${IG_AUDIO_KBPS}k`],
+      ]
+    : ["-c", "copy"];
+  onPrepare(0, duration);
+  await ffmpeg(["-i", file, ...encode, "-movflags", "+faststart", tmp + ".part.mp4"], (t) => onPrepare(Math.min(t, duration), duration));
+  fs.renameSync(tmp + ".part.mp4", tmp);
+  log(`copy ready: ${fs.statSync(tmp).size} bytes`);
+  return tmp;
+}
+
+async function runPost(key, p) {
+  const { dir, platform } = p;
+  const name = key.slice(0, key.lastIndexOf(":"));
+  const logFile = pub(dir, `${platform}.log`);
+  const log = (m) => fs.appendFileSync(logFile, `[${now()}] ${m}\n`);
+  const forget = () => posts.get(key) === p && posts.delete(key);
+  const file = videoPath(dir, p.rel);
+  if (!file) {
+    log(`failed: ${p.rel} is gone`);
+    setState(dir, platform, { status: "failed", error: `The file ${p.rel} isn't there any more.`, retryable: false, endedAt: now() });
+    forget();
+    return;
+  }
+  const s = getState(dir)[platform] ?? {};
+  const d = getDraft(dir, platform);
+  const st = fs.statSync(file);
+  const identity = { size: st.size, mtime: Math.round(st.mtimeMs) };
+  const post = s.post?.identity?.mtime === identity.mtime ? s.post : { identity };
+  const save = () => setState(dir, platform, { post, status: post.phase === "processing" ? "processing" : ["finishing", "publishing", "done"].includes(post.phase) ? "publishing" : "uploading" });
+  setState(dir, platform, { status: "uploading", startedAt: s.startedAt ?? now(), error: null, post });
+  let lastSave = 0;
+  const onProgress = (sent, total) => {
+    p.live = { sent, total };
+    if (Date.now() - lastSave > 3000) {
+      lastSave = Date.now();
+      setState(dir, platform, { progress: { sent, total } });
+    }
+  };
+  try {
+    let result;
+    const caption = d.caption.trim();
+    if (platform === "facebook") {
+      const page = pageById(s.account.id);
+      if (!page) throw new MetaError("That Facebook Page isn't connected any more: Test connection in Settings.");
+      log(`${s.format === "reel" ? "Reel" : "video post"} of ${p.rel} (${st.size} bytes) to ${page.name}`);
+      result = s.format === "reel" ? await postFacebookReel({ page, file, size: st.size, caption, st: post, save, log, onProgress }) : await postFacebookVideo({ page, file, size: st.size, caption, title: d.title?.trim(), st: post, save, log, onProgress });
+    } else {
+      const page = pageOfInstagram(s.account.id);
+      if (!page) throw new MetaError("That Instagram account isn't linked to a connected Page any more: Test connection in Settings.");
+      const up = await instagramFile(dir, file, identity, log, (done, total) => (p.live = { preparing: { done, total } }));
+      const size = fs.statSync(up).size;
+      log(`Reel of ${p.rel} (${size} bytes) to ${s.account.name}${d.shareToFeed ? ", also in the feed" : ", Reels tab only"}`);
+      result = await postInstagramReel({ page, igId: s.account.id, file: up, size, caption, shareToFeed: d.shareToFeed !== false, st: post, save, log, onProgress });
+      if (up !== file) fs.rmSync(up, { force: true });
+    }
+    const id = `${platform}-${Date.now()}`;
+    const endedAt = now();
+    recordHistory(dir, { id, platform, route: "api", account: s.account, format: s.format, postId: result.id, file: p.rel, size: st.size, mtime: identity.mtime, url: result.url, at: endedAt });
+    setState(dir, platform, { status: "posted", result, url: result.url, post: null, endedAt, historyId: id, progress: { sent: st.size, total: st.size } });
+    log(`done: ${result.url ?? result.id}`);
+  } catch (e) {
+    log(`failed: ${e.message}`);
+    setState(dir, platform, { status: "failed", error: e.message, retryable: e instanceof MetaError ? e.retry : true, endedAt: now() });
+    hooks.onFailure?.(name, dir, e.message)?.catch?.(() => undefined);
   } finally {
     forget();
   }

@@ -103,6 +103,7 @@ window.__set = (el, v) => {
 window.__btn = (re, root = document) => [...root.querySelectorAll("button, a")].find((b) => new RegExp(re).test(b.textContent.trim()));
 window.__click = (re, root) => { const b = window.__btn(re, root); if (!b) return "no button " + re; if (b.disabled) return "disabled " + re; b.click(); return "clicked"; };
 window.__text = (sel = "body") => (document.querySelector(sel)?.innerText ?? "").replace(/\\s+/g, " ");
+window.__tab = (re) => { const b = [...document.querySelectorAll(".ptabs button")].find((x) => new RegExp(re).test(x.textContent)); if (!b) return "no tab " + re; b.click(); return "tab"; };
 `;
 export async function page(port = 9340, size) {
   const { launch } = await import("./cdp.mjs");

@@ -20,7 +20,20 @@ export function publishWord(platform: PlatformId, status: string): string {
     return (
       { done: "uploaded", uploading: "uploading", queued: "waiting to upload", stopped: "upload stopped", interrupted: "upload interrupted", failed: "upload stopped by an error" }[status] ?? status
     );
-  return { handed: "with Claude", "ready-to-post": "ready: click Post in Chrome", posted: "posted", failed: "not posted" }[status] ?? status;
+  return (
+    {
+      handed: "with Claude",
+      "ready-to-post": "ready: click Post in Chrome",
+      posted: "posted",
+      failed: "not posted",
+      // through Meta's API
+      queued: "waiting to post",
+      uploading: "posting",
+      processing: "processing",
+      publishing: "publishing",
+      interrupted: "posting interrupted",
+    }[status] ?? status
+  );
 }
 /** Statuses where something stopped (shown as a warning). */
 export const publishNeedsYou = (status: string) => ["failed", "interrupted", "stopped"].includes(status);

@@ -4,6 +4,14 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Content engine</title>
+    <script>
+      // light unless this browser chose dark in Settings (src/theme.ts); set before the page draws
+      try {
+        document.documentElement.dataset.theme = localStorage.getItem("ce.theme") === "dark" ? "dark" : "light";
+      } catch (e) {
+        document.documentElement.dataset.theme = "light";
+      }
+    </script>
     <link rel="stylesheet" href="/main.css" />
   </head>
   <body>

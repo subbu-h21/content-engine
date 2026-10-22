@@ -97,9 +97,17 @@ export type RenderInfo = {
 
 export type YouTubeStatus = { clientSaved: boolean; clientId?: string | null; connected: boolean; channel: { id: string; title: string; url: string } | null; connectedAt: string | null };
 export type YouTubeDraft = { title: string; description: string; tags: string[]; categoryId: string; privacy: "private" | "unlisted" | "public" | "scheduled"; publishAt: string | null; madeForKids: boolean | null; synthetic: boolean };
-export type SocialDraft = { page?: string; account?: string; format: "reel" | "post" | null; caption: string };
+export type SocialDraft = { page?: string; account?: string; format: "reel" | "post" | null; caption: string; pageId?: string | null; igId?: string | null; title?: string; shareToFeed?: boolean };
+/** Facebook & Instagram through Meta's API (server: meta.mjs). */
+export type MetaPage = { id: string; name: string; link: string; canPost: boolean; instagram: { id: string; username: string | null } | null };
+export type MetaStatus = { appSaved: boolean; appId: string | null; configId: string | null; connected: boolean; user: { id: string; name: string } | null; connectedAt: string | null; userExpiresAt: string | null; missing: string[]; pages: MetaPage[]; redirectUri: string };
+export type MetaAccount = { id: string; name: string; link?: string; pageId?: string; pageName?: string };
 export type PlatformState = {
   status?: string;
+  /** "api": posted through Meta's API (else the Chrome hand-off's reports) */
+  route?: "api";
+  account?: { id: string; name: string } | null;
+  retryable?: boolean;
   file?: string;
   format?: "reel" | "post" | null;
   error?: string | null;
@@ -139,6 +147,16 @@ export type PublishInfo = {
   state: Partial<Record<"youtube" | "facebook" | "instagram", PlatformState>>;
   youtube: YouTubeStatus & { live: { sent?: number; total?: number; queuePosition: number | null } | null };
   youtubeLog: string[];
+  /** missing from older engines (before Meta's API): treat as not connected */
+  apiProblems?: Record<"facebook" | "instagram", string[]>;
+  meta?: {
+    connected: boolean;
+    userExpiresAt: string | null;
+    pages: MetaPage[];
+    account: Record<"facebook" | "instagram", MetaAccount | null>;
+    live: Record<"facebook" | "instagram", { sent?: number; total?: number; preparing?: { done: number; total: number }; queuePosition: number | null } | null>;
+    log: Record<"facebook" | "instagram", string[]>;
+  };
 };
 
 
@@ -207,6 +225,13 @@ export const api = {
     return body as YouTubeStatus;
   },
   youtubeConnect: () => call<{ url: string }>("/api/youtube/connect", { method: "POST" }),
+  meta: () => call<MetaStatus>("/api/meta"),
+  metaApp: (appId: string, appSecret: string, configId: string) => call<MetaStatus>("/api/meta/app", { method: "PUT", body: JSON.stringify({ appId, appSecret, configId }) }),
+  metaConnect: () => call<{ url: string }>("/api/meta/connect", { method: "POST" }),
+  metaToken: (token: string) => call<MetaStatus>("/api/meta/token", { method: "POST", body: JSON.stringify({ token }) }),
+  metaTest: () => call<{ ok: boolean; error?: string; pages?: MetaPage[] }>("/api/meta/test", { method: "POST" }),
+  metaDisconnect: () => call<MetaStatus>("/api/meta/disconnect", { method: "POST" }),
+  metaPost: (name: string, platform: "facebook" | "instagram", again = false) => call<PlatformState>(`/api/projects/${encodeURIComponent(name)}/publish/${platform}/post`, { method: "POST", body: JSON.stringify({ again }) }),
   youtubeDisconnect: () => call<YouTubeStatus>("/api/youtube/disconnect", { method: "POST" }),
   publish: (name: string) => call<PublishInfo>(`/api/projects/${encodeURIComponent(name)}/publish`),
   saveDraft: (name: string, platform: string, patch: object) => call<object>(`/api/projects/${encodeURIComponent(name)}/publish/${platform}`, { method: "PUT", body: JSON.stringify(patch) }),

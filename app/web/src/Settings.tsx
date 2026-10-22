@@ -1,7 +1,9 @@
 /** Settings: general paths, YouTube (setup, connection, defaults), Facebook & Instagram (defaults, Chrome check). */
 import React, { useEffect, useRef, useState } from "react";
 import { api, type PublishDefaults, type SettingsView, type YouTubeStatus } from "./api";
+import { MetaSettings } from "./MetaSettings";
 import { navigate } from "./nav";
+import { getTheme, setTheme, type Theme } from "./theme";
 import { TopNav } from "./TopNav";
 
 const CATEGORIES: [string, string][] = [
@@ -27,6 +29,9 @@ const Field: React.FC<{ label: string; value: string; placeholder?: string; hint
     setSaving(true);
     try {
       await onSave(v);
+      // show what was saved: the engine may tidy it (a Page name becomes its link) to the value it already had, and
+      // then `value` doesn't change; when it does change, the effect above shows the new one
+      setV(value);
       setSaved(true);
       setTimeout(() => setSaved(false), 1500);
     } catch (e) {
@@ -68,6 +73,9 @@ export const Settings: React.FC = () => {
   const [clientId, setClientId] = useState("");
   const [clientSecret, setClientSecret] = useState("");
   const [waiting, setWaiting] = useState(false);
+  const [theme, setThemeState] = useState<Theme>(getTheme);
+  // the Test connection result, shown next to its button (the page-wide note sits at the top, out of view)
+  const [ytTest, setYtTest] = useState<"testing" | { ok: string } | { bad: string } | null>(null);
   const [checking, setChecking] = useState<string | null>(null);
   const [checkProject, setCheckProject] = useState<string | null>(null);
   const file = useRef<HTMLInputElement>(null);
@@ -138,6 +146,20 @@ export const Settings: React.FC = () => {
 
       <section>
         <h2>General</h2>
+        <label className="field">
+          <span>Appearance</span>
+          <Seg
+            value={theme}
+            options={[
+              ["light", "Light"],
+              ["dark", "Dark"],
+            ]}
+            onPick={(t) => {
+              setTheme(t as Theme);
+              setThemeState(t as Theme);
+            }}
+          />
+        </label>
         <Field label="Workspace: where video folders are created" value={s.workspace} hint={ok(s.checks.workspace)} onSave={(v) => api.saveSettings({ workspace: v }).then(setS)} />
         <Field label="Blender (blender.exe)" value={s.blender} hint={ok(s.checks.blender)} onSave={(v) => api.saveSettings({ blender: v }).then(setS)} />
         <Field label="Python" value={s.python} hint={s.checks.python ? <span className="okmark">✓ {s.checks.python}</span> : <span className="badmark">✕ didn't run</span>} onSave={(v) => api.saveSettings({ python: v }).then(setS)} />
@@ -154,12 +176,27 @@ export const Settings: React.FC = () => {
                 {yt.connectedAt ? <span className="dim"> · since {new Date(yt.connectedAt).toLocaleDateString()}</span> : null}
               </p>
               <div className="actions">
-                <button onClick={() => run(async () => { const r = await api.youtubeTest(); if (!r.ok) throw new Error(r.error); }, "The connection works.")}>Test connection</button>
+                <button
+                  disabled={ytTest === "testing"}
+                  onClick={async () => {
+                    setYtTest("testing");
+                    try {
+                      const r = await api.youtubeTest();
+                      setYtTest(r.ok ? { ok: `✓ The connection works: YouTube confirms the channel ${r.channel?.title ?? ""}.` } : { bad: r.error ?? "The test failed." });
+                    } catch (e) {
+                      setYtTest({ bad: (e as Error).message });
+                    }
+                    load();
+                  }}
+                >
+                  {ytTest === "testing" ? "Testing…" : "Test connection"}
+                </button>
                 <button onClick={() => run(async () => { const { url } = await api.youtubeConnect(); window.open(url, "_blank"); setWaiting(true); })}>Switch channel</button>
                 <button className="quiet" onClick={() => window.confirm("Disconnect YouTube? Uploads stop working until you connect again.") && run(() => api.youtubeDisconnect().then(setYt))}>
                   Disconnect
                 </button>
               </div>
+              {ytTest && ytTest !== "testing" ? <p className={"ok" in ytTest ? "okmark" : "error"}>{"ok" in ytTest ? ytTest.ok : `✕ ${ytTest.bad}`}</p> : null}
               {waiting ? <p className="hint">Waiting for you to finish signing in in the new tab…</p> : null}
             </>
           ) : yt.clientSaved ? (
@@ -237,14 +274,15 @@ export const Settings: React.FC = () => {
 
       <section>
         <h2>Facebook Page &amp; Instagram</h2>
-        <p className="hint">
-          Posted by Claude in your Chrome: keep Facebook and Instagram logged in on the Chrome profile with the Claude in Chrome extension. Claude prepares each post and stops before Post; you click it. Reel or post is chosen on the Publish page each time.
-        </p>
+        <MetaSettings />
+        <h3>Defaults for new videos</h3>
         <div className="defaults">
           <Field label="Facebook Page" value={p.facebookPage} placeholder="https://www.facebook.com/yourpage" onSave={(v) => savePublish({ facebookPage: v })} />
           <Field label="Instagram account" value={p.instagramAccount} placeholder="@yourhandle" onSave={(v) => savePublish({ instagramAccount: v })} />
           <Field label="Caption ending (hashtags you always use)" value={p.captionFooter} placeholder="#science #explained" textarea onSave={(v) => savePublish({ captionFooter: v })} />
         </div>
+        <h3>Backup: posting through Claude in Chrome</h3>
+        <p className="hint">Claude posts in your Chrome (logged in to Facebook and Instagram, with the Claude in Chrome extension), prepares each post and stops before Post; you click it.</p>
         <div className="account">
           <strong>Is Chrome ready?</strong>
           {cc ? (

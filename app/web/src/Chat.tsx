@@ -44,7 +44,8 @@ const clock = (ms: number) => {
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
 };
 
-export const Chat: React.FC<{ project: string }> = ({ project }) => {
+/** onClose: the page can fold the panel away (Publish page); the button only shows when it's given. */
+export const Chat: React.FC<{ project: string; onClose?: () => void }> = ({ project, onClose }) => {
   const [items, setItems] = useState<ChatItem[]>([]);
   const [trimmed, setTrimmed] = useState(0);
   const [state, setState] = useState<ChatState | null>(null);
@@ -176,6 +177,11 @@ export const Chat: React.FC<{ project: string }> = ({ project }) => {
           onTerminal={() => act(() => api.chatTerminal(project))}
           onNew={() => window.confirm("Start a new conversation with Claude? This one stays saved, but Claude won't remember it.") && act(() => api.chatNew(project))}
         />
+        {onClose ? (
+          <button className="quiet icon-btn" onClick={onClose} title="Fold the Claude panel away (it keeps working)" aria-label="Close">
+            <Icon name="close" />
+          </button>
+        ) : null}
       </div>
 
       <div className="chat-list" ref={scroller} onScroll={onScroll}>
@@ -239,8 +245,9 @@ export const Chat: React.FC<{ project: string }> = ({ project }) => {
 };
 
 /** Small line icons (stroke follows the text colour). */
-const Icon: React.FC<{ name: "up" | "stop" | "dots" | "chevron" | "steps" | "spark" }> = ({ name }) => {
+export const Icon: React.FC<{ name: "up" | "stop" | "dots" | "chevron" | "steps" | "spark" | "close" }> = ({ name }) => {
   const paths = {
+    close: <path d="M6 6l12 12M18 6 6 18" />,
     up: <path d="M12 19V5M5.5 11.5 12 5l6.5 6.5" />,
     stop: <rect x="7" y="7" width="10" height="10" rx="1.5" fill="currentColor" stroke="none" />,
     dots: (

@@ -5,7 +5,7 @@
  */
 import React, { useEffect, useState } from "react";
 import { api, type PublishList, type VideoFile } from "./api";
-import { Chat } from "./Chat";
+import { Chat, Icon } from "./Chat";
 import { History } from "./History";
 import { navigate } from "./nav";
 import { PublishPanel } from "./PublishPanel";
@@ -13,14 +13,30 @@ import { TopNav } from "./TopNav";
 import { PLATFORM_NAME, publishNeedsYou, publishWord } from "./words";
 
 const PANEL_KEY = "ce.claudePanelWidth";
+const OPEN_KEY = "ce.publishClaudeOpen";
 export const KIND: Record<VideoFile["kind"], string> = { final: "Final", master: "Final (sound not levelled)", draft: "Draft", render: "Render" };
 const mb = (b: number) => (b > 1e9 ? `${(b / 1e9).toFixed(1)} GB` : `${Math.max(1, Math.round(b / 1e6))} MB`);
-const fileUrl = (project: string, rel: string) => `/api/projects/${encodeURIComponent(project)}/file?path=${encodeURIComponent(rel)}`;
 const fileName = (rel: string) => rel.split("/").pop() ?? rel;
 
 export const PublishPage: React.FC<{ name: string | null }> = ({ name }) => {
   const [list, setList] = useState<PublishList | null>(null);
   const [error, setError] = useState<string | null>(null);
+  // the Claude panel starts folded here (the page needs the width); it opens by itself when something goes to Claude
+  const [chatOpen, setChatOpen] = useState(() => {
+    try {
+      return localStorage.getItem(OPEN_KEY) === "1";
+    } catch {
+      return false;
+    }
+  });
+  const showChat = (open: boolean) => {
+    setChatOpen(open);
+    try {
+      localStorage.setItem(OPEN_KEY, open ? "1" : "0");
+    } catch {
+      // storage unavailable
+    }
+  };
   const [width, setWidth] = useState(() => {
     try {
       return Number(localStorage.getItem(PANEL_KEY)) || 520;
@@ -120,7 +136,7 @@ export const PublishPage: React.FC<{ name: string | null }> = ({ name }) => {
                 const on = r.project === name && r.selected === v.rel;
                 return (
                   <button key={v.rel} className={`vfile ${on ? "on" : ""}`} onClick={() => pick(r.project, v.rel)} title={v.rel}>
-                    <video muted preload="metadata" src={`${fileUrl(r.project, v.rel)}#t=1`} />
+                    <img alt="" loading="lazy" src={`/api/projects/${encodeURIComponent(r.project)}/thumb?path=${encodeURIComponent(v.rel)}&v=${encodeURIComponent(v.madeAt)}`} />
                     <span className="vinfo">
                       <span className={`kind kind-${v.kind}`}>{KIND[v.kind]}</span>
                       <span className="dim">{fileName(v.rel)}</span>
@@ -150,16 +166,23 @@ export const PublishPage: React.FC<{ name: string | null }> = ({ name }) => {
           ) : null}
         </aside>
 
-        {name && known ? <PublishPanel key={name} name={name} /> : name ? <div className="board"><p className="error">There's no video called {name} in the workspace.</p></div> : <History />}
+        {name && known ? <PublishPanel key={name} name={name} onClaude={() => showChat(true)} /> : name ? <div className="board"><p className="error">There's no video called {name} in the workspace.</p></div> : <History />}
 
         {/* the video's Claude (posts to Facebook and Instagram in Chrome); showing it doesn't start Claude */}
         {name && known ? (
-          <>
-            <div className="divider" onPointerDown={drag} />
-            <aside className="claude-pane" style={{ width }}>
-              <Chat key={name} project={name} />
-            </aside>
-          </>
+          chatOpen ? (
+            <>
+              <div className="divider" onPointerDown={drag} />
+              <aside className="claude-pane" style={{ width }}>
+                <Chat key={name} project={name} onClose={() => showChat(false)} />
+              </aside>
+            </>
+          ) : (
+            <button className="chat-rail" onClick={() => showChat(true)} title="Open the Claude panel">
+              <Icon name="spark" />
+              <span>Claude</span>
+            </button>
+          )
         ) : null}
       </div>
     </div>

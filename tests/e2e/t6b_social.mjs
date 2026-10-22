@@ -50,6 +50,7 @@ ok("upload log says where it continued", /YouTube has \d+ of \d+ bytes; continui
 if (process.env.ONLY_RESTART) { browser.proc.kill(); console.log(failures() ? `${failures()} FAILED` : "all passed"); process.exit(0); }
 console.log("== Facebook through Claude (fake)");
 await p.go(`/publish/${leaves}`, 4000);
+await p.eval(`window.__tab("Facebook")`);
 await p.eval(`[...${card("/Facebook Page/")}.querySelectorAll(".seg button")].find(b => b.textContent === "Reel").click()`);
 await p.eval(`window.__set(${card("/Facebook Page/")}.querySelector("textarea"), "Why do leaves turn red? 🍁\\n\\n#science #kids")`);
 await sleep(2500);
@@ -62,7 +63,7 @@ const m = fakeMessages(dir).at(-1)?.text ?? "";
 ok("Claude got the post request with the picked file and Reel", /to the Facebook Page https:\/\/www\.facebook\.com\/leavesexplained as a Reel/.test(m) && m.includes("long draft.mp4") && /Never click it yourself/.test(m), m.slice(0, 160));
 x = await info();
 ok("state handed, with the file", x.state.facebook?.status === "handed" && x.state.facebook?.file === "out/long draft.mp4", JSON.stringify(x.state.facebook));
-ok("Claude's chat on the page shows the hand-off", /Engine\s*Please post this video/.test(await p.text(".claude-pane .chat-list")), (await p.text(".claude-pane .chat-list")).slice(-200));
+ok("Claude's chat on the page shows the hand-off", /Sent by the engine\s*Please post this video/.test(await p.text(".claude-pane .chat-list")), (await p.text(".claude-pane .chat-list")).slice(-200));
 const mcp = new Client({ name: "fake-claude", version: "0.0.1" });
 await mcp.connect(new StreamableHTTPClientTransport(new URL(`${B}/mcp/${leaves}`)));
 await mcp.callTool({ name: "publish_report", arguments: { platform: "facebook", status: "ready-to-post" } });
@@ -77,6 +78,7 @@ console.log("== Instagram hand-off while Claude waits for the user's answer");
 const answersBefore = fakeAnswers(dir).length;
 await call("POST", `/api/projects/${leaves}/chat/send`, { text: "FAKE-ASK-PERMISSION" });
 for (let i = 0; i < 20 && (await info()).claude !== "question"; i++) await sleep(500);
+await p.eval(`window.__tab("Instagram")`);
 await p.eval(`[...${card("/Instagram/")}.querySelectorAll(".seg button")].find(b => b.textContent === "Feed post").click()`);
 await p.eval(`window.__set(${card("/Instagram/")}.querySelector("textarea"), "Leaves! #autumn")`);
 await sleep(2500);
@@ -104,7 +106,7 @@ ok("history row opens the video", (await p.path()) === `/publish/${leaves}`);
 console.log("== the picked file disappears");
 fs.renameSync(`${dir}/out/long draft.mp4`, `${dir}/out/long draft.bak`);
 await sleep(5000);
-t = await p.text(".publish-panel .status");
+t = await p.text(".publish-panel .vstrip");
 ok("falls back to the final", /Final video/.test(t), t.slice(0, 160));
 fs.renameSync(`${dir}/out/long draft.bak`, `${dir}/out/long draft.mp4`);
 

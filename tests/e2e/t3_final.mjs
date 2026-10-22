@@ -88,7 +88,7 @@ console.log("== Publish this video → Publish page with the final picked");
 await p.click("Publish this video");
 await sleep(3000);
 ok("on /publish/<video>", (await p.path()) === `/publish/${leaves}`, await p.path());
-ok("final file picked", /Final video/.test(await p.text(".publish-panel .status")));
+ok("final file picked", /Final video/.test(await p.text(".publish-panel .vstrip")));
 console.log("   page errors:", JSON.stringify(p.errors()));
 browser.proc.kill();
 console.log(failures() ? `${failures()} FAILED` : "all passed");

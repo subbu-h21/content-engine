@@ -106,6 +106,7 @@ ok("resumed in the same session and finished", x.state.youtube?.status === "done
 
 console.log("== Facebook through Claude (fake)");
 await p.go(`/publish/${leaves}`, 3500);
+await p.eval(`window.__tab("Facebook")`);
 ok("hand-off disabled until Reel or post is chosen", await p.eval(`window.__btn("Hand to Claude in Chrome", [...document.querySelectorAll(".publish-card")].find(c => /Facebook Page/.test(c.querySelector("h2").textContent))).disabled`));
 await p.eval(`[...[...document.querySelectorAll(".publish-card")].find(c => /Facebook Page/.test(c.querySelector("h2").textContent)).querySelectorAll(".seg button")].find(b => b.textContent === "Reel").click()`);
 await p.eval(`window.__set([...document.querySelectorAll(".publish-card")].find(c => /Facebook Page/.test(c.querySelector("h2").textContent)).querySelector("textarea"), "Why do leaves turn red? 🍁\\n\\n#science #kids")`);
@@ -142,6 +143,7 @@ console.log("== Instagram hand-off while Claude waits for the user's answer");
 const answersBefore = fakeAnswers(dir).length;
 await call("POST", `/api/projects/${leaves}/chat/send`, { text: "FAKE-ASK-PERMISSION" });
 for (let i = 0; i < 20 && (await info()).claude !== "question"; i++) await sleep(500);
+await p.eval(`window.__tab("Instagram")`);
 await p.eval(`[...[...document.querySelectorAll(".publish-card")].find(c => /Instagram/.test(c.querySelector("h2").textContent)).querySelectorAll(".seg button")].find(b => b.textContent === "Feed post").click()`);
 await p.eval(`window.__set([...document.querySelectorAll(".publish-card")].find(c => /Instagram/.test(c.querySelector("h2").textContent)).querySelector("textarea"), "Leaves! #autumn")`);
 await sleep(2500);

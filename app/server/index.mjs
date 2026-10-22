@@ -7,6 +7,7 @@
  *   /ws/chat/<p>      the Claude chat's live updates
  */
 import { execFile, execFileSync } from "node:child_process";
+import crypto from "node:crypto";
 import fs from "node:fs";
 import http from "node:http";
 import path from "node:path";
@@ -21,7 +22,8 @@ import { ensureIntegration } from "./integration.mjs";
 import { handleMcp } from "./mcp.mjs";
 import { ensureStudio, stopAllStudios, stopStudio, studioInfo } from "./studios.mjs";
 import { deleteInfo, recycle } from "./remove.mjs";
-import { activity, getDraft, draftProblems, getState as publishState, handoffMessage, listVideos, publishSummary, recoverUploads, report as publishReport, saveDraft, selectedVideo, selectVideo, startYouTube, stopYouTube, videoInfo, youtubeLive } from "./publish.mjs";
+import { accountFor, activity, apiProblems, API_ACTIVE, getDraft, draftProblems, getState as publishState, handoffMessage, listVideos, metaBusy, metaLive, publishSummary, recoverUploads, report as publishReport, saveDraft, selectedVideo, selectVideo, startMeta, startYouTube, stopYouTube, videoInfo, youtubeLive } from "./publish.mjs";
+import { authUrl as metaAuthUrl, connectWithToken as metaConnectWithToken, disconnect as metaDisconnect, finishAuth as metaFinishAuth, isOAuthCallback as isMetaCallback, saveApp as saveMetaApp, status as metaStatus, testConnection as metaTest } from "./meta.mjs";
 import { authUrl, disconnect as youtubeDisconnect, finishAuth, isOAuthCallback, saveClient as saveYouTubeClient, saveClientFields, status as youtubeStatus, testConnection } from "./youtube.mjs";
 import { publishDefaults, settingsView, updateSettings } from "./settings.mjs";
 import { computePlan, failureMessage, getJob, liveInfo, noteClaude, recoverJobs, renderSummary, resumeJob, setRenderHooks, shutdownRenders, startJob, stopJob } from "./render.mjs";
@@ -216,6 +218,7 @@ app.delete("/api/projects/:name", wrap(async (req, res) => {
   const job = getJob(req.params.name, dir);
   if (job && ["running", "queued"].includes(job.status)) return res.status(409).json({ error: "A final render of this video is running or queued: stop it on its Final tab first." });
   if (["queued", "uploading"].includes(publishState(dir).youtube?.status)) return res.status(409).json({ error: "This video is uploading to YouTube: stop it on the Publish page first." });
+  if (metaBusy(dir)) return res.status(409).json({ error: "This video is being posted to Facebook or Instagram: wait until it's done." });
   stopStudio(req.params.name);
   killClaude(req.params.name);
   await new Promise((r) => setTimeout(r, 800)); // let Windows release the files
@@ -297,12 +300,32 @@ app.post("/api/youtube/client-fields", wrap((req, res) => res.json(saveClientFie
 app.post("/api/youtube/test", wrap(async (req, res) => res.json(await testConnection())));
 app.post("/api/youtube/connect", wrap((req, res) => res.json({ url: authUrl(REDIRECT_URI) })));
 app.post("/api/youtube/disconnect", wrap((req, res) => res.json(youtubeDisconnect())));
-// Google sends the browser back to http://127.0.0.1:<port>/?code=…&state=… after sign-in
+// ---- Facebook & Instagram through Meta's API: the user's Meta app, sign-in, the connected Pages
+// Facebook allows a plain-http redirect only to localhost (apps in development mode), so this one uses localhost
+const META_REDIRECT_URI = `http://localhost:${PORT}/`;
+app.get("/api/meta", (req, res) => res.json({ ...metaStatus(), redirectUri: META_REDIRECT_URI }));
+app.put("/api/meta/app", wrap((req, res) => res.json({ ...saveMetaApp(req.body ?? {}), redirectUri: META_REDIRECT_URI })));
+app.post("/api/meta/connect", wrap((req, res) => res.json({ url: metaAuthUrl(META_REDIRECT_URI) })));
+app.post("/api/meta/token", wrap(async (req, res) => res.json({ ...(await metaConnectWithToken(req.body?.token)), redirectUri: META_REDIRECT_URI })));
+app.post("/api/meta/test", wrap(async (req, res) => res.json(await metaTest())));
+app.post("/api/meta/disconnect", wrap((req, res) => res.json({ ...metaDisconnect(), redirectUri: META_REDIRECT_URI })));
+
+// Google (127.0.0.1) and Facebook (localhost) send the browser back to /?code=…&state=… after sign-in
 app.get("/", async (req, res, next) => {
-  if (!isOAuthCallback(req.query)) return next();
   const page = (title, body) =>
-    `<!doctype html><meta charset="utf-8"><title>${title}</title><body style="background:#08070a;color:#ede3d1;font:16px Segoe UI,sans-serif;padding:48px"><h2 style="font-family:Georgia,serif;font-weight:400">${title}</h2><p>${body}</p><p><a style="color:#94d1ff" href="/">Back to the content engine</a></p>`;
+    `<!doctype html><meta charset="utf-8"><title>${title}</title><body style="background:#f6f3ee;color:#1f1c19;font:16px Segoe UI,sans-serif;padding:48px"><h2 style="font-family:Georgia,serif;font-weight:400">${title}</h2><p>${body}</p><p><a style="color:#1d64a6" href="/settings">Back to the content engine's Settings</a></p>`;
   const esc = (t) => String(t).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+  if (isMetaCallback(req.query)) {
+    try {
+      const st = await metaFinishAuth(req.query);
+      const list = st.pages.map((p) => `<b>${esc(p.name)}</b>${p.instagram ? ` (Instagram: <b>@${esc(p.instagram.username ?? p.instagram.id)}</b>)` : " (no Instagram linked)"}`).join("<br>");
+      const missing = st.missing.length ? `<br><br>Facebook didn't grant: ${esc(st.missing.join(", "))}. Connect again and allow everything it asks for.` : "";
+      return res.send(page("Facebook & Instagram connected", (st.pages.length ? `The engine can post to:<br>${list}` : "Connected, but no Pages were shared: connect again and pick your Page on Facebook's screen.") + missing));
+    } catch (e) {
+      return res.status(400).send(page("Facebook & Instagram not connected", esc(e.message)));
+    }
+  }
+  if (!isOAuthCallback(req.query)) return next();
   try {
     const st = await finishAuth(req.query);
     res.send(page("YouTube connected", st.channel ? `Uploads go to the channel <b>${esc(st.channel.title)}</b>.` : "Connected. (The channel name couldn't be read.)"));
@@ -319,16 +342,42 @@ app.get("/api/projects/:name/publish", wrap(async (req, res) => {
   const logFile = path.join(dir, "publish", "youtube.log");
   const youtubeLog = fs.existsSync(logFile) ? fs.readFileSync(logFile, "utf8").trim().split(/\r?\n/).slice(-30) : [];
   const { video: _picked, ...state } = publishState(dir);
+  const video = await videoInfo(dir);
+  const tail = (f) => (fs.existsSync(f) ? fs.readFileSync(f, "utf8").trim().split(/\r?\n/).slice(-30) : []);
+  const ms = metaStatus();
   res.json({
     videos: listVideos(dir),
-    video: await videoInfo(dir),
+    video,
     drafts,
+    // problems: the Chrome hand-off's; apiProblems: posting through Meta's API
     problems: Object.fromEntries(PLATFORMS.map((p) => [p, draftProblems(p, drafts[p])])),
+    apiProblems: { facebook: apiProblems("facebook", drafts.facebook, video), instagram: apiProblems("instagram", drafts.instagram, video) },
     state,
     youtube: { ...youtubeStatus(), live: youtubeLive(req.params.name) },
     youtubeLog,
+    meta: {
+      connected: ms.connected,
+      userExpiresAt: ms.userExpiresAt,
+      pages: ms.pages,
+      account: { facebook: accountFor("facebook", drafts.facebook), instagram: accountFor("instagram", drafts.instagram) },
+      live: { facebook: metaLive(req.params.name, "facebook"), instagram: metaLive(req.params.name, "instagram") },
+      log: { facebook: tail(path.join(dir, "publish", "facebook.log")), instagram: tail(path.join(dir, "publish", "instagram.log")) },
+    },
     claude: chatState(req.params.name),
   });
+}));
+/** Post the picked file to Facebook or Instagram through Meta's API (queued). */
+app.post("/api/projects/:name/publish/:platform/post", wrap(async (req, res) => {
+  const dir = project(req, res);
+  if (!dir) return;
+  if (!["facebook", "instagram"].includes(req.params.platform)) return res.status(404).json({ error: "only Facebook and Instagram post through Meta's API" });
+  try {
+    res.json(await startMeta(req.params.name, dir, req.params.platform, { again: req.body?.again === true }));
+  } catch (e) {
+    // already posted there: the page asks whether to post a second copy
+    if (e.duplicate) return res.status(409).json({ error: e.message, duplicate: e.duplicate });
+    throw e;
+  }
 }));
 /** The Publish page picked one of the project's video files. */
 app.post("/api/projects/:name/publish/select", wrap((req, res) => {
@@ -365,6 +414,8 @@ app.post("/api/projects/:name/publish/:platform/handoff", wrap(async (req, res) 
   if (!file) return res.status(400).json({ error: "This video has no exported file yet: render it on its Final tab first." });
   const problems = draftProblems(platform, getDraft(dir, platform));
   if (problems.length) return res.status(400).json({ error: problems.join(" ") });
+  const cur = publishState(dir)[platform] ?? {};
+  if (cur.route === "api" && API_ACTIVE.includes(cur.status)) return res.status(409).json({ error: "This video is being posted there through Meta's API right now: wait until it's done." });
   const r = await deliverToClaude(req.params.name, dir, handoffMessage(dir, platform, file));
   if (r.ok) publishReport(dir, platform, { status: "handed", file });
   res.json(r);
@@ -456,6 +507,32 @@ app.get("/api/projects/:name/file", (req, res) => {
   }
   res.sendFile(full);
 });
+/**
+ * A still of a project video (JPEG, 320 px wide), made once per file version and kept in out/render/thumbs/. Lists of
+ * videos use these instead of <video> elements: the browser keeps a connection open for every paused video, and with
+ * six of them (its limit per site) the page's own status requests wait.
+ */
+app.get("/api/projects/:name/thumb", wrap(async (req, res) => {
+  const dir = project(req, res);
+  if (!dir) return;
+  const full = resolveServable(dir, String(req.query.path ?? ""));
+  if (!full) return res.sendStatus(404);
+  const st = fs.statSync(full);
+  const key = crypto.createHash("sha1").update(`${full}|${st.size}|${st.mtimeMs}`).digest("hex").slice(0, 16);
+  const out = path.join(dir, "out", "render", "thumbs", `${key}.jpg`);
+  if (!fs.existsSync(out)) {
+    fs.mkdirSync(path.dirname(out), { recursive: true });
+    const grab = (at) =>
+      new Promise((resolve) =>
+        execFile("ffmpeg", ["-y", "-loglevel", "error", "-ss", at, "-i", full, "-frames:v", "1", "-vf", "scale=320:-2", "-q:v", "4", out + ".part.jpg"], { windowsHide: true, timeout: 30000 }, (err) => resolve(!err && fs.existsSync(out + ".part.jpg"))),
+      );
+    // a second in shows the video better than its first (often black) frame; very short files only have frame 0
+    if (!(await grab("1")) && !(await grab("0"))) return res.sendStatus(404);
+    fs.renameSync(out + ".part.jpg", out);
+  }
+  res.set("cache-control", "max-age=3600");
+  res.sendFile(out);
+}));
 app.put("/api/projects/:name/upload", wrap(async (req, res) => {
   const dir = project(req, res);
   if (!dir) return;

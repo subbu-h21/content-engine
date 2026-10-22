@@ -132,7 +132,32 @@ start Claude; it writes the project's `.mcp.json`/hook like the editor does).
   answered; an AI-content disclosure checkbox maps to `containsSyntheticMedia`. Checked 2026-10-19 against Google's
   docs: uploads from unverified API projects are not restricted to private; videos.insert is 1 unit of a 100/day
   "Video Uploads" quota.
-- **Facebook Page and Instagram, through Claude in Chrome**: "Hand to Claude in Chrome" sends a message to the video's
+- **Facebook Page and Instagram, through Meta's Graph API** (`app/server/meta.mjs`, v26.0), when connected in
+  **Settings → Facebook Page & Instagram**: the user's own Meta app (App ID + secret, optional Facebook Login for Business
+  configuration ID), development mode, redirect `http://localhost:<port>/` (Facebook allows plain http only for
+  localhost); Connect = Facebook Login code flow → long-lived user token (~60 days) → each Page's token (doesn't expire)
+  and its linked Instagram account (`instagram_business_account`). Fallback: a user token pasted from the Graph API
+  Explorer. Secrets in `secrets/meta-app.json`, `secrets/meta-token.json`.
+  - Publish tabs: account picker (several Pages / Instagram accounts), Facebook **Reel** (3–90 s, vertical, 24–60 fps;
+    `video_reels` start → rupload → finish → status) or **video post** (Resumable Upload API session → upload →
+    `graph-video …/{page}/videos`, optional title); Instagram **Reel** (resumable container → rupload → `status_code`
+    FINISHED → `media_publish` → permalink; 3 s–15 min, ≤ 300 MB, 23–60 fps, ≤ 1920 px wide; "also in feed" =
+    `share_to_feed`). Instagram's upload fails on files much over ~30 MB in practice ("ProcessingFailedError: Request
+    processing failed", far below the documented 300 MB): above 24 MB it gets a copy re-encoded to about 21 MB
+    (≤ 3 Mbit/s, 720 px wide when that's low; the tab says so); a file without its MP4 index at the front gets a
+    faststart copy. Copies go in `publish/.upload/`, named per file version, reused on Resume, removed after. That
+    error isn't always final: the engine watches the container 3 minutes, then fails, and Resume uploads afresh.
+  - One post at a time (queue), progress, `publish/<platform>.log`. Resumable and never posted twice: each post's IDs and
+    phase are saved in `publish/state.json` → `post`; the step that publishes is marked before it's asked for and, on
+    resume, the engine checks Meta first (Reel status, recent Page videos, container `PUBLISHED` + recent media). An
+    engine restart marks it *interrupted*; Resume continues. The same file to the same account and format asks first.
+  - History entries keep `route: "api"`, the account and Meta's `postId` (for view counts later).
+  - Lists of videos use stills (`/api/projects/<p>/thumb`, cached in `out/render/thumbs/`) and the player loads on play:
+    Chrome keeps a connection open per paused `<video>`, and six of them blocked the page's own status requests.
+  - Tests: `tests/e2e/fake_meta.mjs` (port 4181) + `t15_meta.mjs`; overrides `CE_META_GRAPH`, `CE_META_GRAPH_VIDEO`,
+    `CE_META_RUPLOAD`, `CE_META_DIALOG`, `CE_META_POLL_MS`.
+- **Facebook Page and Instagram, through Claude in Chrome** (the route when Meta isn't connected, else under *Other way*
+  in the tab): "Hand to Claude in Chrome" sends a message to the video's
   Claude chat (it waits its turn like any other); Claude posts in the user's logged-in Chrome profile as a Reel or a
   post, **stops before the final Post**, reports `ready-to-post` with the `publish_report` tool, and the user clicks
   Post. If the browser tools can't attach a file from disk, Claude asks the user to drag it in ("Show the video in its

@@ -1,5 +1,25 @@
-/* Content engine website. Same language as the videos: ink ground, one text colour, italics for emphasis. */
+/* Content engine website: one text colour, italics for emphasis. Light paper by default; the videos' ink ground as the
+   dark theme (Settings → Appearance; <html data-theme>, see theme.ts). The names stay from the dark original:
+   --ink = the page ground, --bone = the text. */
 :root {
+  --ink: #f6f3ee;
+  --ink-2: #ffffff;
+  --ink-3: #ebe7e0;
+  --line: #d8d2c9;
+  --bone: #1f1c19;
+  --ash: #5c5650;
+  --dim: #736c65;
+  --ember: #c2491a;
+  --ice: #1d64a6;
+  --ok: #2e8a52; /* done, connected */
+  --calm: #b9c8d6; /* a quiet "all good" border */
+  --primary-hover: #3b3631;
+  --display: "Sitka Heading", "Sitka Text", Cambria, Georgia, serif; /* headings, mostly italic */
+  --body: "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif;
+  --brand: "Sitka Display", "Sitka Banner", Cambria, Georgia, serif; /* the "Content engine" name, bold */
+  color-scheme: light;
+}
+:root[data-theme="dark"] {
   --ink: #08070a;
   --ink-2: #0e0d10;
   --ink-3: #17151a;
@@ -9,8 +29,9 @@
   --dim: #5d5856;
   --ember: #ff6b29;
   --ice: #94d1ff;
-  --display: "Bodoni MT", "Bodoni Moda", Didot, Georgia, serif;
-  --body: "Inter 18pt", Inter, "Segoe UI", system-ui, sans-serif;
+  --ok: #6fbf8e;
+  --calm: #2b3a46;
+  --primary-hover: #ffffff;
   color-scheme: dark;
 }
 * {
@@ -111,8 +132,19 @@ em {
   padding-bottom: 20px;
   margin-bottom: 28px;
 }
+/* the "Content engine" name: its own font (the headings keep --display) */
+.home-head h1,
+.topbar .brand {
+  font-family: var(--brand);
+  font-weight: 700;
+}
+.home-head h1 em,
+.topbar .brand em {
+  font-style: normal;
+}
 .home-head h1 {
-  font: 400 44px/1 var(--display);
+  font-size: 40px;
+  line-height: 1;
   margin: 0;
   flex: 1;
 }
@@ -217,7 +249,7 @@ em {
   font-variant-numeric: tabular-nums;
 }
 .projects .title {
-  font: 400 18px/1.3 var(--display);
+  font: italic 400 18px/1.3 var(--display);
 }
 .projects .folder {
   color: var(--dim);
@@ -265,7 +297,7 @@ em {
 }
 .pill.ready {
   color: var(--ice);
-  border-color: #2b3a46;
+  border-color: var(--calm);
 }
 .pill.exited {
   color: var(--ember);
@@ -343,7 +375,7 @@ em {
 .claude-pane {
   display: flex;
   flex-direction: column;
-  background: #0e0d10;
+  background: var(--ink-2);
   flex: none;
   min-width: 320px;
 }
@@ -388,7 +420,7 @@ em {
   flex: none;
 }
 .chat-status.idle .dot {
-  background: #6fbf8e;
+  background: var(--ok);
 }
 .chat-status.working .dot,
 .chat-status.starting .dot {
@@ -850,8 +882,9 @@ button.primary {
   border-color: var(--bone);
   font-weight: 500;
 }
-button.primary:hover {
-  background: #fff;
+button.primary:hover:not(:disabled) {
+  background: var(--primary-hover);
+  border-color: var(--primary-hover);
 }
 .home .stage {
   color: var(--ice);
@@ -888,7 +921,7 @@ button.primary:hover {
   border-color: var(--ember);
 }
 .status.stage-preview-ready {
-  border-color: #2b3a46;
+  border-color: var(--calm);
 }
 .steps {
   display: flex;
@@ -1246,7 +1279,7 @@ button.danger:disabled {
   border-color: var(--ember);
 }
 .status.job-done {
-  border-color: #2b3a46;
+  border-color: var(--calm);
 }
 .warn.block {
   border-left-color: var(--ember);
@@ -1357,6 +1390,178 @@ label.check {
 .publish-panel a,
 .accounts a {
   color: var(--ice);
+}
+.board.publish-panel > * {
+  max-width: 960px;
+}
+/* the picked video: a small player beside its facts and actions */
+.vstrip {
+  display: flex;
+  gap: 20px;
+  align-items: flex-start;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--ink-2);
+  padding: 14px;
+  margin-bottom: 18px;
+}
+.vfacts {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
+}
+.vkind {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  font-size: 15px;
+}
+.vfacts .warn {
+  margin: 2px 0;
+  font-size: 13px;
+}
+.vfacts .actions {
+  margin-top: 8px;
+}
+/* one tab per platform, each with a status dot */
+.ptabs {
+  display: flex;
+  gap: 4px;
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 4px;
+}
+.ptabs button {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  padding: 10px 16px 9px;
+  color: var(--ash);
+  font-size: 15px;
+}
+.ptabs button:hover {
+  color: var(--bone);
+}
+.ptabs button.on {
+  color: var(--bone);
+  border-bottom-color: var(--bone);
+}
+.pdot {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  color: var(--ash);
+}
+.pdot .dotmark {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--dim);
+}
+.pdot.busy .dotmark {
+  background: var(--ice);
+  animation: pulse 1.2s ease-in-out infinite;
+}
+.pdot.done .dotmark {
+  background: var(--ok);
+}
+.pdot.wait .dotmark,
+.pdot.bad .dotmark {
+  background: var(--ember);
+}
+.publish-card {
+  padding: 14px 0 8px;
+}
+.publish-card h2 {
+  /* the tab already names the platform */
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+}
+.publish-card .meta {
+  font-size: 13px;
+  margin: 2px 0 6px;
+}
+.publish-card .result {
+  margin: 10px 0 0;
+  font-size: 14px;
+}
+.publish-card .result.bad {
+  color: var(--ember);
+}
+.todo {
+  margin: 10px 0 0;
+  font-size: 13px;
+  color: var(--ash);
+}
+/* the Chrome hand-off, folded under the API post */
+details.other-way {
+  margin-top: 18px;
+  border-top: 1px solid var(--line);
+  padding-top: 10px;
+}
+details.other-way > summary {
+  cursor: pointer;
+  color: var(--ash);
+  font-size: 13px;
+}
+details.other-way > summary:hover {
+  color: var(--bone);
+}
+/* Settings → Facebook Page & Instagram: the Meta app and connection */
+.meta-account ol.steps-list,
+.meta-account details.fallback ol {
+  margin: 8px 0 12px;
+  padding-left: 22px;
+  line-height: 1.6;
+}
+.meta-account details.fallback {
+  margin-top: 12px;
+}
+.meta-account details.fallback > summary {
+  cursor: pointer;
+  color: var(--ash);
+  font-size: 13px;
+}
+.meta-account .form2 input {
+  min-width: 0;
+}
+/* the folded Claude panel on the Publish page */
+.chat-rail {
+  flex: none;
+  width: 40px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 16px 0;
+  background: var(--ink-2);
+  border: none;
+  border-left: 1px solid var(--line);
+  border-radius: 0;
+  color: var(--ash);
+  font: italic 15px var(--display);
+}
+.chat-rail:hover {
+  color: var(--bone);
+  background: var(--ink-3);
+}
+.chat-rail .icon {
+  color: var(--ember);
+  width: 14px;
+  height: 14px;
+}
+.chat-rail span {
+  writing-mode: vertical-rl;
 }
 .accounts {
   display: grid;
@@ -1485,10 +1690,10 @@ table.published a {
 }
 .publish-video {
   display: block;
-  max-height: 46vh;
-  max-width: 100%;
-  margin: 12px 0 4px;
-  border-radius: 8px;
+  height: 230px;
+  max-width: 46%;
+  flex: none;
+  border-radius: 10px;
   background: #000;
 }
 a.button {
@@ -1520,7 +1725,8 @@ details.log pre {
   padding: 0 14px;
 }
 .topbar .brand {
-  font: 400 19px/1 var(--display);
+  font-size: 18px;
+  line-height: 1;
   color: var(--bone);
   text-decoration: none;
   flex: 1;
@@ -1602,6 +1808,7 @@ details.log pre {
   border-color: var(--bone);
   background: var(--ink-3);
 }
+.vfile img,
 .vfile video {
   width: 64px;
   height: 64px;

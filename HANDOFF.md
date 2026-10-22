@@ -142,6 +142,16 @@ in git).
 
 ## What's left
 
+00. **Facebook & Instagram through Meta's API (built 2026-10-22, tested against `fake_meta.mjs`, not committed):**
+   connected for real on 2026-10-22 with a token pasted from the Graph API Explorer (Meta app "Content-engine", App ID
+   1726166678921606, development mode; Page **Daily Insights** + Instagram **@daily_insights21**; user token until
+   2026-12-21). First real post: "why the sky is blue" as a Facebook Reel worked
+   (https://www.facebook.com/reel/1093334150071704/). Instagram failed with "ProcessingFailedError" on the 40 MB file;
+   probed with unpublished test containers: ≤ 31 MB went through, 38–60 MB never did, and one 21 MB upload reported
+   the error but FINISHED anyway. Fixed the same day (lighter copy above 24 MB, watch the container after that error,
+   fresh container on Resume; see README). Needs the user's engine restarted to take effect, then Resume on the
+   Instagram tab. Still unknown: whether Development-mode posts are visible to the public. Then: X (planned, pay per
+   use), scheduling, view counts.
 0. **The Claude chat (2026-10-21):** switch 4100 over (see "Running engines"), then let the user try it by hand and
    collect feedback. Open questions for the user:
    - Remove the now unused `node-pty`, `@xterm/xterm`, `@xterm/addon-fit` from `app/package.json`? (Dependency
