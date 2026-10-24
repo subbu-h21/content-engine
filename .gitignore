@@ -6,5 +6,7 @@ app/dist/
 models/
 # local machine settings (workspace path, tool locations)
 settings.json
-# YouTube sign-in (OAuth client + tokens): never in git
+# YouTube and Meta sign-ins (app details + tokens): never in git
 secrets/
+# API keys (OPENROUTER_API_KEY lives in the workspace's .env; guard against one landing here)
+.env

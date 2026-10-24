@@ -1,7 +1,7 @@
 # Handoff: state of the content engine and what's left (2026-10-21)
 
-For a fresh Claude Code session opened in `D:\code_files\content-engine`. Read this, then `README.md` and `CLAUDE.md`
-(this folder), `template/README.md` and `template/.claude/skills/make-video/SKILL.md`. Earlier sessions ran from
+For a fresh Claude Code session opened in `D:\code_files\content-engine`. Read this, then `docs/ENGINE.md` and `CLAUDE.md`
+(this folder; `README.md` is the setup guide for a new PC), `template/README.md` and `template/.claude/skills/make-video/SKILL.md`. Earlier sessions ran from
 `D:\code_files\animations`, so their memory notes are not loaded here; everything they knew that matters is below.
 
 ## The user and how to work with them
@@ -26,6 +26,7 @@ For a fresh Claude Code session opened in `D:\code_files\content-engine`. Read t
 
 ## What exists (phases 1–5 done, all committed)
 
+`setup.bat` checks the tools and installs the engine's packages on a new computer (`README.md`); `start.bat` or
 `ce app` starts the website at http://127.0.0.1:4100 (Express + React). Each video is a folder
 `project-N-<slug>` in the workspace `D:\code_files\animations`. The flow:
 
@@ -38,7 +39,7 @@ For a fresh Claude Code session opened in `D:\code_files\content-engine`. Read t
 - **Editor (`/p/<p>`):** the project's Remotion Studio (iframe), the Claude chat, and MCP tools that tell Claude where
   the user is (`editor_state`, `seek`, `view_frame`…).
 - **The Claude chat (2026-10-21, not committed):** replaced the xterm/node-pty terminal on Brief, Editor, Final and
-  Publish. See README "The Claude chat" and "Verified, the Claude chat". The user's choices: earlier conversations shown
+  Publish. See `docs/ENGINE.md` "The Claude chat" and "Verified, the Claude chat". The user's choices: earlier conversations shown
   (from Claude Code's saved `.jsonl`), tool steps folded into one line, a **Terminal** button (same conversation in a
   real window; the chat waits), Claude closes after 15 idle minutes. The user doesn't want remote access/tunnels.
 - **Final (`/p/<p>/final`):** the render queue (`app/server/render.mjs`): audio → Blender plates (only missing
@@ -60,7 +61,7 @@ queue; probed and tested: a queued message doesn't answer or cancel a waiting qu
 Terminal window still asks it once per folder, and its **default is "No, exit"**.
 
 Latest commits: `dd4b82d` (Final tab: Resume first, finished video kept; Publish step in the tabs) and `f9aa064`
-(Settings and Publish pages, history, whole-pipeline review fixes). The README's "Verified, whole-pipeline review"
+(Settings and Publish pages, history, whole-pipeline review fixes). `docs/ENGINE.md`'s "Verified, whole-pipeline review"
 section lists every check and fix from 2026-10-19.
 
 ## Running engines: be careful
@@ -149,7 +150,7 @@ in git).
    (https://www.facebook.com/reel/1093334150071704/). Instagram failed with "ProcessingFailedError" on the 40 MB file;
    probed with unpublished test containers: ≤ 31 MB went through, 38–60 MB never did, and one 21 MB upload reported
    the error but FINISHED anyway. Fixed the same day (lighter copy above 24 MB, watch the container after that error,
-   fresh container on Resume; see README). Needs the user's engine restarted to take effect, then Resume on the
+   fresh container on Resume; see `docs/ENGINE.md`). Needs the user's engine restarted to take effect, then Resume on the
    Instagram tab. Still unknown: whether Development-mode posts are visible to the public. Then: X (planned, pay per
    use), scheduling, view counts.
 0. **The Claude chat (2026-10-21):** switch 4100 over (see "Running engines"), then let the user try it by hand and

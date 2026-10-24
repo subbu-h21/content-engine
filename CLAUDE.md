@@ -1,6 +1,6 @@
 # Conventions for Claude Code in the content engine
 
-- Read `HANDOFF.md` first (current state, the user's working rules, running engines, how to test, what's left), then `README.md`. Video projects live in the workspace (`ce settings`), not here; each has its own CLAUDE.md.
+- Read `HANDOFF.md` first (current state, the user's working rules, running engines, how to test, what's left), then `docs/ENGINE.md` (how everything works, what was verified; `README.md` is the setup guide for a new PC). Video projects live in the workspace (`ce settings`), not here; each has its own CLAUDE.md.
 - `template/` changes only affect projects created afterwards. Existing projects keep their copy; port a fix to one
   only when the user asks.
 - `runtime/package.json` versions are pinned and shared by every project: changing one can change existing videos.

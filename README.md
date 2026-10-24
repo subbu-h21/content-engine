@@ -1,403 +1,261 @@
 # Content engine
 
-One place to make explainer videos: brief → script → voice and music → Blender plates → Remotion 2D layer → render.
-Each video is a numbered folder in a workspace you choose (`project-4-<slug>`, `project-5-<slug>`, …) and every file
-that video needs lives in that folder.
+A website that runs on your own Windows PC for making explainer videos with Claude. You describe a video; Claude
+talks it through with you and writes the script and the look. After you approve, the engine:
 
-Status: **Phase 5** done (publishing). Version zero is complete end to end: brief → preview → edit → final → publish.
+- records the voice and makes music (through OpenRouter)
+- builds the 3D shots in Blender and the 2D animation in Remotion
+- renders the final video
+- publishes it to YouTube, Facebook and Instagram
 
-## The website
+Each video is a folder `project-N-<name>` in a **workspace** folder you choose. Everything a video needs lives in that
+folder.
 
-```
-ce app            # starts http://127.0.0.1:4100 and opens it; Ctrl+C stops it (and the Studios/Claude sessions it started)
-```
+This guide sets the engine up on a new PC. How the engine works inside, and what was tested, is in
+[docs/ENGINE.md](docs/ENGINE.md).
 
-- **Home**: the workspace; **What do you want to create today?** (free text, saved as `brief/request.md`) with an
-  optional dropper for inspiration, reference or skill files (uploaded into the new project before its Brief opens);
-  Create makes the next `project-N-<slug>` and opens its Brief, where Claude starts from that request. The list of
-  videos shows each one's stage, with **Delete**: a warning shows the folder, its size and whether it has a finished
-  video or Blender renders, and asks for the video's number; the folder then goes to the Windows Recycle Bin
-  (its Studio and Claude panel are stopped first, the node_modules link removed so shared packages are never touched).
-  A reusable style library (choose a look from a catalog) is planned.
-- **Brief** (`/p/<project>/brief`): Claude (same panel as the editor, one conversation) runs the project's
-  `make-video` skill: asks what you want to make, talks through idea, script, look, sound and 3D, and writes each decision
-  into the project's files, which the board on the left shows live (`brief/status.json`, `brief.md`, `script.json`,
-  `style.md`, `brief/frames/`, `project.json` voice/music, `plan.md`). One checkpoint: Claude shows the script and 2–3
-  style frames and waits for **Approve and build** (nothing paid or slow before it), then records the voice, makes
-  music, builds the scenes and quick 3D drafts, and the Editor opens with the preview.
-- **References**: drop files on the board or paste a YouTube/Instagram link (`yt-dlp`). `ce pipeline <p> refs` turns
-  each into study material in `references/_study/<file>/` (stills, contact sheet, cuts, palette, Whisper transcript;
-  the Whisper model is downloaded once into `models/`). A dropped `.md` with a `name:` front matter becomes a skill of
-  that project (`.claude/skills/<name>/`).
-- **Editor** (`/p/<project>`): the project's Remotion Studio (started on a free port from 3200), the Claude chat on the
-  right, and a strip under Studio showing what Claude is told about your position.
-- **The Claude chat** (right side of Brief, Editor, Final and Publish; `app/server/claude.mjs`, `app/web/src/Chat.tsx`):
-  the project's Claude Code runs on this PC without a screen (`claude -p` with stream-json in and out,
-  `--permission-prompt-tool stdio`, `--chrome`) and the page shows it as a chat: messages, replies streaming in, the
-  steps Claude took folded into one line ("Ran 3 commands, read 2 files", click to see each step and its output).
-  - Claude starts when a message is sent (about a second) and continues the project's latest conversation (what
-    `claude --continue` would pick); earlier messages, also ones from the old terminal or VS Code, come from Claude
-    Code's saved conversation (`~/.claude/projects/<folder>/<id>.jsonl`). It closes after 15 idle minutes.
-  - Permission questions are cards with **Allow / Always allow / Deny**; Claude's own questions (AskUserQuestion) are
-    cards with option buttons and a free-text answer. The engine never answers them; a message sent meanwhile (typed, a
-    board button, a render failure, a Publish hand-off) waits in Claude's queue and doesn't answer or cancel them.
-  - Header: **Auto / Ask first** (permission mode, per video, `.claude/engine-chat.json`), **Terminal** (the same
-    conversation in a normal Claude Code window on this PC; the chat waits until that window is closed), **New**
-    (a new conversation; the old one stays saved). **Stop** stops what Claude is doing.
-  - A new video's chat starts `/make-video` by itself when its page first opens.
-  - Claude Code's built-in commands that need its screen (`/model`, `/compact`, Shift+Tab…) aren't available in the
-    chat; use **Terminal** for those.
-- **How Claude knows "this"**: the template's `EngineBridge` (inside the video, active only in a Studio the engine
-  started) reports composition, playhead and props to the engine. Opening a project writes two git-ignored files into it:
-  `.mcp.json` (the engine's MCP tools for that project) and `.claude/settings.local.json` (approves them and adds a
-  `UserPromptSubmit` hook, `app/server/hook.mjs`, that prefixes each message with time, scene, narration line and the
-  headlines on screen). Works the same when Claude Code runs in VS Code instead of the website, as long as the website
-  has the project open.
-- **Claude's tools** (MCP `content-engine`): `editor_state`, `timeline`, `view_frame` (renders the frame as an image,
-  ~20 s), `seek`, `playback`, `show_setting` (opens Studio's props editor at a path).
-- **Safety**: the server listens on 127.0.0.1 only, rejects foreign `Host` headers (DNS rebinding) and foreign `Origin`s;
-  the chat's socket (`/ws/chat/<project>`) only accepts the engine's own page.
-- The chat skips Claude Code's trust question (`-p` does). The **Terminal** window asks it once per video folder:
-  choose *Yes, I trust this folder* (the default is *No, exit*).
-- **Settings** (`/settings`, top menu): everything that used to need `settings.json` or the file explorer. *General*:
-  workspace, Blender and Python paths, each checked when saved (folder exists, `blender.exe` exists, `python --version`
-  runs), plus whether ffmpeg is found. *YouTube*: setup steps with links, then paste the Client ID and secret (or choose
-  the downloaded JSON file), Connect, Test connection, Switch channel, Disconnect, and defaults for new videos
-  (visibility, made for kids, category, tags, description ending). *Facebook & Instagram*: Page link and Instagram
-  account (a page name or profile URL is normalised), caption ending (Reel or post has no default: it's chosen on the
-  Publish page each time), and **Check Chrome**: asks
-  the most recently used video's Claude to check, read-only, that Claude in Chrome is connected and both accounts are
-  logged in; the result shows on the page (MCP `chrome_check_report`). Saved to `settings.json` → `publish`.
-- **Publish** (`/publish`, top menu; see below): a page of its own, not a tab inside each video. Left: every video with
-  an exported file and its files; middle: the picked file and the platforms, or the History when nothing is picked;
-  right: that video's Claude chat. Old links (`/published`, `/p/<project>/publish`) redirect there. A video's tab bar
-  reads Brief · Editor · Final · Publish (the last opens this page at that video; "Open the video" goes back).
+## Contents
 
-## Final render (Phase 4)
+1. [What you need](#1-what-you-need)
+2. [Install the prerequisites](#2-install-the-prerequisites)
+3. [Get the engine onto the PC](#3-get-the-engine-onto-the-pc)
+4. [Run setup.bat](#4-run-setupbat)
+5. [Workspace and OpenRouter key](#5-workspace-and-openrouter-key)
+6. [Start the engine](#6-start-the-engine)
+7. [Connect YouTube, Facebook and Instagram](#7-connect-youtube-facebook-and-instagram)
+8. [Moving from another PC](#8-moving-from-another-pc)
+9. [Everyday use and updates](#9-everyday-use-and-updates)
+10. [Troubleshooting](#10-troubleshooting)
+11. [Commands](#11-commands)
 
-The **Final** tab of a video (`/p/<project>/final`) shows what a final render involves before it starts: the 3D plates
-and how many final frames each still needs, a time and disk estimate, and anything that blocks it (narration not
-recorded, placeholder script, a missing shot script, Blender not found, not enough disk, broken package link). Start
-puts it in the engine's queue (`app/server/render.mjs`), one heavy job at a time:
+## 1. What you need
 
-| Step | What | Resumes / retries |
+**The computer**
+
+- **Windows 11** (64-bit). Windows 10 should work, but the website's fonts (Sitka, Segoe UI Variable) look best on 11.
+  The engine is Windows-only: it uses Windows folder links, `cmd` scripts and the Recycle Bin.
+- **At least 20 GB free** on the drive that holds the workspace (`ce doctor` checks this). Final renders and
+  Blender frames take many GB per video. Use a drive other than C: if C: is small.
+- **An NVIDIA RTX graphics card** for videos with 3D shots: they render in Blender with Cycles and NVIDIA OptiX. Videos
+  without 3D don't use Blender.
+- **An internet connection**: voice, music, Claude and publishing all go online.
+
+**Accounts**
+
+| Account | What for | Cost |
 |---|---|---|
-| audio | `pipeline audio`: timing, stems, effects, captions from the recorded lines | retried once; missing voice lines stop it (recording costs money) |
-| blender:&lt;plate&gt; | only the missing final frames, 200 per call, via the plate's shot script `final f0 f1` | finished frames kept; half-written frames (no PNG end marker) redone; a chunk that fails twice stops the step; waits while another Blender uses the GPU |
-| plates | `pipeline plates`: bloom + encode from the final frames | retried once |
-| render | Remotion render of `Reel` with `props/final.json` → temp file → `out/video.mp4` | retried once; a locked output says "close the player, then Resume" |
-| deliver | loudness-levelled `out/delivery.mp4`, checked for length and sound | retried once |
+| Claude (claude.ai) with a Pro or Max plan, or an Anthropic Console account | The Claude chat inside the engine (Claude Code) | Subscription or pay per use |
+| [OpenRouter](https://openrouter.ai/) with credit and an API key | Voice recording and music | Pay per use |
+| GitHub access to `subbu-h21/content-engine` (private) | Downloading the engine (or copy the folder instead) | Free |
+| A Google account with a YouTube channel | Uploading to YouTube (needs a Google Cloud project, set up in step 7) | Free |
+| A Facebook Page you manage, plus an Instagram **professional** account (Business or Creator) linked to that Page | Posting Reels and videos (needs a Meta developer app, set up in step 7) | Free |
 
-- **State** is in the project: `out/render/job.json`, logs in `out/render/logs/<step>.log`. Stop keeps everything;
-  Resume continues at the first unfinished step/frame. If the engine stops (Ctrl+C, crash, PC restart), the job comes
-  back as *interrupted* on the next start.
-- **3D frames out of date**: each plate's final folder has `.ce-final.json` with a fingerprint of the shot script,
-  `blender/lib`, `blender/assets`, the timing and the plate. If it changed, the plan flags the plate and the step
-  refuses to mix old and new frames until "re-render" is ticked (which deletes the old frames).
-- **Fallback to Claude**: when a step still fails after its retry, the engine hands the error and log path to the
-  video's Claude chat (starting Claude if needed) — at most twice per render, and only if the job allows it (a checkbox,
-  on by default). If Claude is busy or waiting for the user's answer to a question, the message waits in its queue;
-  the engine never answers questions for the user. Until Claude is told, the failure is also added to the user's next
-  message (prompt hook). Claude has
-  `render_status`, `render_start`, `render_resume`, `render_stop` tools; the `make-video` skill says how to fix and
-  resume, and what to ask the user first (anything costing money, re-rendering existing 3D, script or look changes).
-- Board buttons (Approve, Ask Claude) send their message the same way.
-- `CE_RENDER_NO_GPU_WAIT=1` (tests) skips waiting for other Blender processes.
-- Shot script contract (also in the skill): `final <f0> <f1>` renders plate-local frames f0..f1 (1-based) at full
-  resolution into `renders/<id>/final/f_####.png`; the plate has `round(duration × fps) + 1` frames; frames without 3D
-  still need a file. A plate entry may name its script with `"shot"` (default `blender/shot_<id>.py`).
+YouTube, Facebook and Instagram are optional: the engine makes videos without them.
 
-## Publish (Phase 5)
+## 2. Install the prerequisites
 
-The **Publish** page (`/publish`, top menu) is where every video is published. The left side lists each video that has
-an exported file, with its files: the Final render's `out/delivery.mp4` ("Final") first, then other video files in
-`out/` and one folder below (a name with "draft" → "Draft", others "Render"; `out/video.mp4` only when there's no
-delivery file yet; `out/render/` and `out/check/` are skipped). Videos without one are listed under *Not exported yet*
-with a link to their Final tab. Picking a file stores it in `publish/state.json` → `video`; everything below uses the
-picked file. With nothing picked the middle shows the **History** (`publish/history.json` of each video: every finished
-upload or post with its file, plus anything under way). The right side is the video's Claude chat (showing it doesn't
-start Claude; it writes the project's `.mcp.json`/hook like the editor does).
+`setup.bat` checks for these tools but doesn't install them. Install them first, in this order. Keep the default install
+locations unless noted.
 
-- **YouTube, through the YouTube Data API** (`app/server/youtube.mjs`). One-time setup in **Settings → YouTube**:
-  a Google Cloud project with the YouTube Data API v3, a **Desktop app** OAuth client (Client ID and secret pasted on
-  the page, or its JSON file chosen), the Google Auth Platform app published to *In production* (in *Testing* the sign-in
-  expires every 7 days). Sign-in uses PKCE and a loopback redirect to the engine (`http://127.0.0.1:<port>/`); scopes
-  `youtube.upload` + `youtube.readonly` (to show which channel). Client file and tokens are in `secrets/` (git-ignored).
-  Uploads use the resumable protocol in 8 MB chunks from a background queue: a dropped connection or a 5xx asks YouTube
-  how much arrived and continues from there; the access token is refreshed when needed; Stop/Resume and an engine
-  restart continue in the same upload session (sessions last about a week) for the same, unchanged file; another file
-  starts a new upload. A file that's already on YouTube (same path and modified time, latest upload or anywhere in the
-  history) is refused with its link; the page then asks whether to upload a second copy (`again`). Default visibility is **private** (the
-  user publishes in YouTube Studio); unlisted, public and scheduled (`publishAt`) are available. "Made for kids" must be
-  answered; an AI-content disclosure checkbox maps to `containsSyntheticMedia`. Checked 2026-10-19 against Google's
-  docs: uploads from unverified API projects are not restricted to private; videos.insert is 1 unit of a 100/day
-  "Video Uploads" quota.
-- **Facebook Page and Instagram, through Meta's Graph API** (`app/server/meta.mjs`, v26.0), when connected in
-  **Settings → Facebook Page & Instagram**: the user's own Meta app (App ID + secret, optional Facebook Login for Business
-  configuration ID), development mode, redirect `http://localhost:<port>/` (Facebook allows plain http only for
-  localhost); Connect = Facebook Login code flow → long-lived user token (~60 days) → each Page's token (doesn't expire)
-  and its linked Instagram account (`instagram_business_account`). Fallback: a user token pasted from the Graph API
-  Explorer. Secrets in `secrets/meta-app.json`, `secrets/meta-token.json`.
-  - Publish tabs: account picker (several Pages / Instagram accounts), Facebook **Reel** (3–90 s, vertical, 24–60 fps;
-    `video_reels` start → rupload → finish → status) or **video post** (Resumable Upload API session → upload →
-    `graph-video …/{page}/videos`, optional title); Instagram **Reel** (resumable container → rupload → `status_code`
-    FINISHED → `media_publish` → permalink; 3 s–15 min, ≤ 300 MB, 23–60 fps, ≤ 1920 px wide; "also in feed" =
-    `share_to_feed`). Instagram's upload fails on files much over ~30 MB in practice ("ProcessingFailedError: Request
-    processing failed", far below the documented 300 MB): above 24 MB it gets a copy re-encoded to about 21 MB
-    (≤ 3 Mbit/s, 720 px wide when that's low; the tab says so); a file without its MP4 index at the front gets a
-    faststart copy. Copies go in `publish/.upload/`, named per file version, reused on Resume, removed after. That
-    error isn't always final: the engine watches the container 3 minutes, then fails, and Resume uploads afresh.
-  - One post at a time (queue), progress, `publish/<platform>.log`. Resumable and never posted twice: each post's IDs and
-    phase are saved in `publish/state.json` → `post`; the step that publishes is marked before it's asked for and, on
-    resume, the engine checks Meta first (Reel status, recent Page videos, container `PUBLISHED` + recent media). An
-    engine restart marks it *interrupted*; Resume continues. The same file to the same account and format asks first.
-  - History entries keep `route: "api"`, the account and Meta's `postId` (for view counts later).
-  - Lists of videos use stills (`/api/projects/<p>/thumb`, cached in `out/render/thumbs/`) and the player loads on play:
-    Chrome keeps a connection open per paused `<video>`, and six of them blocked the page's own status requests.
-  - Tests: `tests/e2e/fake_meta.mjs` (port 4181) + `t15_meta.mjs`; overrides `CE_META_GRAPH`, `CE_META_GRAPH_VIDEO`,
-    `CE_META_RUPLOAD`, `CE_META_DIALOG`, `CE_META_POLL_MS`.
-- **Facebook Page and Instagram, through Claude in Chrome** (the route when Meta isn't connected, else under *Other way*
-  in the tab): "Hand to Claude in Chrome" sends a message to the video's
-  Claude chat (it waits its turn like any other); Claude posts in the user's logged-in Chrome profile as a Reel or a
-  post, **stops before the final Post**, reports `ready-to-post` with the `publish_report` tool, and the user clicks
-  Post. If the browser tools can't attach a file from disk, Claude asks the user to drag it in ("Show the video in its
-  folder" helps). After posting, Claude (or the user, "Mark as posted") records the link.
-- Reel or post has no default: Facebook and Instagram can't be handed over until one is chosen.
-- The page also has the picked file in a player (a draft gets a "quick preview quality" warning), **Download** (saved as
-  `<slug>.mp4` for the final, `<slug>-<name>.mp4` otherwise), **Copy file path** (for a
-  browser's file picker), **Show in folder**, a **Reset** per platform (start that platform over), and the YouTube upload
-  log under *Details*, so nothing needs the file explorer.
-- Drafts are `publish/youtube.json`, `facebook.json`, `instagram.json` (edited on the page, or drafted by Claude from the
-  script: "Ask Claude to draft titles & captions"); state in `publish/state.json`, upload log `publish/youtube.log`.
-  New drafts start from the defaults in Settings (Page, account, tags, visibility, footers).
-- Format notes (soft): vertical ≤ 3 min becomes a YouTube Short; over 15 min needs a verified channel; Facebook/Instagram
-  Reel length limits change, so the notes say "about"; a warning if the video's sources changed after the final file.
-- Claude's tools: `publish_status` (picked file, all files, drafts, state), `publish_report`, `youtube_upload` (only when
-  the user asks; `again` for a second copy), `chrome_check_report`. Facts about a file (ffprobe) are cached per version.
-- Test-only overrides: `CE_SECRETS_DIR`, `CE_SETTINGS_FILE`, `CE_GOOGLE_AUTH_URL`, `CE_GOOGLE_TOKEN_URL`, `CE_YOUTUBE_API`.
+| # | Tool | Version | Where | Notes |
+|---|---|---|---|---|
+| 1 | **Git for Windows** | latest | <https://git-scm.com/download/win> | Downloads the engine (step 3). Claude Code on Windows uses its Git Bash. |
+| 2 | **Node.js** | 24 LTS (20 at least) | <https://nodejs.org/> (LTS installer) | Runs the engine and its website. |
+| 3 | **Python** | 3.12 | <https://www.python.org/downloads/> (a 3.12.x installer) | On the installer's first screen tick **"Add python.exe to PATH"**. Use 3.12: the pinned packages were tested on it. |
+| 4 | **ffmpeg** (with ffprobe) | 8.x full build | In a terminal: `winget install Gyan.FFmpeg` | Audio, video copies and checks. |
+| 5 | **Blender** | 5.1 | <https://www.blender.org/download/> | The 3D shots. Expected at `C:\Program Files\Blender Foundation\Blender 5.1\blender.exe`. Another location can be set in Settings. |
+| 6 | **Claude Code** | current | <https://claude.com/claude-code> (follow the Windows install) | After installing, open a terminal, run `claude` once and sign in with your Claude account. |
+| 7 | **Google Chrome** + the **Claude in Chrome** extension | optional | <https://www.google.com/chrome/> | Only for the backup way of posting to Facebook/Instagram ("Other way" on the Publish page) and for Settings → Check Chrome. |
 
-## Commands
+**Then close every terminal and open a new one**, so the new PATH entries are seen. Check that each tool answers:
 
 ```
-ce app [--no-open]                 # the website (see above)
-ce settings workspace D:\code_files\animations   # where video projects live (currently set)
-ce new <slug> --title "..."        # project-<N>-<slug> from the template: packages linked, git repo, ready for Studio
-ce list                            # projects in the workspace
-ce link [project]                  # create/repair node_modules links (all projects if none given)
-ce pipeline <project> <step>       # vo | music | stems | sfx | plates | captions | audio | refs  (see pipeline/run.py)
-ce blender <project> <shot>.py <args>   # run a shot script from the project's blender/ folder headless
-ce doctor                          # check node, python packages, ffmpeg, Blender, disk, project links
+git --version
+node --version
+python --version
+ffmpeg -version
+ffprobe -version
+claude --version
 ```
 
-`ce` is `ce.cmd` in this folder (add the folder to PATH, or call it by full path). `<project>` is a path, a folder
-name in the workspace, or a project number.
+If `python` opens the Microsoft Store or says "Python was not found", see [Troubleshooting](#10-troubleshooting).
 
-## Layout
+## 3. Get the engine onto the PC
+
+Pick a folder on a drive with space, ideally a path without spaces, for example `D:\content-engine`.
+
+**With git** (recommended, since updates are then one command):
+
+```
+git clone https://github.com/subbu-h21/content-engine.git D:\content-engine
+```
+
+The repository is private. Git asks you to sign in to GitHub the first time: a browser window opens, so sign in with
+an account that has access.
+
+**Without git:** copy the engine folder from the other PC. Leave out `runtime\node_modules`, `app\node_modules`,
+`app\dist` and `models`: setup makes them again. Copying `secrets\` and `settings.json` is covered in
+[step 8](#8-moving-from-another-pc).
+
+## 4. Run setup.bat
+
+Double-click `setup.bat` in the engine folder, or run it in a terminal. It takes a few minutes the first time. It:
+
+1. **checks the tools**: Node, Python, ffmpeg, ffprobe and Claude Code. Anything missing is listed as `MISSING`, with
+   where to get it.
+2. **installs the engine's packages**: the video packages (`runtime\`) and the website's (`app\`), at the exact
+   versions in their `package-lock.json`.
+3. **builds the website** (`app\dist`).
+4. **installs the Python packages**: numpy, scipy and pillow at fixed versions, so audio comes out identical on every
+   PC; Whisper, which transcribes reference videos locally (it brings PyTorch, a large download); and yt-dlp, which
+   downloads reference links.
+5. **runs `ce doctor`**, a checklist of the whole machine.
+
+Each check prints `ok`, `MISSING` or `FAIL`. Fix whatever is `MISSING` or `FAIL` and run `setup.bat` again: it skips
+what's already installed. On a brand-new PC, `FAIL workspace (not set)` is expected; step 5 sets it.
+
+npm may print warnings about "install scripts not yet covered by allowScripts" for esbuild and node-pty. They are
+harmless: esbuild works without its script, and node-pty isn't used.
+
+## 5. Workspace and OpenRouter key
+
+1. Make a folder for the videos, for example `D:\videos`. It holds every video, so put it on the drive with space.
+2. In that folder create a text file named exactly `.env` (no `.txt` at the end) containing one line:
+
+   ```
+   OPENROUTER_API_KEY=sk-or-v1-...
+   ```
+
+   Your key is at <https://openrouter.ai/keys>. The engine finds the `.env` in a video's folder or any folder above it,
+   so one file in the workspace covers every video. Treat this file like a password: don't send it or put it in git.
+
+## 6. Start the engine
+
+Double-click **`start.bat`**. A terminal window opens with the engine's log, and the browser opens
+<http://127.0.0.1:4100>. **Keep that window open**: closing it, or pressing Ctrl+C in it, stops the engine and
+everything it started.
+
+If the engine is already running, `start.bat` just opens the page.
+
+First time only:
+
+1. **Settings → General**: choose the workspace folder from step 5. Blender's and Python's paths are filled in;
+   change them only if you installed them somewhere else. Each one is checked when you save.
+2. **Videos** (home page): type what you want to make under "What do you want to create today?" and press Create.
+   The video's Brief opens and Claude starts talking it through in the chat on the right.
+
+Downloaded on first use, automatically:
+- Remotion's own headless browser, the first time a video is rendered
+- the Whisper speech model (about 460 MB), the first time a reference video is studied
+
+The website only listens on this PC (`127.0.0.1`), so other computers can't reach it. If the PC is a remote or cloud
+machine, use the engine through Remote Desktop on that machine. Don't open the port to the network: the website has
+no login.
+
+## 7. Connect YouTube, Facebook and Instagram
+
+Both are one-time setups done from the website, with step-by-step instructions and links on each settings page.
+Each takes about 10 minutes.
+
+**YouTube** (Settings → YouTube):
+- Google Cloud project, *YouTube Data API v3* enabled, Google Auth Platform app, a **Desktop app** client.
+- Paste its Client ID and secret, press **Connect** and allow access for your channel.
+- Publish the Google Auth Platform app to **In production**. In *Testing* the sign-in expires every 7 days.
+- After that the engine renews its access by itself. Uploads are **private** by default; you publish them in YouTube
+  Studio, or pick unlisted, public or scheduled on the Publish page.
+- If a Google Cloud project already exists from another PC, reuse it: copy its Client ID and secret (Google Cloud →
+  Google Auth Platform → Clients) instead of making a new one.
+
+**Facebook & Instagram** (Settings → Facebook Page & Instagram):
+- A Meta app at <https://developers.facebook.com/apps/>, with the "manage your Page" and "Instagram content
+  publishing" use cases.
+- Its Valid OAuth Redirect URI set to `http://localhost:4100/`. The page shows the exact value; it changes only if the
+  port changes.
+- It stays in Development mode. Paste its App ID and secret and press **Connect**.
+- On Facebook's screen, choose your Page and its Instagram account.
+- If Facebook refuses the redirect, the same page has a "paste a token instead" route through the Graph API Explorer.
+- The sign-in lasts about 60 days; the engine shows when it ends, and connecting again renews it. To reuse the app
+  from another PC, enter the same App ID and secret here.
+
+## 8. Moving from another PC
+
+- **Videos**: copy the workspace folder, but not the `node_modules` links inside each video. `robocopy` with `/XJ` skips
+  them:
+
+  ```
+  robocopy D:\old\videos D:\videos /E /XJ
+  ```
+
+  Then recreate the links: `D:\content-engine\ce.cmd link`. `ce doctor` shows "project package links ok" when that's
+  done.
+- **The OpenRouter key**: copy the `.env` from the old workspace, or make a new one (step 5).
+- **Settings**: `settings.json` (workspace and paths, posting defaults) is per PC and not in git. Set them again in
+  Settings, or copy the file and correct the paths.
+- **YouTube / Facebook / Instagram sign-ins**: connecting again in Settings is the clean way. Alternatively, copy the
+  engine's `secrets\` folder from the old PC. It holds the sign-ins, so treat it like passwords: copy it directly, never
+  by email or chat. A Facebook sign-in copied this way still ends on its original date.
+- **Earlier Claude conversations** of a video show in its chat only if the video's folder has the same path as before:
+  Claude Code files them under the folder's full path, in `%USERPROFILE%\.claude\projects\`.
+
+## 9. Everyday use and updates
+
+- Start with `start.bat`; stop by closing its window. A render or upload that was running shows as *interrupted* on
+  the next start; press Resume.
+- Check the machine any time with `ce.cmd doctor`.
+- **Update the engine**, with the engine stopped:
+
+  ```
+  cd D:\content-engine
+  git pull
+  ```
+
+  Then:
+  - if `runtime\package-lock.json` or `app\package-lock.json` changed, delete that folder's `node_modules` and run
+    `setup.bat`.
+  - if anything under `app\web` changed, rebuild the website: delete `app\dist` and run `setup.bat`, or run
+    `npm run build` in `app\`.
+
+  Existing videos keep their own copy of the template's code, so an update doesn't change how they look.
+
+## 10. Troubleshooting
+
+| Problem | Fix |
+|---|---|
+| `python` opens the Microsoft Store, or "Python was not found" | Windows' placeholder is answering. Install Python 3.12 with "Add python.exe to PATH" ticked, and turn off the `python.exe` / `python3.exe` entries in Settings → Apps → Advanced app settings → App execution aliases. Open a new terminal. |
+| A tool is `MISSING` right after installing it | Open a new terminal (or sign out and in) so the new PATH is seen, then run `setup.bat` again. |
+| `MISSING yt-dlp on PATH` / `whisper on PATH` | Python's Scripts folder isn't on PATH. Add `%LOCALAPPDATA%\Programs\Python\Python312\Scripts` (the usual location) to your user PATH. |
+| `FAIL blender` | Blender isn't at the default path: set its `blender.exe` in Settings → General. |
+| `FAIL project package links` | Run `ce.cmd link` (after copying videos from another PC, or after reinstalling packages). |
+| Port 4100 is taken by another program | Pick another port: `ce.cmd settings appPort 4200`, then start again. For Facebook, also change the app's redirect URI to `http://localhost:4200/`. |
+| The Claude chat doesn't start | In a new terminal, run `claude --version`, then `claude` to check you're signed in. The engine finds Claude Code through PATH. |
+| Claude's **Terminal** window asks whether to trust the folder | Choose *Yes, I trust this folder*. The highlighted default is *No, exit*. |
+| YouTube asks to connect again every week | The Google Auth Platform app is still in *Testing*: publish it to *In production*. |
+| Voice or music fails with "OPENROUTER_API_KEY not found" | The `.env` from step 5 is missing, misnamed (`.env.txt`), or not in the workspace or above the video. |
+
+## 11. Commands
+
+`ce.cmd` in the engine folder runs the engine's commands from a terminal. Add the folder to PATH to type just `ce`.
+
+```
+ce app [--no-open]                  # start the website (what start.bat does)
+ce doctor                           # check node, Python packages, ffmpeg, Blender, disk, video links
+ce settings [key value]             # show or change settings (workspace, python, blender, appPort)
+ce new <name> --title "..."         # a new video folder from the template (the website's Create does this)
+ce list                             # the videos in the workspace
+ce link [video]                     # repair the videos' package links
+ce pipeline <video> <step>          # run one pipeline step: vo | music | stems | sfx | plates | captions | audio | refs
+ce blender <video> <shot>.py <args> # run a video's Blender shot script without Blender's window
+```
+
+`<video>` is a folder path, a folder name in the workspace, or a video's number.
 
 | Folder | What |
 |---|---|
-| `runtime/` | The npm packages every project uses (Remotion 4.0.535, React 19, zod 4), installed once. Each project's `node_modules` is a Windows junction to `runtime/node_modules`. Versions are pinned: changing one changes how every project renders. |
-| `template/` | What a new project starts as: the generic Remotion layer (`src/components`, `src/lib`), an example scene, `project.json`, `script.json`, `sfx.json`, README and CLAUDE.md for the project. |
-| `pipeline/` | Python steps that read a project's `project.json` / `script.json` / `sfx.json` and write into it: OpenRouter voice (verbatim-checked) and Lyria music, stems and music ducking, procedural sound effects, plate bloom + encode, captions. |
-| `library/blender/` | Reusable Blender builders (brain, phone) with their assets. A project copies what it uses into `blender/lib/`. |
-| `cli/` | `ce.mjs` (commands) and `projects.mjs` (create/list/link projects; the website reuses it). |
-| `app/` | The website: `server/` (Express API, MCP endpoint, Studio management, the Claude chat, bridge, hook), `web/` (React page, built with esbuild into `dist/`: `npm run build`). Own packages, separate from `runtime/`. |
-| `migrations/phone-reel/` | Turns the existing reel (project-3-development + project-2-expt/reel) into an engine project. |
-
-## Rules the design follows
-
-- **Packages are shared, creative code is copied.** Heavy tools (npm packages, Python, Blender, ffmpeg) are installed
-  once. Code that decides how a video looks (components, Blender builders) is copied into the project when it is
-  created, so improving the engine never changes a finished video.
-- **Generated assets stay in the project.** Voice lines, music, stems, plates and data are written into the project;
-  regenerating is always an explicit pipeline step.
-- **Timing is the spine.** `script.json` → `vo` → `src/data/timing.json`; scenes, sound effects and Blender shots key
-  to cue times, so re-recording a line moves everything with it.
-- **Paid calls only for missing files.** `vo` records only lines without a WAV; `music` only runs when there is no
-  `audio/music.mp3`.
-
-## Requirements (checked by `ce doctor`)
-
-Node 20, Python 3.12 with numpy, scipy, pillow; ffmpeg on PATH; Blender 5.1. OpenRouter key in a `.env` above the
-project (the workspace `D:\code_files\animations\.env` has one) as `OPENROUTER_API_KEY=...`.
-
-## Verified (2026-10-17)
-
-The phone reel rebuilt as an engine project (`migrations/phone-reel`), compared with the original project-3-development:
-
-- Full-length render (1671 frames + audio): all 4935 decoded video and audio packets identical (framemd5).
-- Guides overlay (all guides on) at 6 frames incl. the phone→brain plate cut: identical.
-- Pipeline outputs regenerated from scratch, byte-identical: timing.json, vo_full.wav, voice/music stems, duck.json,
-  sfx_events.json + all 9 effect WAVs, captions, music mp3→wav, phone and brain plates (final and draft).
-- Blender: `markers.json` from the brain shot byte-identical; one final frame each of the brain and phone shots
-  pixel-identical (PSNR ∞) to the original final renders. (The old draft frames came from an earlier script version.)
-- Studio starts and compiles; a fresh `ce new` project typechecks and renders; `npm install` inside a project removes
-  only its link (shared packages intact) and `ce link` restores it.
-
-Not exercised: paid voice/music generation (same code paths, adapted), full Blender renders (hours).
-
-Props saving from Studio (2026-10-17): verified with a real save through Studio's `/api/update-default-props`; it only
-works because `defaultProps` is an inline literal in `<Composition id="Reel">` (see template/src/Root.tsx).
-
-## Verified, Phase 2 (2026-10-18)
-
-With project-4-phone-reel, Studio loaded in headless Chrome (Remotion's chrome-headless-shell):
-- the bridge reports composition/frame/props (no page errors); renders with the bridge are still identical to project-3
-- MCP: all six tools listed; `seek` to 0:41 moved Studio's playhead (frame 984); `show_setting` scrolled the props
-  editor to `scenes.s03.cueLabel.text`; `view_frame` returned the right frame (40 KB JPEG, ~19 s)
-- the hook prints the right context; real Claude Code (`claude -p`, read-only) parked at 0:41 answered
-  `scenes.s05.loop.lines` in one turn
-- the editor page shows Studio and a live Claude Code terminal; `ce app` starts and stopping it leaves no processes
-- security: foreign Origin → 403, foreign Host → 403, terminal socket from a foreign origin → 403
-
-Not exercised: a person using the editor page by hand (typing in the terminal, dragging the divider); Ctrl+C shutdown
-(the handlers exist; the tests stopped the process tree directly).
-
-## Verified, Phase 3 (2026-10-18)
-
-In a scratch workspace (`CE_WORKSPACE`, `CE_APP_PORT` override the settings for tests): a new video opens its Brief and
-the panel starts Claude with `/make-video`; after the one-time trust prompt Claude asked what to make, and after one
-answer wrote `brief.md` and set the stage to `talking` (board rendered it). Uploads: image → reference, `.md` with a
-`name:` → project skill, a `..\..\` file name stays inside `references/`; the study step made 70 stills, contact sheet,
-palette and a correct Whisper transcript of the reel. Board messages to Claude (Approve button) are submitted and
-answered (sent as a bracketed paste, then Enter). Reopening a project continues its conversation (`claude --continue`,
-which exits with code 1 after ~12 s when there is none, then a new one starts). `plates --from draft` and
-`vo --estimate` checked on the reel (estimate calibrated to its measured 2.88 words/s). Plate encodes still byte-identical.
-
-Since then the user made "why the sky is blue" end to end (project-5).
-
-## Verified, Phase 4 (2026-10-19)
-
-On a scratch engine with a copy of project-5 (2D) and a small 3D test video (a spinning cube shot that can be made to
-crash at a chosen frame):
-- 2D final render: sound check, 1974-frame render, upload file; 82.3 s with sound, −15.5 LUFS / −1.5 dBTP; board stage
-  `final-ready`. A second video queued behind it (position 1) and could be stopped while queued; double start → 400.
-- 3D: stop mid-plate kept 80 frames; a half-written frame was detected and redone; killing the engine mid-render left
-  `running` in job.json, the next start reported it *interrupted*, Resume finished it; frames 1–79 were never
-  re-rendered (mtimes unchanged); 351 frames, plates, video and delivery correct; the plate visible in the video.
-- Changing the shot script after rendering → plan flags the plate, start refuses to mix frames; re-render ticked →
-  old frames deleted, a one-time Blender crash retried automatically, render finished.
-- Permanent crash → two tries, step failed, handed to Claude automatically; Claude found the cause (the test's crash
-  file), removed it, called `render_resume`, explained what it did; the render finished. (The first attempt exposed a
-  startup question swallowing the message; fixed by the panel-question rule above.)
-- Pre-start blocks on a new video (placeholder script, estimated timing); delete refused while rendering (409);
-  `delivery.mp4` held open → "close it and press Resume", then Resume redid only that step (5 s).
-- Final tab screenshots: plan/blocked, running (frames, time left, log tail, Stop), finished (video player).
-
-## Verified, Phase 5 (2026-10-19)
-
-Against a fake Google on the PC (OAuth with PKCE check, token refresh, channels.list, resumable upload with injectable
-faults) and a scratch engine, with a 30 MB vertical test video:
-- Setup: wrong client files rejected with the reason; sign-in through the loopback redirect, channel shown; tokens in
-  the scratch secrets folder.
-- Uploads: problems block the start ("made for kids" unanswered, `<`/`>`); a connection dropped mid-chunk → asked
-  YouTube, continued from 20 of 30 MB, done; a 503 → waited, continued; the access token expiring mid-upload →
-  refreshed silently; Stop at 24 MB → Resume continued in the same session; engine killed mid-upload → *interrupted*
-  after restart → Resume continued in the same session; a revoked sign-in → clear "connect again" message; the same
-  file twice → refused with the link. Metadata arrived as set (private, not for kids, title, part snippet,status).
-- Facebook/Instagram: draft problems block the hand-off; with the panel showing its trust question the hand-off waited
-  (not typed) and said why; "Mark as posted" with a link; unknown statuses refused; MCP `publish_status` /
-  `publish_report` (schema rejects bad statuses); Page/account remembered.
-- Screenshots: Publish tab (YouTube result with links, Facebook "ready in Chrome", Instagram "posted"), Connected
-  accounts.
-
-Settings and Published pages (2026-10-19, same fake Google, scratch `settings.json`): wrong workspace, Blender, Page
-name and Instagram handle rejected with the reason; `skyexplained` → `https://www.facebook.com/skyexplained`,
-an Instagram profile URL → `@sky.explained`; a new video's drafts took the defaults (unlisted, tags, footers, post);
-Client ID/secret pasted (bad ID and empty secret rejected) → Connect → Test connection → upload as unlisted; Download
-header `attachment; filename=why-the-sky-is-blue.mp4`; Reset; Published table rows; Check Chrome waited for the
-(untrusted) panel and `chrome_check_report` saved a result; the real `settings.json` was untouched; no page errors.
-
-Publish page (2026-10-19, same setup, a vertical final + a horizontal 100 s draft + temp/check files): only final and
-draft listed (final first, default pick), a video without files under *Not exported yet*; old Reel/post settings
-ignored, Facebook/Instagram hand-off refused until Reel or post is chosen, a bad format not stored; picking a path outside
-the list (or a temp file) refused; notes and download name follow the picked file; YouTube: draft uploaded, same file
-again → 409 with the link, final stopped part-way and resumed in the same session, an unchanged draft refused from the
-history even after another upload, changed draft → new upload, confirmed second copy uploads; history rows carry their
-files, a repeated "posted" updates its row, Reset removes it; MCP `publish_status` shows the picked file; the Claude panel
-opened from the page writes `.mcp.json`; old `/published` and `/p/<p>/publish` links redirect; no Publish tab in the
-project bar; no page errors. (Stop/resume checks depend on timing: one of three runs finished the upload before Stop.)
-
-Not exercised: the real Google sign-in and a real upload (needs the user's Google Cloud setup), Claude actually
-posting in Chrome (deliberately not run against the user's accounts), whether Claude in Chrome can attach a local
-file (unknown; the hand-off covers both cases).
-
-Not exercised yet (Phase 4): a long real 3D final render (project-7), Ctrl+C shutdown of `ce app` during a render (handler
-exists; the tests killed the process tree, the harder case), a disk-space block (logic only), link downloads (`yt-dlp` is installed), cut detection on dark footage (found no cut in
-the reel's dark phone→brain change).
-
-## Verified, whole-pipeline review (2026-10-19)
-
-On a scratch engine (port 4170, workspace `D:\tmp\ce-x`) with the fake Google and a **fake Claude** (a stand-in
-`claude.cmd` first on the engine's PATH that draws a trust question, Claude Code's prompt footer, and a permission
-question on demand, and logs every message it receives), driven through the website in headless Chrome:
-- Videos: create without and with dropped files (skill `.md` → project skill, style guide and image → references);
-  Brief: Claude's files show on the board; Approve refused (and the reason stays visible) while the panel shows a
-  question, typed once it's answered; building → preview ready → Editor with Studio and "Claude sees".
-- Final: start, stop during the video render, resume (sound step not redone), finished card → Publish; a broken step
-  handed to Claude only after the user answered the panel's question, Claude's `render_resume` finished it; two
-  videos queued; the engine killed mid-render → both *interrupted* → Resume finished both.
-- Settings: bad workspace/Blender/Python refused with the reason; Client ID/secret → Connect → Test → Disconnect →
-  Connect; Page name and Instagram URL normalised; defaults reach new drafts; Check Chrome waits for a trust question,
-  `chrome_check_report` shows on the page; the real `settings.json` untouched.
-- Publish: History when nothing is picked; final and draft per video, *Not exported yet*; upload (metadata from the
-  defaults), duplicate → Cancel uploads nothing, OK uploads a second copy; Stop then Resume at once; engine killed
-  mid-upload → *interrupted* → Resume continued in the same YouTube session; Facebook/Instagram hand-off (picked file,
-  Reel/post), waiting while the panel shows a question and delivered by itself after the answer; ready-to-post /
-  posted via MCP; Mark as posted (Cancel changes nothing); Reset; the picked file vanishing falls back to the final.
-- Back/forward across pages and tabs, old links, unknown video links, Delete (wrong number, refused while rendering or
-  uploading, Recycle Bin), a deleted finished file, a source changed after the final, a broken `project.json` /
-  `script.json`, the engine restarting under open pages.
-- The real Claude Code (current version) in the panel: its trust screen ("No, exit" is the default) is detected as a
-  question and its prompt as ready, so the never-type-into-a-question rule still holds.
-
-Fixed in this review: a second engine's Studio port check (Windows let an IPv4 bind succeed on a port another engine's
-Studio held, so the editor could show another project's Studio; now checked dual-stack, and "ready" needs Studio's own
-"Server ready" line); YouTube Stop + immediate Resume stuck in *queued*; a stopped queued upload left a ghost entry;
-"Handed to Claude" shown while the hand-off was only waiting (Publish, Final tab); Mark as posted on Cancel; the
-Brief board's refresh erasing button errors; stale "Failed to fetch" after an engine restart (Final, Publish);
-Settings saves taking 2–5 s (tool checks now remembered for a minute; YouTube state updates at once; "saving…");
-unknown video links (plain page instead of a Studio and panel that never start); a deleted finished file shown as
-finished; a broken `project.json` as a bare 500; long tracebacks as the Final tab headline (now under Details);
-one set of status words for Videos, Brief, Publish badges and History (`app/web/src/words.ts`); "See the final video"
-on the Brief at *final video ready*; long titles squeezed on Videos.
-
-UX changes chosen by the user afterwards (verified the same way): a stopped/failed/interrupted render offers Resume and
-"Start over instead" (the start form only on request); the finished video stays on the Final tab whenever
-`out/delivery.mp4` exists (with "the newer render didn't finish" when a later render stopped); a Publish step in each
-video's tab bar and "Open the video" back from the Publish page; folder names on the Videos list only on hover; the
-Brief shows the voice as "not decided" while it's still the template's voice and the brief is being talked through.
-The user's engine (4100) was restarted onto this version with nothing rendering and its Claude panels idle.
-
-Not exercised in this review: a 3D (Blender) final render (unchanged since Phase 4; the PC had ~4 GB free memory),
-the real Google and real Chrome posting (by design), Copy file path / Show in folder / Download in a real browser,
-link downloads, Studio interactions and the editor MCP tools, the real Claude running `/make-video`.
-
-## Verified, the Claude chat (2026-10-21)
-
-Claude Code 2.1.304, probed first in a scratch folder (stream-json in and out): skills (`/make-video`), the
-`UserPromptSubmit` hook, `--resume` (about 1 s), interrupt, `set_permission_mode`, permission questions and
-AskUserQuestion answered by the host (`--permission-prompt-tool stdio` plus an `initialize` request; without them
-permission questions are silently denied and AskUserQuestion is missing), "always allow" (`updatedPermissions`, saved
-to the folder's `settings.local.json`), deny, streaming text, `--chrome` (the Chrome tools, including `file_upload`).
-A message sent while a permission question waits is queued: the question is neither answered nor cancelled.
-
-Scratch engine, fake Claude (`tests/e2e/t12_chat.mjs`, 60 checks): a new video starts `/make-video` by itself (first
-reply 0.5 s after the page opened); messages, streamed replies, tool steps folded and opened; a permission card, a board
-message sent meanwhile waits and doesn't answer it, Allow / Always allow / Deny; a question card; Stop (no error line);
-Auto / Ask first saved per video and passed on restart; reload keeps the conversation; a crash is reported and the next
-message resumes the same conversation; idle close and resume; New conversation; Terminal (a window of its own, sending
-refused meanwhile, the chat back when it closes); earlier messages from a copied real conversation (0.8 MB and 23.6 MB:
-shown in about 0.3 s, no Claude started just by looking, the first message resumes it); the chat socket and the send API
-refuse foreign origins. The older tests (t1–t11) were updated to the chat (Approve, render failures and Publish hand-offs
-sent while Claude waits for an answer are queued and the question stays the user's).
-
-Real Claude Code on the scratch engine (`t13_real_claude_chat.mjs`, `t14_tui_resume.mjs`): `/make-video` started by
-itself (first words after 15 s), the engine's MCP tools connected (`editor_state` used), the hook's note arrived, Ask
-first showed a real permission card and the command ran after Allow, AskUserQuestion became a card and Claude got
-"Blue", Stop; a conversation made in Claude Code's normal terminal showed in the chat and the chat's Claude remembered
-it; the Terminal button ran `claude.exe --resume <id>` in a window of its own and the chat came back when it closed.
-
-Not exercised: a person using the chat by hand in a normal browser; the real Claude posting through Chrome (by design);
-a whole `/make-video` → Approve run with the real Claude (Approve costs money); how the chat behaves after a future
-Claude Code update changes its stream-json messages.
+| `app/` | The website: server (`server/`) and page (`web/`, built into `dist/`) |
+| `runtime/` | The video packages (Remotion, React), shared by every video through a folder link |
+| `template/` | What a new video starts as |
+| `pipeline/` | Python steps: voice, music, stems, sound effects, 3D plates, captions, references |
+| `library/blender/` | Reusable Blender scene builders and assets |
+| `cli/` | The `ce` commands |
+| `docs/ENGINE.md` | How it all works, and what was tested |
+| `secrets/`, `settings.json`, `models/` | Per PC, not in git: sign-ins, settings, the Whisper model |

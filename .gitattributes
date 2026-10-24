@@ -1,0 +1,5 @@
+# Windows scripts always check out with CRLF (cmd misreads labels otherwise), the sh launcher always with LF (sh
+# fails on CR), whatever core.autocrlf says on the machine.
+*.bat text eol=crlf
+*.cmd text eol=crlf
+ce text eol=lf
