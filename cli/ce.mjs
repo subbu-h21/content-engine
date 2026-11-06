@@ -16,6 +16,8 @@
  *   ce catalog copy <style> [--as <id>]   your own copy of a style (same id: an editable built-in; --as: a new style)
  *   ce catalog use <style> [--project <p>]  give a video its own copy of a style (inside a video folder: that video)
  *   ce review [project] [--no-critic]   the quality gate: review pack, measured checks, a fresh critic's notes
+ *   ce hooks [project]               score the hook options in brief/hooks.json
+ *   ce package [project]             render the thumbnails, check them, score the titles and captions
  *   ce doctor                        check the machine: node, python packages, ffmpeg, Blender, disk
  *
  * <project> is a path, a folder name in the workspace, or a project number.
@@ -25,6 +27,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { applyStyle, checkStyle, copyStyle, findStyle, listStyles, previewStyle } from "./catalog.mjs";
 import { createProject, ENGINE_DIR, linkProject, listProjects, loadSettings, resolveProject, RUNTIME_MODULES, saveSettings } from "./projects.mjs";
+import { readHooks, runPackage } from "./packaging.mjs";
 import { runReview } from "./review.mjs";
 
 const [cmd, ...rest] = process.argv.slice(2);
@@ -37,6 +40,14 @@ const flag = (name) => {
   rest.splice(i, 2);
   return v;
 };
+
+/** The video a command is about: its name or number, or the folder it's run in. */
+function videoDir(command) {
+  const workspace = flag("workspace") ?? process.env.CE_WORKSPACE ?? settings.workspace;
+  const dir = rest[0] ? resolveProject(rest[0], workspace) : process.cwd();
+  if (!fs.existsSync(path.join(dir, "project.json"))) throw new Error(`usage: ce ${command} [project]  (or run it inside a video folder)`);
+  return dir;
+}
 
 function run(cmdline, args, opts = {}) {
   const r = spawnSync(cmdline, args, { stdio: "inherit", ...opts });
@@ -119,6 +130,26 @@ const commands = {
     if (!fs.existsSync(path.join(dir, "project.json"))) throw new Error("usage: ce review [project] [--no-critic]  (or run it inside a video folder)");
     const r = runReview(dir, { critic });
     console.log(`${r.summary}\n${path.join(dir, "review", "REPORT.md")}`);
+  },
+
+  hooks() {
+    const dir = videoDir("hooks");
+    const h = readHooks(dir);
+    if (!h) throw new Error("There are no hooks yet: write brief/hooks.json (the packaging skill says how).");
+    for (const o of h.options) console.log(`${String(o.score).padStart(3)}  ${o.verdict.padEnd(8)} ${o.formula.padEnd(22)} ${o.text}${o.note ? `\n     weak: ${o.note}` : ""}`);
+    console.log(`\nThe board shows the best two: ${h.best.join(", ")}`);
+  },
+
+  package() {
+    const r = runPackage(videoDir("package"));
+    for (const t of r.thumbs) {
+      console.log(`thumbnail ${t.id}: ${t.findings.length ? "" : "ok"}`);
+      for (const f of t.findings) console.log(`  ${f.level.toUpperCase()} ${f.where}: ${f.problem} → ${f.change}`);
+    }
+    for (const t of r.titles.slice(0, 3)) console.log(`title ${String(t.score).padStart(3)}  ${t.title}${t.issues.length ? `\n     ${t.issues.join("; ")}` : ""}`);
+    for (const c of r.captions.slice(0, 2)) console.log(`caption ${c.total}/20  ${c.text.split("\n")[0]}${c.issues.length ? `\n     ${c.issues.join("; ")}` : ""}`);
+    for (const e of r.errors) console.log(`FAIL the page: ${e}`);
+    for (const m of r.missing) console.log(`MISSING ${m}`);
   },
 
   catalog() {

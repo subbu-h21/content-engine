@@ -1,6 +1,6 @@
 /** The Brief board: the video's plan as Claude writes it (read live from the project files), plus references. */
 import React, { useEffect, useRef, useState } from "react";
-import { api, previewUrl, type Brief, type CatalogStyle, type Stage } from "./api";
+import { api, previewUrl, type Brief, type CatalogStyle, type HookOption, type Stage } from "./api";
 import { Markdown } from "./Markdown";
 import { navigate } from "./nav";
 import { STAGE_WORD as STAGES } from "./words";
@@ -146,6 +146,8 @@ export const BriefBoard: React.FC<{ name: string; onOpenEditor: () => void }> = 
         {b.brief ? <Markdown text={b.brief} /> : null}
       </Section>
 
+      {b.hooks ? <HookCard name={name} hooks={b.hooks} canChange={["new", "talking", "none", "awaiting-approval"].includes(stage)} onError={setError} /> : null}
+
       <Section title="Script" empty={!b.script.scenes.length}>
         <p className="meta">
           {b.script.words} words · {b.script.total ? `${fmt(b.script.total)} recorded` : `about ${fmt(b.script.estimate)} (estimated)`}
@@ -277,6 +279,66 @@ export const BriefBoard: React.FC<{ name: string; onOpenEditor: () => void }> = 
         {b.skills.length ? <p className="meta">Skills for this video: {b.skills.join(", ")}</p> : null}
       </section>
     </div>
+  );
+};
+
+/** The video's opening line: the best two options, the rest on request. Claude builds the script on the one picked. */
+const HookCard: React.FC<{ name: string; hooks: NonNullable<Brief["hooks"]>; canChange: boolean; onError: (e: string | null) => void }> = ({ name, hooks, canChange, onError }) => {
+  const [all, setAll] = useState(false);
+  const [changing, setChanging] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const sending = useRef(false); // a ref: a second click can land before the page has redrawn
+  const chosen = hooks.options.find((o) => o.id === hooks.chosen) ?? null;
+  // the engine saves the pick only if Claude got it, so a failed send can be tried again
+  const pick = async (o: HookOption) => {
+    if (sending.current) return;
+    sending.current = true;
+    setBusy(true);
+    onError(null);
+    try {
+      const r = await api.chooseHook(name, o.id);
+      if (r.sent) setChanging(false);
+      else onError(`Not sent: ${r.reason ?? "Claude couldn't be reached."}`);
+    } catch (e) {
+      onError((e as Error).message);
+    }
+    sending.current = false;
+    setBusy(false);
+  };
+  const row = (o: HookOption) => (
+    <li key={o.id} className={`hook ${o.id === hooks.chosen ? "on" : ""}`}>
+      <span className={`hook-score ${o.verdict}`}>{o.score}</span>
+      <div>
+        <p className="hook-text">{o.text}</p>
+        <p className="meta">
+          {[o.formula, o.why].filter(Boolean).join(" · ")}
+          {o.note ? ` · weak: ${o.note}` : ""}
+        </p>
+      </div>
+      {canChange ? (
+        <button className={o.id === hooks.chosen ? "quiet" : "primary"} disabled={busy || o.id === hooks.chosen} onClick={() => pick(o)}>
+          {o.id === hooks.chosen ? "Picked" : "Use this hook"}
+        </button>
+      ) : null}
+    </li>
+  );
+  const shown = chosen && !changing ? [chosen] : all ? hooks.options : hooks.options.filter((o) => hooks.best.includes(o.id));
+  return (
+    <section className="card">
+      <h2>Hook</h2>
+      {!chosen ? <p className="hint">The video's first line. Pick one and Claude builds the script on it. The score is a guide: it spots weak lines, it can't promise a good one.</p> : null}
+      <ul className="hooks">{shown.map(row)}</ul>
+      {chosen && !changing && canChange ? (
+        <button className="quiet" onClick={() => setChanging(true)}>
+          Change the hook
+        </button>
+      ) : null}
+      {(!chosen || changing) && hooks.options.length > 2 ? (
+        <button className="quiet" onClick={() => setAll(!all)}>
+          {all ? "Show the best two" : `Show all ${hooks.options.length}`}
+        </button>
+      ) : null}
+    </section>
   );
 };
 

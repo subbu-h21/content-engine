@@ -236,7 +236,8 @@ export const StylePage: React.FC<{ id: string }> = ({ id }) => {
     setError(null);
     setNote(null);
     try {
-      await fn();
+      const r = (await fn()) as { sent?: boolean; reason?: string } | undefined;
+      if (r?.sent === false) throw new Error(`Not sent: ${r.reason ?? "Claude couldn't be reached."}`);
       if (done) setNote(done);
     } catch (e) {
       setError((e as Error).message);

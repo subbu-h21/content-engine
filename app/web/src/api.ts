@@ -57,7 +57,11 @@ export type Brief = {
   jobs: Job[];
   /** The video's catalog style and channel (optional: an older engine doesn't send it). */
   look?: { style: { id: string; name: string; locked: boolean; builtIn: boolean; cover: string | null } | null; channel: { id: string; name: string; locked: boolean } | null };
+  /** The hook options, best first (optional: an older engine doesn't send it; null before there are any). */
+  hooks?: { options: HookOption[]; best: string[]; chosen: string | null } | null;
 };
+
+export type HookOption = { id: string; text: string; formula: string; why: string; score: number; verdict: "strong" | "workable" | "weak"; note: string | null };
 
 
 export type RenderStep = {
@@ -196,14 +200,27 @@ export type ReviewReport = {
   frames: number;
   findings: ReviewFinding[];
   listen: { t: number; why: string }[];
-  pack: { beats: string[]; seams: string[]; phone: string[]; safe: string | null };
-  critic: { notes?: ReviewNote[]; error?: string } | null;
+  pack: { beats: string[]; seams: string[]; phone: string[]; safe: string | string[] | null };
+  /** earlier: when a Measure only run kept the last full review's notes. */
+  critic: { notes?: ReviewNote[]; error?: string; earlier?: string } | null;
+  unmeasured?: number;
   counts: { fails: number; warnings: number; p0: number; p1: number; p2: number };
   passed: boolean;
   summary: string;
 };
 export type ReviewFinal = { lufs: number | null; truePeak: number | null; width: number; height: number; colour: string; findings: ReviewFinding[] };
 export type ReviewInfo = { running: boolean; error: string | null; report: ReviewReport | null; final: ReviewFinal | null };
+
+export type PackageFinding = { level: "fail" | "warn"; where: string; problem: string; change: string };
+export type PackageThumb = { id: string; file: string; width: number; height: number; bytes: number; text: string; findings: PackageFinding[] };
+export type PackageTitle = { id: string; title: string; thumb: string | null; score: number; issues: string[]; good: string[]; phone: string };
+export type PackageCaption = { id: string; text: string; keyphrase: string; total: number; issues: string[] };
+export type PackageInfo = {
+  report: { at: string; thumbs: PackageThumb[]; titles: PackageTitle[]; captions: PackageCaption[]; errors: string[]; missing: string[] } | null;
+  choice: { title?: string; thumb?: string; caption?: string };
+  /** What the Publish drafts hold now (optional: an older engine doesn't send it). */
+  draft?: { title?: string; facebook?: string; instagram?: string };
+};
 
 async function call<T>(url: string, init?: RequestInit): Promise<T> {
   const r = await fetch(url, { ...init, headers: { "content-type": "application/json", ...(init?.headers ?? {}) } });
@@ -241,6 +258,10 @@ export const api = {
   remove: (name: string, confirm: string) => call<{ deleted: string }>(`/api/projects/${encodeURIComponent(name)}`, { method: "DELETE", body: JSON.stringify({ confirm }) }),
   review: (name: string) => call<ReviewInfo>(`/api/projects/${encodeURIComponent(name)}/review`),
   reviewRun: (name: string, critic: boolean) => call<{ started: boolean }>(`/api/projects/${encodeURIComponent(name)}/review/run`, { method: "POST", body: JSON.stringify({ critic }) }),
+  package: (name: string) => call<PackageInfo>(`/api/projects/${encodeURIComponent(name)}/package`),
+  packageMake: (name: string) => call<{ sent: boolean; reason?: string }>(`/api/projects/${encodeURIComponent(name)}/package/make`, { method: "POST", body: "{}" }),
+  packageUse: (name: string, kind: "title" | "thumb" | "caption", id: string) => call<PackageInfo>(`/api/projects/${encodeURIComponent(name)}/package/use`, { method: "POST", body: JSON.stringify({ kind, id }) }),
+  chooseHook: (name: string, id: string) => call<{ sent: boolean; reason?: string }>(`/api/projects/${encodeURIComponent(name)}/hook`, { method: "POST", body: JSON.stringify({ id }) }),
   render: (name: string) => call<RenderInfo>(`/api/projects/${encodeURIComponent(name)}/render`),
   renderStart: (name: string, rerender: string[], autoFix: boolean) => call<RenderJob>(`/api/projects/${encodeURIComponent(name)}/render/start`, { method: "POST", body: JSON.stringify({ rerender, autoFix }) }),
   renderResume: (name: string, autoFix?: boolean) => call<RenderJob>(`/api/projects/${encodeURIComponent(name)}/render/resume`, { method: "POST", body: JSON.stringify({ autoFix }) }),
@@ -272,7 +293,7 @@ export const api = {
   publishDraftWithClaude: (name: string) => call<{ ok: boolean; pending?: boolean; reason?: string }>(`/api/projects/${encodeURIComponent(name)}/publish/draft`, { method: "POST", body: "{}" }),
   revealVideo: (name: string) => call<{ ok: boolean }>(`/api/projects/${encodeURIComponent(name)}/publish/reveal`, { method: "POST" }),
   brief: (name: string) => call<Brief>(`/api/projects/${encodeURIComponent(name)}/brief`),
-  view: (name: string, tab: "brief" | "editor" | "review" | "final" | "publish") => call<{ ok: boolean }>(`/api/projects/${encodeURIComponent(name)}/view`, { method: "POST", body: JSON.stringify({ tab }) }),
+  view: (name: string, tab: "brief" | "editor" | "review" | "final" | "package" | "publish") => call<{ ok: boolean }>(`/api/projects/${encodeURIComponent(name)}/view`, { method: "POST", body: JSON.stringify({ tab }) }),
   link: (name: string, url: string) => call<{ started: boolean }>(`/api/projects/${encodeURIComponent(name)}/link`, { method: "POST", body: JSON.stringify({ url }) }),
   study: (name: string) => call<{ started: boolean }>(`/api/projects/${encodeURIComponent(name)}/study`, { method: "POST" }),
   say: (name: string, text: string) => call<{ sent: boolean; reason?: string }>(`/api/projects/${encodeURIComponent(name)}/say`, { method: "POST", body: JSON.stringify({ text }) }),

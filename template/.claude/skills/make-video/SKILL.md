@@ -14,6 +14,7 @@ a programmer. `ce` is the engine command (`D:\code_files\content-engine\ce.cmd`,
 |---|---|---|
 | Status | `brief/status.json` | `{"stage": "...", "note": "one line for the user"}` — update at every stage change |
 | Idea | `brief.md` | topic, key message, audience, length, format, tone, must include / avoid |
+| Hook | `brief/hooks.json` | five opening lines; the user picks one and the script is built on it |
 | Script | `script.json` | scenes and lines (format below) |
 | Look | `style.md` + `brief/frames/*.png` | style guide; 2–3 style frames at the checkpoint |
 | Sound | `project.json` → `voice`, `music` | voice name + style direction; music prompt |
@@ -46,10 +47,13 @@ folder name stays). Ask a few questions at a time, never a long form. Settle, in
    what you see in 4–6 plain bullets and how it would carry over. Links: the user can paste them on the board; you can
    also run `yt-dlp` yourself into `references/` and then `ce pipeline . refs`. A `.md` skill the user dropped is in
    `.claude/skills/<name>/` and applies to this video — read it.
-3. **Script**: write `script.json`. One cue per sentence; calm narration runs about **2.8 words per second**, and
+3. **Hook**: follow the `packaging` skill's Hook section: five opening lines in `brief/hooks.json`, scored with
+   `ce hooks .`. The board shows the best two. **Wait for the user's pick before writing the script.**
+4. **Script**: write `script.json`, built on the chosen hook: its text is the first cue, word for word, and the rest of
+   the script pays off what it promises. One cue per sentence; calm narration runs about **2.8 words per second**, and
    with the lead-in, gaps and pauses a 30 s video holds about 65–75 words; `pause` (seconds) adds silence after a line for emphasis. Read the whole script back
    in chat once it's drafted and adjust together.
-4. **Look**: the look comes from the engine's style catalog. The user browses it on the Catalog page; `ce catalog list`
+5. **Look**: the look comes from the engine's style catalog. The user browses it on the Catalog page; `ce catalog list`
    lists it. The styles are in `D:\code_files\content-engine\library\catalog\visual\<id>\` and
    `<workspace>\catalog\visual\<id>\`; each has `STYLE.md` and `preview/sheet.jpg`.
    - **The video already has a style** when `src/style/STYLE.md` exists (`project.json` → `style`; it came from the
@@ -71,11 +75,11 @@ folder name stays). Ask a few questions at a time, never a long form. Settle, in
      video's own under its `## This video` heading (which accent means what here, which scenes are 3D), and never
      contradict the style. The engine keeps that section when the style changes. Without a catalog style, write
      `style.md` yourself (sections below).
-5. **Sound**: narrator voice (`project.json` → `voice.voice`, e.g. cedar, marin, alloy, ash, coral, sage, verse —
+6. **Sound**: narrator voice (`project.json` → `voice.voice`, e.g. cedar, marin, alloy, ash, coral, sage, verse —
    offer a sample with `ce pipeline . vo --sample "<a line from the script>"`, about $0.003, the board plays it) and the
    voice direction (`voice.style`); music mood → `music.prompt` (instrumental, tempo, instruments, structure, "sits
    under a quiet voice-over"). Sound effects are decided during the build.
-6. **Visual plan**: `plan.md`, one block per scene. Say clearly which scenes use **3D** (Blender: realistic objects,
+7. **Visual plan**: `plan.md`, one block per scene. Say clearly which scenes use **3D** (Blender: realistic objects,
    camera moves; costs render time) and which are **2D** (Remotion: type, diagrams, labels; free and instant to change).
 
 `script.json`:
@@ -163,6 +167,12 @@ single frame (`ce blender . <shot>.py frame <n> final`, or `npx remotion still �
 first when the fix costs money (re-recording voice, new music), re-renders 3D frames that already exist, or changes
 the script or the look. If you can't fix it, explain the problem in two or three plain sentences.
 
+## Packaging (after the preview)
+
+When the user asks, or the **Package** tab's button sends you the request, follow the `packaging` skill: ten titles,
+three thumbnails and five post captions. Nothing is uploaded. The user picks on the Package tab, and a picked title or
+caption goes into the Publish drafts.
+
 ## Publish (after the final video)
 
 The engine's **Publish** page posts the video file the user picked there (usually `out/delivery.mp4` from the Final render;
@@ -171,7 +181,8 @@ it can be a draft or another render in `out/`: `publish_status` shows which): Yo
 logged-in Chrome profile). Your panel is on the right of that page.
 
 **Drafting** (when asked, or by the tab's button): write `publish/youtube.json`, `publish/facebook.json`,
-`publish/instagram.json` from `script.json` and `brief.md`; keep fields the user already filled in. The tab reloads them.
+`publish/instagram.json` from `script.json` and `brief.md`; keep fields the user already filled in, including a title or
+caption they picked on the Package tab. The tab reloads them.
 - YouTube `{"title", "description", "tags": [], "categoryId": "27", "privacy", "publishAt", "madeForKids", "synthetic"}`:
   title ≤ 100 characters, no `<` `>`; description: two or three plain lines on what the viewer learns, then chapters
   if the video has 3+ scenes of 10 s or more (`0:00 Hook` first, times from `src/data/timing.json` scene starts), then

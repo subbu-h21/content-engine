@@ -4,12 +4,13 @@ import { api, type Context, type ProjectInfo, type StudioInfo } from "./api";
 import { BriefBoard } from "./BriefBoard";
 import { Chat } from "./Chat";
 import { RenderPanel } from "./RenderPanel";
+import { PackagePanel } from "./PackagePanel";
 import { ReviewPanel } from "./ReviewPanel";
 import { navigate } from "./nav";
 import { TopNav } from "./TopNav";
 
 const PANEL_KEY = "ce.claudePanelWidth";
-export type Tab = "brief" | "editor" | "review" | "final";
+export type Tab = "brief" | "editor" | "review" | "final" | "package";
 
 /** A video page; an old or mistyped link to a video that isn't in the workspace gets a plain message instead. */
 export const Project: React.FC<{ name: string; tab: Tab }> = ({ name, tab }) => {
@@ -164,6 +165,9 @@ const ProjectView: React.FC<{ name: string; tab: Tab }> = ({ name, tab }) => {
           <button className={tab === "final" ? "on" : ""} onClick={() => go("final")}>
             Final
           </button>
+          <button className={tab === "package" ? "on" : ""} onClick={() => go("package")}>
+            Package
+          </button>
           {/* the last step lives on the Publish page (all videos' files and history), opened at this video */}
           <button onClick={() => navigate(`/publish/${encodeURIComponent(name)}`)} title="Publish this video (the Publish page, opened at this video)">
             Publish
@@ -189,6 +193,7 @@ const ProjectView: React.FC<{ name: string; tab: Tab }> = ({ name, tab }) => {
         {tab === "brief" ? <BriefBoard name={name} onOpenEditor={() => go("editor")} /> : null}
         {tab === "review" ? <ReviewPanel name={name} /> : null}
         {tab === "final" ? <RenderPanel name={name} /> : null}
+        {tab === "package" ? <PackagePanel name={name} /> : null}
         <div className="studio-pane" style={tab !== "editor" ? { display: "none" } : undefined}>
           {src ? (
             <iframe title="Remotion Studio" src={src} allow="autoplay; fullscreen; clipboard-read; clipboard-write" />

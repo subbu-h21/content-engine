@@ -7,6 +7,7 @@
 import { execFileSync, spawnSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
+import { withLock } from "./lock.mjs";
 import { ENGINE_DIR, linkProject, RUNTIME_MODULES } from "./projects.mjs";
 
 export const CATALOG_DIR = path.join(ENGINE_DIR, "library", "catalog");
@@ -409,10 +410,15 @@ export function ensurePreviewProject(workspace) {
  * them side by side) and reel.mp4 (every sample playing in a row). reelOnly leaves the stills alone and replaces only
  * reel.mp4. Nothing paid is called. Returns { stills, cover, sheet, reel }.
  */
-export function previewStyle(styleDir, workspace, { scale = 0.5, reelOnly = false } = {}) {
+export function previewStyle(styleDir, workspace, options = {}) {
   const check = checkStyle(styleDir);
   if (!check.ok) throw new Error(`The style has problems:\n- ${check.problems.join("\n- ")}`);
   const proj = ensurePreviewProject(workspace);
+  // every style goes through this one folder, so two previews at once would mix them up
+  return withLock(path.join(proj, ".lock"), "Another style's preview is rendering; try again when it's done.", () => renderPreview(styleDir, proj, options));
+}
+
+function renderPreview(styleDir, proj, { scale = 0.5, reelOnly = false }) {
   const src = path.join(proj, "src");
   // the style, the kit and the sample content go where the scenes import them from: src/style, src/kit, src/sample.json
   for (const d of [path.join(src, "style"), path.join(src, "kit"), path.join(proj, "public", "style")]) fs.rmSync(d, { recursive: true, force: true });

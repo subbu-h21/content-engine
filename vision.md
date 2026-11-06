@@ -561,14 +561,24 @@ Folders below are inside `D:\code_files\resources to make content engine`.
 | Post captions scored on curiosity and search phrase | Rob Cressy's caption skill | web page; skill links |
 | Official Remotion rules (captions, voiceover, sound effects, silence detection); version 4.0.539 vs our 4.0.535 | remotion-dev/skills | skill links |
 
-Part of the vision	State
-Catalog page, with uploads turned into one style format	Built, tested with a fake Claude
-Taste skill and curated styles	Built: 73 styles
-Channels with a lock, last video's style as the default	Built and tested
-Quality gate: review pack, automatic checks, critic	Built and tested; two critics for the autopilot come with the autopilot
-Word timing, sound on words, animated captions	Not built
-Hooks, titles, thumbnails	Not built
-Editing your own footage (talking head, podcast clips)	Not built
-Storytelling	Not built
-Content-design and sound catalogs	Later, as you decided
-Analytics, autopilot, account setup skills	Later, as you decided
+## 19. Where the vision stands
+
+As of 2026-11-06. Steps follow §15. Steps 1, 2 and 5 are on the `visual-catalog` branch, not yet merged into `main`.
+
+| Step | Part of the vision | State |
+|---|---|---|
+| Before | Generated videos, final render, posting to YouTube, Facebook and Instagram | Working |
+| 1 | Catalog page, with uploads turned into one style format | Built; uploads tested with a fake Claude only |
+| 1 | Taste skill and curated styles | Built: 73 styles, each with a moving preview |
+| 1 | Channels with a lock, last video's style as the default | Built and tested |
+| 1 | Theme set automatically from the style | Built and tested on all 73 styles |
+| 2 | Quality gate: review pack, automatic checks, critic, storyboard, BT.709 colour, safe zones | Built and tested. Its goal isn't met yet: the first real video still has 2 P1 notes open |
+| 2 | First real video in a catalog style (Why the Sea Is Salty) | Rendered; nobody has heard it yet |
+| 3 | Catalog growth: try styles on the real script, styles from reference videos and the user's own videos | Not started |
+| 4 | Word timing, sound on words, animated captions, 16:9 and teaser versions | Not started |
+| 5 | Hooks, titles, thumbnails, post captions | Built and tested, and used on the first real video. Made, not uploaded |
+| 6 | Footage: personal channel, then podcast clips | Not started |
+| 7 | Storytelling | Not started; its visuals still have to be decided |
+| Later | Content-design, sound, caption and transition catalogs | Later, as decided |
+| Later | Channels with their own accounts, scheduling and X, account setup skills | Later, as decided |
+| Later | Results and the Performance page, ideas, autopilot with two critics, `lessons.md` | Later, as decided |

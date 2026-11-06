@@ -4,7 +4,7 @@
  *   review/beats-NN.jpg    each scene just after it starts and at its middle, numbered
  *   review/seams-NN.jpg    −0.2, −0.1, 0, +0.1, +0.2 s around every cut
  *   review/phone-NN.jpg    the beat frames at 360 px wide, to judge what can be read on a phone
- *   review/safe.jpg        one frame per scene under the platforms' interface bands
+ *   review/safe-NN.jpg     one frame per scene under the platforms' interface bands
  *   review/report.json     the measured findings and the critic's notes
  *   review/REPORT.md       the same for Claude and for reading
  *   review/history.json    the P0 and P1 notes of earlier reviews, so a new critic doesn't undo them
@@ -13,12 +13,15 @@
  * from HyperFrames' review checks (docs/research/styles/hyperframes.md, R1-R5, R22-R28). A warning is a question, not a
  * rule: a video may break one on purpose. Nothing here calls a paid API; the critic runs on the user's Claude Code.
  */
-import { execFileSync, spawnSync } from "node:child_process";
+import { execFile, execFileSync, spawnSync } from "node:child_process";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { promisify } from "node:util";
+import { isLocked, withLock, writeWhole } from "./lock.mjs";
 
+const run = promisify(execFile);
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const CRITIC_PROMPT = path.join(HERE, "..", "library", "review", "critic.md");
 const LABEL_FONT = "C\\:/Windows/Fonts/arial.ttf";
@@ -32,12 +35,19 @@ export const PLATFORMS = {
 /** The buttons on the right only start partway down the screen. */
 const RIGHT_RAIL_FROM = 0.4;
 
+/** The deepest band of the three platforms on each side, for a frame of this size: what stays clear is safe everywhere. */
+export function safeBands(width, height) {
+  const band = (side) => Math.round((Math.max(...Object.values(PLATFORMS).map((p) => p[side])) * width) / 1080);
+  return { top: band("top"), bottom: band("bottom"), left: band("left"), right: band("right"), railFrom: Math.round(height * RIGHT_RAIL_FROM) };
+}
+
 const SWEEP_FPS = 8;
 const TEXT_FLOOR = 0.026; // of the frame's short side: 28 px at 1080
 const HELD = 0.5; // seconds: anything shorter is an entrance or an exit
 const DEAD_STRETCH = 3;
 const TARGET_LUFS = -16; // what the render's deliver step levels to
 const MAX_TRUE_PEAK = -1;
+const CRITIC_MINUTES = 20; // about 5 on a 20 s video, and a long video has more sheets to read
 
 const readJson = (f, fallback = null) => {
   try {
@@ -48,10 +58,12 @@ const readJson = (f, fallback = null) => {
 };
 const round = (v, d = 2) => Math.round(v * 10 ** d) / 10 ** d;
 const ffmpeg = (args) => execFileSync("ffmpeg", ["-hide_banner", "-y", "-loglevel", "error", ...args], { stdio: "pipe", maxBuffer: 256 * 1024 * 1024 });
-/** ffmpeg's report goes to stderr even when it succeeds. */
-const ffmpegLog = (args) => spawnSync("ffmpeg", ["-hide_banner", "-nostats", ...args], { encoding: "utf8", maxBuffer: 256 * 1024 * 1024 }).stderr ?? "";
 
 export const reviewDir = (dir) => path.join(dir, "review");
+const lockFile = (dir) => path.join(reviewDir(dir), ".lock");
+
+/** A review of this video is running, from the website or from Claude's own `ce review .`. */
+export const reviewBusy = (dir) => isLocked(lockFile(dir));
 
 // ------------------------------------------------------------------ which frames
 
@@ -202,33 +214,59 @@ function textFindings(probe, pl) {
     if (list.length >= 2) out.push({ level: "info", area: "pacing", t: t(f), where: list.map((s) => `"${s}"`).join(", "), problem: "appear at the same moment", change: "stagger them unless they're one thought" });
   }
 
-  // fonts: every family the text uses has to be one the page really loaded
-  const loaded = new Set(probe.frames.flatMap((f) => f.fonts));
-  const used = new Map();
-  for (const fr of probe.frames) for (const b of fr.blocks) if (!used.has(b.family)) used.set(b.family, { text: b.key, f: fr.f });
-  for (const [family, u] of used) {
-    if (!loaded.has(family) && !/^(serif|sans-serif|monospace|cursive|fantasy|system-ui)$/.test(family)) out.push({ level: "fail", area: "fonts", t: t(u.f), where: `"${u.text}"`, problem: `its font ${family} isn't loaded, so the browser drew a fallback`, change: "load it in src/lib/fonts.ts" });
-  }
+  // fonts: text where none of the fonts it names could be used
+  const fallback = new Map();
+  for (const fr of probe.frames) for (const b of fr.blocks) if (b.fontOk === false && !fallback.has(b.family)) fallback.set(b.family, { text: b.key, f: fr.f });
+  for (const [family, u] of fallback) out.push({ level: "fail", area: "fonts", t: t(u.f), where: `"${u.text}"`, problem: `its font ${family} isn't loaded, so the browser drew a fallback`, change: "load it in src/lib/fonts.ts" });
   for (const e of probe.errors) out.push({ level: "fail", area: "page", t: 0, where: "the page", problem: e, change: "fix the error" });
   return out;
 }
 
 // ------------------------------------------------------------------ the checks on the pixels
 
-/** Brightness, spread and change per sweep frame, on a small blurred copy so film grain doesn't count as motion. */
-function pixelStats(framesDir, sweep) {
+/**
+ * Brightness and spread per sweep frame, and how much changes from one second to the next, on a small blurred copy so
+ * film grain doesn't count as motion. Over a second, because a slow camera move barely changes neighbouring frames.
+ */
+function pixelStats(framesDir, sweep, perSecond) {
   const seq = path.join(framesDir, "seq");
   fs.rmSync(seq, { recursive: true, force: true });
   fs.mkdirSync(seq);
   sweep.forEach((f, i) => fs.copyFileSync(path.join(framesDir, `f_${String(f).padStart(5, "0")}.jpg`), path.join(seq, `s_${String(i).padStart(5, "0")}.jpg`)));
-  const log = execFileSync("ffmpeg", ["-hide_banner", "-loglevel", "error", "-framerate", String(SWEEP_FPS), "-i", path.join(seq, "s_%05d.jpg"), "-vf", "scale=135:-2,gblur=sigma=1.5,signalstats,metadata=print:file=-", "-f", "null", "-"], { encoding: "utf8", maxBuffer: 256 * 1024 * 1024 });
+  const scan = (pick) => execFileSync("ffmpeg", ["-hide_banner", "-loglevel", "error", "-framerate", String(SWEEP_FPS), "-i", path.join(seq, "s_%05d.jpg"), "-vf", `${pick}scale=135:-2,gblur=sigma=1.5,signalstats,metadata=print:file=-`, "-fps_mode", "passthrough", "-f", "null", "-"], { encoding: "utf8", maxBuffer: 256 * 1024 * 1024 });
+  const col = (log, name) => [...log.matchAll(new RegExp(`lavfi\\.signalstats\\.${name}=([\\d.]+)`, "g"))].map((m) => Number(m[1]));
+  const all = scan("");
+  const change = col(scan(`select='not(mod(n\\,${perSecond}))',`), "YDIF");
   fs.rmSync(seq, { recursive: true, force: true });
-  const col = (name) => [...log.matchAll(new RegExp(`lavfi\\.signalstats\\.${name}=([\\d.]+)`, "g"))].map((m) => Number(m[1]));
-  const [avg, low, high, dif] = [col("YAVG"), col("YLOW"), col("YHIGH"), col("YDIF")];
-  return sweep.map((f, i) => ({ f, avg: avg[i] ?? 0, spread: (high[i] ?? 0) - (low[i] ?? 0), dif: i ? (dif[i] ?? 0) : null }));
+  const [avg, low, high] = [col(all, "YAVG"), col(all, "YLOW"), col(all, "YHIGH")];
+  return {
+    frames: sweep.map((f, i) => ({ f, avg: avg[i] ?? 0, spread: (high[i] ?? 0) - (low[i] ?? 0) })),
+    seconds: change.map((dif, i) => ({ f: sweep[i * perSecond], dif })),
+  };
 }
 
-function pixelFindings(stats, probe, pl) {
+/**
+ * Stretches with nothing changing, as [from, to] frames. The last seconds don't count: a hold is the point there.
+ * Measured on real videos, a second apart: holds change by 0.02-0.06, a slow 3D turn or drifting particles by 0.10-0.35.
+ */
+export function deadStretches(seconds, fps, total) {
+  const limit = total - DEAD_STRETCH * fps;
+  const found = [];
+  let from = null;
+  const close = (end) => {
+    if (from !== null && (end - from) / fps > DEAD_STRETCH) found.push([from, end]);
+    from = null;
+  };
+  for (let i = 1; i < seconds.length; i++) {
+    if (seconds[i].f >= limit) break;
+    if (seconds[i].dif < 0.08) from ??= seconds[i - 1].f;
+    else close(seconds[i - 1].f);
+  }
+  close(Math.min(limit, seconds.at(-1)?.f ?? 0));
+  return found;
+}
+
+function pixelFindings({ frames: stats, seconds }, probe, pl) {
   const out = [];
   const t = (f) => round(f / pl.fps);
   const textAt = new Map(probe.frames.map((f) => [f.f, f.blocks.filter((b) => b.op >= 0.5).length]));
@@ -238,20 +276,9 @@ function pixelFindings(stats, probe, pl) {
   const blank = stats.filter((s, i) => i > 0 && i < stats.length - 1 && s.avg < 3 && stats[i - 1].avg > 8 && stats[i + 1].avg > 8);
   for (const s of blank) out.push({ level: "fail", area: "frames", t: t(s.f), where: "a single moment", problem: "a black frame between two lit ones", change: "find the missing or corrupt frame" });
 
-  // nothing changing, apart from the end of the video where a hold is the point
-  const limit = pl.total - DEAD_STRETCH * pl.fps;
-  const still = 0.12;
-  let from = null;
-  const close = (end) => {
-    if (from !== null && (end - from) / pl.fps > DEAD_STRETCH) out.push({ level: "warn", area: "pacing", t: t(from), where: `${t(from)}–${t(end)} s`, problem: `nothing changes on screen for ${round((end - from) / pl.fps, 1)} s`, change: "give the stretch a move or cut it" });
-    from = null;
-  };
-  for (const s of stats.slice(1)) {
-    if (s.f >= limit) break;
-    if (s.dif < still) from ??= s.f;
-    else close(s.f);
+  for (const [from, end] of deadStretches(seconds, pl.fps, pl.total)) {
+    out.push({ level: "warn", area: "pacing", t: t(from), where: `${t(from)}–${t(end)} s`, problem: `nothing changes on screen for ${round((end - from) / pl.fps, 1)} s`, change: "give the stretch a move or cut it" });
   }
-  close(Math.min(limit, stats.at(-1).f));
   return out;
 }
 
@@ -267,10 +294,12 @@ function samples(file) {
  * Power of the voice and of everything else, per 50 ms, from the same files, gains and envelope the video mixes
  * (src/components/AudioMix.tsx): the voice can't be measured apart from the effects once they're in one file.
  */
-function mixWindows(dir, audio, total, fps) {
+export function mixWindows(dir, audio, total, fps) {
   const RATE = 8000, WIN = 400;
-  const n = Math.ceil(((total / fps) * RATE) / WIN);
+  const seconds = total / fps;
+  const n = Math.ceil((seconds * RATE) / WIN);
   const db = (v) => 10 ** (v / 20);
+  const clamp01 = (v) => Math.max(0, Math.min(1, v));
   const power = (arr, offset, gainAt) => {
     const w = new Float64Array(n);
     for (let i = 0; i < arr.length; i++) {
@@ -282,22 +311,34 @@ function mixWindows(dir, audio, total, fps) {
     }
     return w;
   };
-  const voiceFile = path.join(dir, "public", "audio", "voice.wav");
-  if (!fs.existsSync(voiceFile)) return null;
+  const stems = readJson(path.join(dir, "project.json"), {}).stems ?? {};
+  const stem = (rel) => (rel ? path.join(dir, "public", ...rel.split("/")) : null);
+  const voiceFile = stem(stems.voice === undefined ? "audio/voice.wav" : stems.voice);
+  if (audio?.voice === false || !voiceFile || !fs.existsSync(voiceFile)) return null;
   const voice = power(samples(voiceFile), 0, () => db(audio?.voiceDb ?? 0));
   const others = new Float64Array(n);
   const add = (w) => w.forEach((v, i) => (others[i] += v));
-  const musicFile = path.join(dir, "public", "audio", "music.wav");
-  if (fs.existsSync(musicFile) && audio?.music !== false) {
+  const musicFile = stem(stems.music === undefined ? "audio/music.wav" : stems.music);
+  if (musicFile && fs.existsSync(musicFile) && audio?.music !== false) {
     const duck = readJson(path.join(dir, "src", "data", "duck.json"));
-    add(power(samples(musicFile), 0, (s) => db(audio?.musicDb ?? -14) * (duck?.gain?.[Math.floor(s * fps)] ?? 1)));
+    const gains = duck?.gain ?? [];
+    const baked = db(duck?.duckDb ?? -7);
+    const wanted = db(audio?.duckDb ?? duck?.duckDb ?? -7);
+    add(
+      power(samples(musicFile), 0, (s) => {
+        const g = gains[Math.min(gains.length - 1, Math.max(0, Math.floor(s * fps)))] ?? 1;
+        const env = 1 - ((1 - g) / (1 - baked)) * (1 - wanted);
+        return db(audio?.musicDb ?? -14) * env * clamp01(s / 1.5) * clamp01((seconds - s) / 4) ** 1.5;
+      }),
+    );
   }
   const cache = new Map();
-  for (const e of readJson(path.join(dir, "src", "data", "sfx_events.json"), [])) {
+  for (const e of audio?.sfx === false ? [] : readJson(path.join(dir, "src", "data", "sfx_events.json"), [])) {
     const f = path.join(dir, "public", "audio", "sfx", `${e.kind}.wav`);
-    if (!fs.existsSync(f)) continue;
+    const from = Math.round((e.t - (e.lead ?? 0)) * fps);
+    if (!fs.existsSync(f) || from + 2 >= total) continue;
     if (!cache.has(f)) cache.set(f, samples(f));
-    add(power(cache.get(f), Math.round((e.t - (e.lead ?? 0)) * RATE), () => db(audio?.sfxDb ?? -9) * e.gain));
+    add(power(cache.get(f), Math.round((Math.max(0, from) / fps) * RATE), () => db(audio?.sfxDb ?? -9) * e.gain));
   }
   return { voice, others, seconds: WIN / RATE };
 }
@@ -313,7 +354,10 @@ function soundFindings(dir, probe, pl) {
   }
   const dB = (p) => 10 * Math.log10(p + 1e-12);
   // loudness is heard over a moment: 200 ms, so the first instant of a word doesn't count as the voice being quiet
-  const smooth = (w) => w.map((_, i) => w.slice(Math.max(0, i - 2), i + 2).reduce((a, b) => a + b, 0) / 4);
+  const smooth = (w) => w.map((_, i) => {
+    const part = w.slice(Math.max(0, i - 2), i + 2);
+    return part.reduce((a, b) => a + b, 0) / part.length;
+  });
   const [voice, others] = [smooth(mix.voice), smooth(mix.others)];
   const voiced = [];
   voice.forEach((v, i) => {
@@ -338,16 +382,26 @@ function soundFindings(dir, probe, pl) {
   return { findings: out, listen: listen.sort((a, b) => a.t - b.t), voiceOver: close.length ? round(close[0].margin, 1) : null };
 }
 
-/** Loudness, peak and format of the finished file, measured on the file. Cached until the file changes. */
-export function finalChecks(dir) {
+const measuring = new Map(); // file version -> the measurement in progress: the Review tab asks every few seconds
+
+/**
+ * Loudness, peak and format of the finished file, measured on the file. Cached until the file changes. Asynchronous
+ * because the website calls it, and a long video takes a while: a blocked engine would stall every open page and chat.
+ */
+export async function finalChecks(dir) {
   const file = path.join(dir, "out", "delivery.mp4");
   if (!fs.existsSync(file)) return null;
   const cached = path.join(reviewDir(dir), "final.json");
   const stamp = Math.round(fs.statSync(file).mtimeMs);
   const old = readJson(cached);
   if (old?.stamp === stamp) return old;
+  const key = `${file}|${stamp}`;
+  if (!measuring.has(key)) measuring.set(key, measureFinal(dir, file, cached, stamp).finally(() => measuring.delete(key)));
+  return measuring.get(key);
+}
 
-  const log = ffmpegLog(["-i", file, "-af", "ebur128=peak=true", "-f", "null", "-"]);
+async function measureFinal(dir, file, cached, stamp) {
+  const { stderr: log } = await run("ffmpeg", ["-hide_banner", "-nostats", "-i", file, "-vn", "-af", "ebur128=peak=true", "-f", "null", "-"], { maxBuffer: 256 * 1024 * 1024 });
   const summary = log.slice(log.lastIndexOf("Summary:"));
   const num = (re) => {
     const m = re.exec(summary);
@@ -355,7 +409,7 @@ export function finalChecks(dir) {
   };
   const lufs = num(/I:\s+(-?[\d.]+) LUFS/);
   const truePeak = num(/Peak:\s+(-?[\d.]+) dBFS/);
-  const probe = JSON.parse(execFileSync("ffprobe", ["-v", "error", "-show_entries", "stream=codec_type,width,height,color_space,color_primaries,color_transfer", "-of", "json", file], { encoding: "utf8" }));
+  const probe = JSON.parse((await run("ffprobe", ["-v", "error", "-show_entries", "stream=codec_type,width,height,color_space,color_primaries,color_transfer", "-of", "json", file])).stdout);
   const video = probe.streams.find((s) => s.codec_type === "video");
   const hasAudio = probe.streams.some((s) => s.codec_type === "audio");
   const findings = [];
@@ -365,7 +419,7 @@ export function finalChecks(dir) {
   if (video?.color_primaries !== "bt709") findings.push({ level: "info", area: "colour", t: 0, where: "the final file", problem: "not tagged BT.709, so players guess its colours", change: "render it again with this engine" });
   const result = { stamp, file: "out/delivery.mp4", lufs, truePeak, width: video?.width, height: video?.height, colour: video?.color_primaries ?? "untagged", findings };
   fs.mkdirSync(reviewDir(dir), { recursive: true });
-  fs.writeFileSync(cached, JSON.stringify(result, null, 1));
+  writeWhole(cached, JSON.stringify(result, null, 1));
   return result;
 }
 
@@ -407,35 +461,39 @@ function buildPack(dir, framesDir, pl, probe) {
     tile(src(f), to, width, label);
     return to;
   };
-  const landscape = probe.width > probe.height;
-  const beats = sheets(pl.beats.map((b) => made(b.f, 270, `${b.n}${b.at === "start" ? "a" : "b"} t=${secs(b.f)} ${b.scene}`)), tmp, out, "beats", landscape ? 3 : 8, 2);
+  const tall = probe.height > probe.width;
+  const beats = sheets(pl.beats.map((b) => made(b.f, 270, `${b.n}${b.at === "start" ? "a" : "b"} t=${secs(b.f)} ${b.scene}`)), tmp, out, "beats", tall ? 8 : 3, 2);
   const seams = sheets(pl.seams.flatMap((s, i) => s.frames.map((f, j) => made(f, 200, `cut ${i + 1} ${["-0.2", "-0.1", "0", "+0.1", "+0.2"][j]} t=${secs(f)}`))), tmp, out, "seams", 5, 4);
-  const phone = sheets(pl.beats.map((b) => made(b.f, 360, `${b.n}${b.at === "start" ? "a" : "b"} t=${secs(b.f)}`)), tmp, out, "phone", landscape ? 2 : 5, 2);
+  const phone = sheets(pl.beats.map((b) => made(b.f, 360, `${b.n}${b.at === "start" ? "a" : "b"} t=${secs(b.f)}`)), tmp, out, "phone", tall ? 5 : 2, 2);
 
-  let safe = null;
-  if (!landscape) {
-    // the bands of all three platforms, the deepest of each side: what stays clear is safe everywhere
-    const k = 540 / 1080;
-    const band = (side) => Math.round(Math.max(...Object.values(PLATFORMS).map((p) => p[side])) * k);
-    const railY = Math.round(960 * RIGHT_RAIL_FROM * 2);
+  let safe = [];
+  if (tall) {
+    const w = 540;
+    const h = Math.round((probe.height * w) / probe.width / 2) * 2;
+    const s = safeBands(w, h);
     const draw = [
-      `drawbox=x=0:y=0:w=iw:h=${band("top")}:color=red@0.3:t=fill`,
-      `drawbox=x=0:y=ih-${band("bottom")}:w=iw:h=${band("bottom")}:color=red@0.3:t=fill`,
-      `drawbox=x=0:y=${band("top")}:w=${band("left")}:h=ih-${band("top") + band("bottom")}:color=red@0.3:t=fill`,
-      `drawbox=x=iw-${band("right")}:y=${railY}:w=${band("right")}:h=ih-${railY + band("bottom")}:color=red@0.3:t=fill`,
+      `drawbox=x=0:y=0:w=iw:h=${s.top}:color=red@0.3:t=fill`,
+      `drawbox=x=0:y=ih-${s.bottom}:w=iw:h=${s.bottom}:color=red@0.3:t=fill`,
+      `drawbox=x=0:y=${s.top}:w=${s.left}:h=ih-${s.top + s.bottom}:color=red@0.3:t=fill`,
+      `drawbox=x=iw-${s.right}:y=${s.railFrom}:w=${s.right}:h=ih-${s.railFrom + s.bottom}:color=red@0.3:t=fill`,
     ].join(",");
     const tiles = pl.beats.filter((b) => b.at === "middle").map((b) => {
       const to = path.join(tmp, `${String(++id).padStart(4, "0")}.jpg`);
       const over = `${to}.over.jpg`;
-      ffmpeg(["-i", src(b.f), "-vf", `scale=540:-2,${draw}`, "-q:v", "3", over]);
+      ffmpeg(["-i", src(b.f), "-vf", `scale=${w}:${h},${draw}`, "-q:v", "3", over]);
       tile(over, to, 270, `${b.n} t=${secs(b.f)} ${b.scene}`);
       return to;
     });
-    safe = sheets(tiles, tmp, out, "safe", 8, 2)[0];
+    safe = sheets(tiles, tmp, out, "safe", 8, 2);
   }
   fs.rmSync(tmp, { recursive: true, force: true });
+  // a shorter video makes fewer sheets: the old ones mustn't linger
+  const current = new Set([...beats, ...seams, ...phone, ...safe]);
+  for (const f of fs.readdirSync(out)) if (/^(beats|seams|phone|safe)(-\d+)?\.jpg$/.test(f) && !current.has(f)) fs.rmSync(path.join(out, f));
   return { beats, seams, phone, safe };
 }
+
+const allSheets = (pack) => [...pack.beats, ...pack.seams, ...pack.phone, ...[pack.safe ?? []].flat()];
 
 // ------------------------------------------------------------------ the critic
 
@@ -463,16 +521,15 @@ export function parseNotes(text) {
  * A fresh Claude with no stake in the video reads the pack against the brief and the style. It starts in an empty
  * folder so none of the video's own history, skills or hooks reach it, and it can only read.
  */
-function runCritic(dir, report) {
+function runCritic(dir, report, history) {
   const out = reviewDir(dir);
   const has = (f) => fs.existsSync(path.join(dir, f));
-  const files = [
-    ...report.pack.beats, ...report.pack.seams, ...report.pack.phone, ...(report.pack.safe ? [report.pack.safe] : []),
-  ].map((f) => path.join(out, f));
-  const context = ["brief.md", "script.json", "plan.md", has("src/style/STYLE.md") ? "src/style/STYLE.md" : "style.md"].filter(has).map((f) => path.join(dir, f));
+  const files = allSheets(report.pack).map((f) => path.join(out, f));
+  // style.md as well: the video's own approved decisions are in it, under "This video"
+  const context = ["brief.md", "script.json", "plan.md", "src/style/STYLE.md", "style.md"].filter(has).map((f) => path.join(dir, f));
   const measured = report.findings.length ? report.findings.map(line).join("\n") : "(nothing)";
   // a critic that knows nothing of earlier rounds undoes them: on a real video, two of the last three notes reversed older ones
-  const earlier = rememberNotes(dir).flatMap((h) => h.notes.map(noteLine));
+  const earlier = history.flatMap((h) => h.notes.map(noteLine));
   const prompt = fs
     .readFileSync(CRITIC_PROMPT, "utf8")
     .replace("{{sheets}}", () => files.map((f) => `- ${f}`).join("\n"))
@@ -485,8 +542,9 @@ function runCritic(dir, report) {
   try {
     for (let attempt = 0; attempt < 2; attempt++) {
       const r = spawnSync("claude -p --output-format json --tools Read --allowedTools Read --no-session-persistence --strict-mcp-config --disable-slash-commands", {
-        cwd, env, input: prompt, encoding: "utf8", shell: true, windowsHide: true, timeout: 10 * 60 * 1000, maxBuffer: 64 * 1024 * 1024,
+        cwd, env, input: prompt, encoding: "utf8", shell: true, windowsHide: true, timeout: CRITIC_MINUTES * 60 * 1000, maxBuffer: 64 * 1024 * 1024,
       });
+      if (r.error?.code === "ETIMEDOUT") return { error: `The critic didn't finish in ${CRITIC_MINUTES} minutes.` };
       if (r.status !== 0) return { error: `The critic couldn't run: ${(r.stderr || r.stdout || "no output").trim().split(/\r?\n/).slice(-3).join(" ").slice(0, 300)}` };
       const reply = readReply(r.stdout);
       const notes = reply === null ? null : parseNotes(reply);
@@ -507,9 +565,10 @@ function rememberNotes(dir) {
   const history = readJson(file, []);
   const last = readJson(path.join(reviewDir(dir), "report.json"));
   const notes = last?.critic?.notes?.filter((n) => n.p < 2) ?? [];
-  if (notes.length && !history.some((h) => h.at === last.at)) {
+  // critic.earlier: a measure-only run carrying notes forward, which are remembered already
+  if (notes.length && !last.critic.earlier && !history.some((h) => h.at === last.at)) {
     history.push({ at: last.at, notes });
-    fs.writeFileSync(file, JSON.stringify(history, null, 1));
+    writeWhole(file, JSON.stringify(history, null, 1));
   }
   return history;
 }
@@ -531,6 +590,7 @@ const noteLine = (n) => `P${n.p} · t=${n.t}s · ${n.where} · ${n.problem} → 
 function writeReport(dir, r) {
   const parts = [`# Review of this video`, ``, r.summary, ``];
   parts.push(`## The critic's notes`, ``);
+  if (r.critic?.earlier) parts.push(`These are from the last full review (${r.critic.earlier}): this run only measured.`, ``);
   if (r.critic?.error) parts.push(`No notes: ${r.critic.error}`, ``);
   else if (!r.critic) parts.push(`The critic wasn't run.`, ``);
   else if (!r.critic.notes.length) parts.push(`No notes.`, ``);
@@ -539,9 +599,9 @@ function writeReport(dir, r) {
   parts.push(...(r.findings.length ? r.findings.map((f) => `- ${line(f)}`) : ["Nothing to report."]), ``);
   parts.push(`## For your ears`, ``, `Nothing here can hear the video. Listen to these moments on headphones:`, ``);
   parts.push(...(r.listen.length ? r.listen.map((l) => `- ${l.t} s: ${l.why}`) : ["- the whole video: there's no sound to compare yet"]), ``);
-  parts.push(`## Sheets`, ``, ...[...r.pack.beats, ...r.pack.seams, ...r.pack.phone, ...(r.pack.safe ? [r.pack.safe] : [])].map((f) => `- review/${f}`), ``);
+  parts.push(`## Sheets`, ``, ...allSheets(r.pack).map((f) => `- review/${f}`), ``);
   parts.push(`## Not checked`, ``, `Contrast of text against its background, and anything that needs ears, are left to the critic and to you. Warnings are questions: keep one on purpose if the video is better for it.`, ``);
-  fs.writeFileSync(path.join(reviewDir(dir), "REPORT.md"), parts.join("\n"));
+  writeWhole(path.join(reviewDir(dir), "REPORT.md"), parts.join("\n"));
 }
 
 function summarize(r) {
@@ -550,43 +610,54 @@ function summarize(r) {
   const counts = { fails: n("fail"), warnings: n("warn"), p0: p(0), p1: p(1), p2: p(2) };
   const open = counts.fails + counts.p0 + counts.p1;
   const critic = r.critic?.notes ? `, ${counts.p0} P0, ${counts.p1} P1, ${counts.p2} P2` : "";
-  return { counts, passed: open === 0 && !!r.critic?.notes, text: `${counts.fails} failed, ${counts.warnings} to look at${critic}.` };
+  return { counts, passed: open === 0 && !!r.critic?.notes && !r.critic.earlier, text: `${counts.fails} failed, ${counts.warnings} to look at${critic}.` };
 }
 
 /** The saved report with the final file's measurements, or null when the video hasn't been reviewed. */
-export function readReview(dir) {
+export async function readReview(dir) {
   const report = readJson(path.join(reviewDir(dir), "report.json"));
-  const final = finalChecks(dir);
+  const final = await finalChecks(dir).catch(() => null); // a broken file shouldn't take the whole tab with it
   return report || final ? { report, final } : null;
 }
 
-/** Run the whole gate on the video's current code. */
-export function runReview(dir, { critic = true } = {}) {
+/** Run the whole gate on the video's current code. One at a time per video: they share the working folders. */
+export function runReview(dir, options = {}) {
+  fs.mkdirSync(reviewDir(dir), { recursive: true });
+  return withLock(lockFile(dir), "A review of this video is already running.", () => review(dir, options));
+}
+
+function review(dir, { critic = true }) {
   const pl = plan(dir);
   const out = reviewDir(dir);
   const framesDir = path.join(out, "_frames");
-  fs.mkdirSync(out, { recursive: true });
+  // before anything replaces the report: a measure-only run mustn't lose what the last critic asked for
+  const history = rememberNotes(dir);
+  const prior = readJson(path.join(out, "report.json"));
   fs.rmSync(framesDir, { recursive: true, force: true });
   fs.mkdirSync(framesDir);
   const listFile = path.join(framesDir, "frames.json");
   fs.writeFileSync(listFile, JSON.stringify(pl.frames));
-  const run = spawnSync(process.execPath, [path.join(HERE, "review-probe.mjs"), framesDir, listFile], { cwd: dir, encoding: "utf8", windowsHide: true, maxBuffer: 64 * 1024 * 1024 });
-  if (run.status !== 0) throw new Error(`The review's render failed:\n${`${run.stderr ?? ""}\n${run.stdout ?? ""}`.trim().split(/\r?\n/).slice(-20).join("\n")}`);
+  const probeRun = spawnSync(process.execPath, [path.join(HERE, "review-probe.mjs"), framesDir, listFile], { cwd: dir, encoding: "utf8", windowsHide: true, maxBuffer: 64 * 1024 * 1024 });
+  if (probeRun.status !== 0) throw new Error(`The review's render failed:\n${`${probeRun.stderr ?? ""}\n${probeRun.stdout ?? ""}`.trim().split(/\r?\n/).slice(-20).join("\n")}`);
   const probe = readJson(path.join(framesDir, "probe.json"));
   const missing = pl.sweep.filter((f) => !probe.frames.some((m) => m.f === f)).length;
 
   const sound = soundFindings(dir, probe, pl);
-  const findings = [...textFindings(probe, pl), ...pixelFindings(pixelStats(framesDir, pl.sweep), probe, pl), ...sound.findings].sort((a, b) => a.t - b.t);
+  const findings = [...textFindings(probe, pl), ...pixelFindings(pixelStats(framesDir, pl.sweep, Math.max(1, Math.round(pl.fps / pl.step))), probe, pl), ...sound.findings];
+  // a broken probe finds nothing, which must not read as nothing wrong
+  if (missing) findings.push({ level: missing > pl.sweep.length / 10 ? "fail" : "warn", area: "page", t: 0, where: "the text checks", problem: `${missing} of ${pl.sweep.length} frames couldn't be measured, so these checks are incomplete`, change: "review again; if it repeats, the engine's probe needs checking (t19)" });
+  findings.sort((a, b) => a.t - b.t);
   const pack = buildPack(dir, framesDir, pl, probe);
   fs.rmSync(framesDir, { recursive: true, force: true });
 
   const r = { at: new Date().toISOString(), seconds: round(pl.total / pl.fps), scenes: pl.scenes.length, cuts: pl.seams.length, frames: pl.frames.length, unmeasured: missing, findings, listen: sound.listen, voiceOver: sound.voiceOver, pack, critic: null };
-  if (critic) r.critic = runCritic(dir, r);
+  if (critic) r.critic = runCritic(dir, r, history);
+  else if (prior?.critic?.notes) r.critic = { ...prior.critic, earlier: prior.critic.earlier ?? prior.at };
   const s = summarize(r);
   r.counts = s.counts;
   r.passed = s.passed;
   r.summary = s.text;
-  fs.writeFileSync(path.join(out, "report.json"), JSON.stringify(r, null, 1));
+  writeWhole(path.join(out, "report.json"), JSON.stringify(r, null, 1));
   writeReport(dir, r);
   return r;
 }

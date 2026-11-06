@@ -141,8 +141,14 @@ const writeStream = (target, stream) =>
     stream.on("error", reject);
     out.on("error", reject);
     out.on("finish", () => {
-      fs.renameSync(tmp, target);
-      resolve();
+      // a throw here would take the whole engine down, and antivirus can hold a new file for a moment
+      try {
+        fs.renameSync(tmp, target);
+        resolve();
+      } catch (e) {
+        fs.rmSync(tmp, { force: true });
+        reject(e);
+      }
     });
   });
 
@@ -199,13 +205,17 @@ export function addDraftLink(ws, draft, url) {
   return draftView(ws, draft);
 }
 
+export const markDraftStarted = (ws, draft) =>
+  updateDraft(ws, draft, (m) => {
+    m.started = new Date().toISOString();
+  });
+
 /** Record the note and build the message that asks the catalog's Claude to make the style. */
 export function startDraft(ws, draft, note) {
   const v = draftView(ws, draft);
   if (!v.files.length && !v.links.length && !String(note ?? "").trim()) throw new Error("Add a file, a link or a description first.");
   updateDraft(ws, draft, (m) => {
     m.note = String(note ?? "").trim();
-    m.started = new Date().toISOString();
   });
   const lines = [
     `[content engine] Please make a new catalog style from draft ${draft} (folder drafts/${draft}/), following the make-style skill.`,

@@ -5,11 +5,13 @@
  * Board files (written by Claude during /make-video):
  *   brief/status.json  {stage: new|talking|awaiting-approval|building|preview-ready, note}
  *   brief.md  style.md  plan.md  script.json  project.json (voice, music)  brief/frames/*.png|jpg
+ *   brief/hooks.json (the opening line options)
  *   references/<files>  references/_study/<file>/...   .claude/skills/<name>/SKILL.md
  */
 import { spawn } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
+import { readHooks } from "../../cli/packaging.mjs";
 import { ENGINE_DIR, loadSettings } from "../../cli/projects.mjs";
 
 const read = (f) => (fs.existsSync(f) ? fs.readFileSync(f, "utf8") : null);
@@ -24,7 +26,7 @@ const mtime = (f) => (fs.existsSync(f) ? fs.statSync(f).mtimeMs : 0);
 const WPS = 2.8; // narration pace, as in pipeline/vo.py (the phone reel measured 2.88)
 
 /** Folders of a project the page may read files from. */
-const SERVABLE = ["brief", "references", "audio", "out", "public", "review"];
+const SERVABLE = ["brief", "references", "audio", "out", "public", "review", "package"];
 
 export function resolveServable(dir, rel) {
   const full = path.resolve(dir, rel);
@@ -194,8 +196,9 @@ export function briefData(name, dir) {
     plates: (manifest.plates ?? []).map((p) => ({ id: p.id, from: p.from, to: p.to })),
     frames,
     references,
-    // the engine's own skills aren't the user's files: make-video, the catalog's skills and the video's style
-    skills: skills.filter((s) => !["make-video", "visual-taste", "make-style"].includes(s) && !s.startsWith("style-")),
+    // the engine's own skills aren't the user's files: make-video, packaging, the catalog's skills and the video's style
+    skills: skills.filter((s) => !["make-video", "visual-taste", "make-style", "packaging"].includes(s) && !s.startsWith("style-")),
+    hooks: readHooks(dir),
     look: lookOf(name, dir, manifest),
     jobs: jobList(name).slice(-8),
   };

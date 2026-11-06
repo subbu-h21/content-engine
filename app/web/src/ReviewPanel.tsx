@@ -54,7 +54,8 @@ export const ReviewPanel: React.FC<{ name: string }> = ({ name }) => {
     setError(null);
     setNote(null);
     fn()
-      .then(() => {
+      .then((r) => {
+        if ((r as { sent?: boolean })?.sent === false) throw new Error(`Not sent: ${(r as { reason?: string }).reason ?? "Claude couldn't be reached."}`);
         if (done) setNote(done);
         return load();
       })
@@ -65,7 +66,7 @@ export const ReviewPanel: React.FC<{ name: string }> = ({ name }) => {
   const r = info.report;
   const stamp = r ? new Date(r.at).getTime() : 0;
   const sheet = (f: string) => `/api/projects/${encodeURIComponent(name)}/file?path=${encodeURIComponent(`review/${f}`)}&v=${stamp}`;
-  const sheets = r ? [...r.pack.beats, ...r.pack.seams, ...r.pack.phone, ...(r.pack.safe ? [r.pack.safe] : [])] : [];
+  const sheets = r ? [...r.pack.beats, ...r.pack.seams, ...r.pack.phone, ...[r.pack.safe ?? []].flat()] : [];
   const notes = r?.critic?.notes ?? [];
   const toFix = notes.filter((n) => n.p < 2).length + (r?.counts.fails ?? 0);
   const final = info.final;
@@ -83,7 +84,7 @@ export const ReviewPanel: React.FC<{ name: string }> = ({ name }) => {
           {info.running
             ? "Rendering the sheets takes under a minute; the critic then takes a few more."
             : r
-              ? `Last review ${new Date(r.at).toLocaleString()}: ${r.scenes} scenes, ${r.cuts} cut${r.cuts === 1 ? "" : "s"}, ${r.frames} frames measured. Warnings are questions: a video may keep one on purpose.`
+              ? `Last review ${new Date(r.at).toLocaleString()}: ${r.scenes} scenes, ${r.cuts} cut${r.cuts === 1 ? "" : "s"}, ${r.frames - (r.unmeasured ?? 0)} frames measured. Warnings are questions: a video may keep one on purpose.`
               : "Renders sheets of every scene and cut, measures the text, the pacing and the sound, then a fresh Claude that has never seen the video writes notes. No paid API; the critic uses your Claude Code."}
         </p>
         <div className="actions">
@@ -105,6 +106,7 @@ export const ReviewPanel: React.FC<{ name: string }> = ({ name }) => {
       {notes.length ? (
         <div className="card">
           <h2>The critic's notes</h2>
+          {r?.critic?.earlier ? <p className="hint">From the last full review ({new Date(r.critic.earlier).toLocaleString()}). A measure-only run doesn't ask the critic.</p> : null}
           <ul className="review-list">
             {notes.map((n, i) => (
               <Note key={i} n={n} />

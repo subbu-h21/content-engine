@@ -232,8 +232,9 @@ function probe(file) {
 /** Newest change to anything that ends up in the video (scenes, props, data, audio, plates). */
 function newestSourceChange(dir) {
   let newest = 0;
+  const thumbnails = path.join(dir, "src", "thumbnails"); // made after the render, and not part of the video
   const walk = (d) => {
-    if (!fs.existsSync(d)) return;
+    if (!fs.existsSync(d) || d === thumbnails) return;
     for (const e of fs.readdirSync(d, { withFileTypes: true })) {
       const full = path.join(d, e.name);
       if (e.isDirectory()) walk(full);

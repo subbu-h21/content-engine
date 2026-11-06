@@ -235,14 +235,27 @@ The plan is in `vision.md` §7. A video goes through it before anyone is asked t
 
   | Level | Check |
   |---|---|
-  | FAIL | text cut off by the frame; a font the page didn't load; a black frame between lit ones; page errors; final file peaking above −1 dBTP |
+  | FAIL | text cut off by the frame; text none of whose named fonts could be used; a black frame between lit ones; page errors; more than a tenth of the frames not measured; final file peaking above −1 dBTP |
   | WARN | text under 2.6% of the short side; on screen shorter than its reading time; under a platform's interface; lines overlapping; more than 3 s with no change (the last 3 s are exempt); an empty first frame; effects louder than the voice; final file more than 1 LU from −16 LUFS |
   | Note | lines arriving at the same moment; the voice under 4 dB above the rest; a final file not tagged BT.709 |
 
   Glitch duplicates of a line don't count as overlaps, and a line's position is the median of its run, so an entrance
   or a jitter doesn't count as off-frame.
-- **Voice against the rest:** can't be measured once mixed, so it's rebuilt from the same files, gains and envelope
-  `AudioMix.tsx` uses, in 200 ms windows. The five closest moments become *For your ears*.
+  - **Fonts:** a font counts if the text can really use it, measured on a canvas in the page. `document.fonts` only knows
+    web fonts, so it would fail Arial, Bodoni MT and every installed font.
+  - **No change:** frames are compared a second apart, under 0.08 counting as still. Neighbouring frames can't see a slow
+    camera move. On real videos holds measured 0.02–0.06, a slow 3D turn and drifting particles 0.10–0.35.
+- **Voice against the rest:** can't be measured once mixed, so it's rebuilt in 200 ms windows from what `AudioMix.tsx`
+  plays: the same files, gains, ducking and fades, and its switches. A video that changes `AudioMix.tsx` needs this
+  changed too. The five closest moments become *For your ears*.
+- **Measure only** keeps the last critic's notes, marked as older, and can't pass on them.
+- **One at a time:** `review/.lock`, because the page's button and Claude's own `ce review .` are different processes
+  sharing `review/_frames`. The Review tab shows either as running. A lock from a process that's gone is ignored.
+  `package/.lock` and the catalog's `_preview/.lock` work the same way (`cli/lock.mjs`).
+- **Temp folder:** Remotion's `bundle()` copies all of `public/` into the system's temp folder and never removes it, so
+  the three scripts that call it delete their bundle when they finish. A final render that's stopped is killed before
+  it can, so the engine also removes `remotion-webpack-bundle-*` folders over a week old, on start and once a day
+  (`cli/temp.mjs`). `C:` is small on this PC.
 - **Critic:** a fresh Claude (`library/review/critic.md`) with only the Read tool, started in an empty temp folder so
   the video's history, skills and hooks don't reach it. It reads the sheets, brief, script, plan, style and measurements
   and answers with P0/P1/P2 notes as JSON. A reply in any other shape is retried once, then reported as an error, never
@@ -258,12 +271,48 @@ The plan is in `vision.md` §7. A video goes through it before anyone is asked t
 - **Not checked:** contrast is left to the critic, and nothing here can hear the video.
 - **Test:** `tests/e2e/t19_quality_gate.mjs` plants one of every fault in a video.
 
+## Packaging
+
+The plan is in `vision.md` §8. Claude writes the options (`library/packaging/SKILL.md`, copied into each new video and
+refreshed by the Package tab's button), `cli/packaging.mjs` scores and checks them, and the user picks. Made, not
+uploaded: no thumbnail goes to any platform yet.
+
+- **Hook, before the script:** the hook is the first spoken line, so the user picks it before the script is written and
+  the script is built on it. Claude writes five to `brief/hooks.json` from `library/packaging/hook-formulas.md`; the
+  Brief's Hook card shows the best two, and the pick goes to Claude as a chat message. The pick is saved only once
+  Claude has it, so a failed send can be tried again. It can't be changed from the board once the build has started,
+  because that means re-recording.
+  - **Score:** 70% Claude's own mark, 30% measured (`scoreHook`). The measured part only sees numbers, "you" and word
+    lists, so on its own it marks down good short lines like "Rain made the sea salty". It's there to catch warm-ups.
+- **Package tab** (`ce package`, run by Claude): ten titles, three thumbnails, five post captions.
+  - **Titles:** `lintTitle` checks length (40 on a phone, 60 in search, 100 at most), capitals, vague words, a number, the
+    opening words, and repeats of the paired thumbnail's words. The tab shows the best three.
+  - **Thumbnails:** Remotion Stills in `src/thumbnails/` with their own entry, so `Root.tsx` and existing videos don't
+    change, and they're drawn from the video's scene pieces rather than grabbed frames, which carry captions and HUD.
+    `cli/packaging-render.mjs` renders each twice, the second time with the text hidden, so contrast is measured against
+    what's really behind each line (the worst tenth of its pixels; under 3:1 is flagged).
+  - **Thumbnail checks:** text cut off and fonts not loaded fail. Text under 14 px at phone size (180 px wide tall, 360 px
+    wide), low contrast, more than 3 words, text in the bottom 28% of a tall one or the corner of a wide one, and files
+    over 2 MB are warnings.
+  - **Captions:** marked by Claude out of 20 (16 is ready to post); `lintCaption` flags hashtags, length and tired words.
+- **Picks:** `package/choice.json`. A picked title goes into the YouTube draft and a caption into the Facebook and
+  Instagram drafts, with Settings' footer. A picked thumbnail is only remembered, and can be downloaded. "In the draft"
+  on the tab is read from the drafts themselves, and making new options drops a pick whose option changed.
+- **A failed run changes nothing:** new thumbnails are made aside and swapped in whole.
+- **Publish:** `src/thumbnails` doesn't count as a change to the video, so packaging after the final render doesn't
+  warn that the file is out of date.
+- **Scores are guides:** they follow youtube-agent-skill's `hookscore.py` and `title.py` (MIT) with our own word lists.
+  Their author found they catch bad lines but barely separate hits from misses.
+- **Test:** `tests/e2e/t20_packaging.mjs` plants faults in thumbnails, titles and captions.
+
 ## Commands
 
 ```
 ce app [--no-open]                 # the website (see above)
 ce catalog list | check <style> | preview <style> | copy <style> [--as <id>]   # the style catalog (above)
 ce review [project] [--no-critic]  # the quality gate (above)
+ce hooks [project]                 # score the hook options in brief/hooks.json
+ce package [project]               # render the thumbnails, check them, score the titles and captions
 ce settings workspace D:\code_files\animations   # where video projects live (currently set)
 ce new <slug> --title "..."        # project-<N>-<slug> from the template: packages linked, git repo, ready for Studio
 ce list                            # projects in the workspace

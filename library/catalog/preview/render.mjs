@@ -1,7 +1,7 @@
 // Render the previews of the style in src/style/: one JPEG per sample into out/stills/ (grain makes PNGs about 500 KB
 // each) and the "Reel" composition, every sample in a row, into out/reel.mp4. Prints what was made as JSON on the last
 // line. Run by `ce catalog preview` with this folder as the working directory.
-//   node render.mjs [--scale 0.5] [--reel-scale 0.3333] [--reel-only]
+//   node render.mjs [--scale 0.5] [--reel-only]
 import fs from "node:fs";
 import path from "node:path";
 import { bundle } from "@remotion/bundler";
@@ -12,7 +12,6 @@ const arg = (name, fallback) => {
   return i > 0 ? Number(process.argv[i + 1]) : fallback;
 };
 const scale = arg("--scale", 0.5);
-const reelScale = arg("--reel-scale", 1 / 3);
 const reelOnly = process.argv.includes("--reel-only");
 const out = path.resolve("out", "stills");
 const reel = path.resolve("out", "reel.mp4");
@@ -37,8 +36,11 @@ try {
   }
   // small and silent: it plays on hover in the gallery. Two pages at a time keeps the memory use low.
   const composition = compositions.find((c) => c.id === "Reel");
+  // 360 px on the short side, whatever the style's frame: a fixed third of 1280 isn't a whole number of pixels
+  const reelScale = 360 / Math.min(composition.width, composition.height);
   await renderMedia({ composition, serveUrl, codec: "h264", crf: 30, muted: true, scale: reelScale, concurrency: 2, outputLocation: reel, chromiumOptions, puppeteerInstance: browser, overwrite: true });
 } finally {
   await browser.close({ silent: true });
+  fs.rmSync(serveUrl, { recursive: true, force: true }); // the bundle holds a copy of public/, in the system's temp folder
 }
 console.log(JSON.stringify({ stills: made, reel }));

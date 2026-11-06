@@ -1,6 +1,7 @@
 # packages come from the content engine (node_modules is a junction)
 node_modules
 out/
+package/_render/
 review/
 _tmp/
 # heavy or regenerable: Blender frames, encoded plates, stems

@@ -106,6 +106,8 @@ export function createProject({ workspace, slug, title }) {
     const from = path.join(ENGINE_DIR, "library", "catalog", "skills", skill);
     if (fs.existsSync(from)) fs.cpSync(from, path.join(dir, ".claude", "skills", skill), { recursive: true });
   }
+  // hooks, titles, thumbnails and captions: make-video's hook step needs this before the script
+  fs.cpSync(path.join(ENGINE_DIR, "library", "packaging"), path.join(dir, ".claude", "skills", "packaging"), { recursive: true });
   const manifestPath = path.join(dir, "project.json");
   const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf8"));
   manifest.title = title || s;

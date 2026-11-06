@@ -154,11 +154,30 @@ in git).
      return in `Mark`): stills can't see this kind of bug, so a new style should always get its reel.
    - **Quality gate (step 2):** see `docs/ENGINE.md` "Quality gate". `ce review`, the Review tab, storyboard at the
      approval step, final render in BT.709. Test: `tests/e2e/t19_quality_gate.mjs`.
-   - **Project 9 after the gate:** 3 rounds took it from 9 P1 notes to 3, all new; 0 failed, 0 P0, 11 P2. Final render
-     done (20.46 s, BT.709, −15.7 LUFS), but the gate hasn't passed. The user decides whether to fix the 3 P1 notes.
-     Nobody has heard it yet.
-   - **Critic memory:** two of those 3 P1 notes reversed earlier notes, so the critic now gets earlier P0 and P1 notes
-     (`review/history.json`). Tested with the fake Claude only; a real critic hasn't run with it yet.
+   - **Project 9 after the gate:** 4 review rounds took it from 9 P1 notes to 2; 0 failed, 0 P0, 8 P2. Final render
+     done (20.46 s, BT.709, −15.7 LUFS), but the gate hasn't passed. The 2 open P1s are the ring not reading as a sample
+     of the sea, and the jump at the cut into the ending at 17 s. Nobody has heard it yet.
+   - **Critic memory:** new critics kept reversing earlier notes, so each now gets earlier P0 and P1 notes
+     (`review/history.json`). It has run once with a real critic, on project 9, but only knew the previous round because
+     older rounds weren't saved, and that run still reversed a round 2 note. A new video is the first full test.
+     **Gate limit:** each fix can still draw new notes, so 0 P1 isn't a realistic bar yet. Claude's advice after 4 rounds
+     was to judge by watching; "passed" may need rethinking once more videos have been through it.
+   - **Packaging (step 5):** see `docs/ENGINE.md` "Packaging". The user chose: the hook is picked before the script and
+     the script is built on it; titles, thumbnails and captions get a Package tab between Final and Publish. Done out of
+     order on purpose: the user asked for it after step 2. Thumbnails aren't uploaded anywhere yet, and YouTube's
+     custom-thumbnail rule for Shorts is still unchecked. Project 9 has a real package; nothing's been picked on it.
+     Tests: t20 (fake Claude, planted faults), t21 (real Claude, hook step).
+   - **Reviewed and fully tested on 2026-11-06, after packaging:** two independent code reviews (20 findings plus 3 they
+     cut for length, all confirmed and fixed; details in `docs/ENGINE.md`), and the whole suite on a fresh workspace.
+     - **Result:** t2–t5, t6b, t9, t11, t12, t15–t21 all pass. The 9 failures left in t1, t6, t7, t8 and t10 are the known
+       ones under "How to test".
+     - **t6 and t8 need a fresh workspace:** they hard-code video numbers, so in a used `D:\tmp\ce-x` they fail on
+       "type N to confirm". The old one is kept as `D:\tmp\ce-x-before-review`.
+     - **Real videos:** the gate ran on copies of projects 4, 5, 7 (14.5 minutes, 3D), 8 and 9 in `D:\tmp\ce-gate\old`.
+     - **Phone reel:** 4 of 4 frames identical to project 3; voice and timing byte for byte.
+     - **Temp leftovers:** the 218 `remotion-webpack-bundle-*` folders (5.8 GB) were cleared on 2026-11-06 at the user's
+       request, taking `C:` from 5.4 to 12 GB free. A stopped final render still leaves one, because Remotion is killed
+       before it can clean up: the engine now removes those after a week (`cli/temp.mjs`).
    - **Not built from vision §7:** two critics for the autopilot (it comes with the autopilot); a contrast measurement
      (left to the critic); re-rendering only the stills a fix touched (each round redoes the sheets, about 20 s).
    - **Existing videos:** `template/` changes don't reach them, so only new videos run the gate by themselves. The

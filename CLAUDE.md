@@ -18,6 +18,8 @@
 - The quality gate (`cli/review.mjs`, `cli/review-probe.mjs`) reads two of Remotion's window variables: re-run
   `tests/e2e/t19_quality_gate.mjs` after any change to `runtime/package.json`. Its `review/` file names are the contract
   with the make-video skill and `app/web/src/ReviewPanel.tsx`.
+- Packaging (`cli/packaging.mjs`, `library/packaging/`): `brief/hooks.json` and the `package/` files are the contract
+  between the skill, `app/web/src/BriefBoard.tsx` and `PackagePanel.tsx`: change them together. Test: `t20_packaging.mjs`.
 - The bridge contract (template `EngineBridge.tsx` ↔ `app/server/bridge.mjs`): POST `/api/bridge/<p>/state` and
   `/result` as text/plain JSON, commands over SSE `/api/bridge/<p>/events`. Changing it means updating both sides and
   the copy in every existing project that should keep working with the website.

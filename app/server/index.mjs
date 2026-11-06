@@ -15,7 +15,9 @@ import { fileURLToPath } from "node:url";
 import express from "express";
 import { WebSocketServer } from "ws";
 import { createProject, ENGINE_DIR, findProject, linkStatus, listProjects, loadSettings, RUNTIME_MODULES, saveSettings } from "../../cli/projects.mjs";
-import { readReview } from "../../cli/review.mjs";
+import { chooseHook, choosePackage, hookOption, installPackagingSkill, readHooks, readPackage } from "../../cli/packaging.mjs";
+import { readReview, reviewBusy } from "../../cli/review.mjs";
+import { removeOldBundles } from "../../cli/temp.mjs";
 import { briefData, downloadLink, resolveServable, saveUpload, studyReferences } from "./brief.mjs";
 import { getState, openChannel, resolveResult, updateState } from "./bridge.mjs";
 import { contextText, describe, loadProject } from "./context.mjs";
@@ -30,7 +32,7 @@ import { publishDefaults, settingsView, updateChannels, updateSettings } from ".
 import { applyStyle, findStyle, styleForChannel } from "../../cli/catalog.mjs";
 import { computePlan, failureMessage, getJob, liveInfo, noteClaude, recoverJobs, renderSummary, resumeJob, setRenderHooks, shutdownRenders, startJob, stopJob } from "./render.mjs";
 import { answer as answerClaude, attachChat, chatState, interrupt as interruptClaude, killAllClaude, killClaude, newConversation, openInTerminal, sendMessage, setMode as setClaudeMode } from "./claude.mjs";
-import { addDraftLink, approveStyle, CATALOG_CHAT, catalogList, contextText as catalogContext, createDraft, deleteStyle, draftView, duplicateStyle, ensureCatalogFolder, previewFile, saveDraftUpload, saveFont, setView as setCatalogView, startDraft, styleDetail } from "./catalog.mjs";
+import { addDraftLink, approveStyle, CATALOG_CHAT, catalogList, contextText as catalogContext, createDraft, deleteStyle, draftView, duplicateStyle, markDraftStarted, ensureCatalogFolder, previewFile, saveDraftUpload, saveFont, setView as setCatalogView, startDraft, styleDetail } from "./catalog.mjs";
 
 const APP_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 // an `nproc` for Remotion (see server/bin/nproc.cmd): Studios, renders, frame previews and Claude panels inherit it
@@ -234,7 +236,7 @@ app.post("/api/projects/:name/studio/restart", wrap(async (req, res) => {
 const views = new Map();
 app.post("/api/projects/:name/view", (req, res) => {
   if (!project(req, res)) return;
-  views.set(req.params.name, ["brief", "final", "publish", "review"].includes(req.body.tab) ? req.body.tab : "editor");
+  views.set(req.params.name, ["brief", "final", "publish", "review", "package"].includes(req.body.tab) ? req.body.tab : "editor");
   res.json({ ok: true });
 });
 app.get("/api/projects/:name/context", (req, res) => {
@@ -538,16 +540,17 @@ app.post("/api/projects/:name/publish/reveal", (req, res) => {
 
 // ---- Review tab: the quality gate (cli/review.mjs), in a process of its own because it renders and waits for the critic
 const reviews = new Map(); // name -> { running, error }
-app.get("/api/projects/:name/review", wrap((req, res) => {
+app.get("/api/projects/:name/review", wrap(async (req, res) => {
   const dir = project(req, res);
   if (!dir) return;
-  res.json({ running: false, error: null, report: null, final: null, ...reviews.get(req.params.name), ...readReview(dir) });
+  // running: from this page's button, or Claude's own `ce review .`
+  res.json({ running: false, error: null, report: null, final: null, ...reviews.get(req.params.name), ...(await readReview(dir)), ...(reviewBusy(dir) ? { running: true } : {}) });
 }));
 app.post("/api/projects/:name/review/run", wrap((req, res) => {
   const dir = project(req, res);
   if (!dir) return;
   const name = req.params.name;
-  if ([...reviews.values()].some((r) => r.running)) return res.status(409).json({ error: "Another review is running; try again when it's done." });
+  if (reviewBusy(dir) || [...reviews.values()].some((r) => r.running)) return res.status(409).json({ error: "Another review is running; try again when it's done." });
   if (liveInfo(name)?.active) return res.status(409).json({ error: "This video is rendering; review it when that's finished." });
   const proc = spawn(process.execPath, [path.join(ENGINE_DIR, "cli", "ce.mjs"), "review", dir, ...(req.body?.critic === false ? ["--no-critic"] : [])], { stdio: ["ignore", "ignore", "pipe"], windowsHide: true });
   let stderr = "";
@@ -556,6 +559,44 @@ app.post("/api/projects/:name/review/run", wrap((req, res) => {
   proc.on("error", (e) => reviews.set(name, { running: false, error: e.message }));
   proc.on("close", (code) => reviews.set(name, { running: false, error: code ? stderr.trim().split(/\r?\n/).slice(-6).join(" ") || "The review stopped." : null }));
   res.json({ started: true });
+}));
+
+// ---- Package tab and the Brief's Hook card (cli/packaging.mjs): Claude writes the options, the user picks here
+const packageView = (dir) => ({ ...readPackage(dir), draft: { title: getDraft(dir, "youtube").title, facebook: getDraft(dir, "facebook").caption, instagram: getDraft(dir, "instagram").caption } });
+app.get("/api/projects/:name/package", wrap((req, res) => {
+  const dir = project(req, res);
+  if (dir) res.json(packageView(dir));
+}));
+app.post("/api/projects/:name/package/make", wrap(async (req, res) => {
+  const dir = project(req, res);
+  if (!dir) return;
+  installPackagingSkill(dir);
+  const r = await deliverToClaude(req.params.name, dir, "Please package this video: follow the packaging skill's titles, thumbnails and captions part, then tell me to open the Package tab.");
+  res.json({ sent: r.ok, reason: r.reason });
+}));
+// a picked title or caption goes straight into the Publish drafts; nothing is uploaded
+app.post("/api/projects/:name/package/use", wrap((req, res) => {
+  const dir = project(req, res);
+  if (!dir) return;
+  const { kind, id } = req.body ?? {};
+  const picked = choosePackage(dir, kind, String(id));
+  if (kind === "title") saveDraft(dir, "youtube", { title: picked.title });
+  if (kind === "caption") {
+    const footer = publishDefaults().captionFooter;
+    const caption = `${picked.text}${footer ? `\n\n${footer}` : ""}`;
+    for (const platform of ["facebook", "instagram"]) saveDraft(dir, platform, { caption });
+  }
+  res.json(packageView(dir));
+}));
+// the pick is saved only once Claude has it: otherwise the board would say Picked while the script waits forever
+app.post("/api/projects/:name/hook", wrap(async (req, res) => {
+  const dir = project(req, res);
+  if (!dir) return;
+  const option = hookOption(dir, req.body?.id);
+  const text = readHooks(dir).chosen ? `I changed the hook to: "${option.text}" Rebuild the script on it.` : `I picked this hook: "${option.text}" Build the script on it.`;
+  const r = await deliverToClaude(req.params.name, dir, text);
+  if (r.ok) chooseHook(dir, option.id);
+  res.json({ sent: r.ok, reason: r.reason });
 }));
 
 // ---- Brief page
@@ -669,6 +710,7 @@ app.post("/api/catalog/drafts/:draft/start", wrap(async (req, res) => {
   const ws = workspace();
   const text = startDraft(ws, req.params.draft, req.body.note);
   const r = await sendMessage(CATALOG_CHAT, ensureCatalogFolder(ws), claudeEnv(CATALOG_CHAT), text, { from: "engine" });
+  if (r.ok) markDraftStarted(ws, req.params.draft); // a failed send leaves the page able to try again
   res.json({ sent: r.ok, reason: r.reason });
 }));
 /** A page button's message to the catalog's Claude ("Render the previews again", "Make my own copy"…). */
@@ -788,4 +830,8 @@ server.listen(PORT, "127.0.0.1", () => {
   recoverUploads(listProjects(workspace()).filter((p) => p.engine));
   const n = recoverJobs(workspace());
   if (n) console.log(`${n} final render(s) were interrupted when the engine last stopped: Resume them on their Final tab.`);
+  // on start and once a day, since the engine can stay up for days
+  const sweep = () => removeOldBundles().then((gone) => gone && console.log(`removed ${gone} old render copies from the temp folder`), () => undefined);
+  sweep();
+  setInterval(sweep, 24 * 60 * 60 * 1000).unref();
 });
