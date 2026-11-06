@@ -28,7 +28,7 @@ gallery, one style, or a new-style draft. "This style" means the style in that n
 ```
 ce catalog list                      every style (built-in and the user's)
 ce catalog check <id or folder>      check a style against the format
-ce catalog preview <id or folder>    render its preview stills (about a minute; nothing paid)
+ce catalog preview <id or folder>    render its preview stills and moving reel (about a minute; nothing paid)
 ce catalog copy <id> [--as <new-id>] the user's own copy of a style (same id = an edited built-in; --as = a new style)
 ```
 

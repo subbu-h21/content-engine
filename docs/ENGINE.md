@@ -187,7 +187,7 @@ The plan behind this is in `vision.md` §5 and `docs/visual-catalog.md`. The for
   - `STYLE.md` is the style document Claude reads, written as a skill.
   - `style.json` holds the numbers.
   - `scenes/` holds Remotion sample scenes that draw the style.
-  - `preview/` holds the rendered stills, and `sources/` what the style was made from.
+  - `preview/` holds the rendered stills and the moving reel, and `sources/` what the style was made from.
 - **Where styles live:**
   - built-in styles in `library/catalog/visual/<id>/`;
   - the user's styles in `<workspace>/catalog/visual/<id>/`.
@@ -217,11 +217,53 @@ The plan behind this is in `vision.md` §5 and `docs/visual-catalog.md`. The for
   - Server: `app/server/catalog.mjs` and the `/api/catalog/...` routes.
   - Test: `tests/e2e/t16_catalog.mjs` (fake Claude, scratch engine).
 
+## Quality gate
+
+The plan is in `vision.md` §7. A video goes through it before anyone is asked to look: the make-video skill runs
+`ce review .` before `preview-ready`, and the **Review** tab shows the result and can run it again.
+
+- **How it sees the video:** `cli/review-probe.mjs` renders about 8 frames a second from the video's current code, so
+  it works on a preview, and measures the text in the page as it draws each frame: words, box, real size after
+  transforms, opacity, font.
+  - Remotion has no public "frame ready" hook, so a script added to each page watches `remotion_setFrame` and
+    `remotion_renderReady`. It waits 16 ms because the flag can turn true just before React commits.
+  - Sound is switched off through the video's `audio` props (they have to go on `composition.props` as well as
+    `inputProps`): Remotion's audio writer crashes on a sparse list of frames.
+- **Review pack** (`review/`): `beats-NN.jpg` (each scene at +0.3 s and its middle), `seams-NN.jpg` (±0.2 s around every
+  cut), `phone-NN.jpg` (360 px wide), `safe-01.jpg` (the deepest interface band of TikTok, Shorts and Reels in red).
+- **Measured** (`cli/review.mjs`). FAIL must be fixed; WARN is a question, a video may keep one on purpose:
+
+  | Level | Check |
+  |---|---|
+  | FAIL | text cut off by the frame; a font the page didn't load; a black frame between lit ones; page errors; final file peaking above −1 dBTP |
+  | WARN | text under 2.6% of the short side; on screen shorter than its reading time; under a platform's interface; lines overlapping; more than 3 s with no change (the last 3 s are exempt); an empty first frame; effects louder than the voice; final file more than 1 LU from −16 LUFS |
+  | Note | lines arriving at the same moment; the voice under 4 dB above the rest; a final file not tagged BT.709 |
+
+  Glitch duplicates of a line don't count as overlaps, and a line's position is the median of its run, so an entrance
+  or a jitter doesn't count as off-frame.
+- **Voice against the rest:** can't be measured once mixed, so it's rebuilt from the same files, gains and envelope
+  `AudioMix.tsx` uses, in 200 ms windows. The five closest moments become *For your ears*.
+- **Critic:** a fresh Claude (`library/review/critic.md`) with only the Read tool, started in an empty temp folder so
+  the video's history, skills and hooks don't reach it. It reads the sheets, brief, script, plan, style and measurements
+  and answers with P0/P1/P2 notes as JSON. A reply in any other shape is retried once, then reported as an error, never
+  as a pass. About 5 minutes on a 20 s video; it uses the user's Claude Code, no paid API.
+  - It's also told the P0 and P1 notes of earlier reviews (`review/history.json`) and asked not to undo them. Without
+    that the loop can't settle: on the first real video, two of the last three P1 notes reversed earlier ones.
+- **Passing:** no FAIL, no P0 or P1 notes, and a critic that really answered.
+- **The final file:** `finalChecks` measures `out/delivery.mp4` (loudness, true peak, format, colour tag) and caches the
+  result until the file changes.
+- **Colour:** the final render uses `--color-space=bt709`. Remotion's default is untagged BT.601, which players show
+  hotter (measured on HUD Detection's orange: source 241,93,39, default 255,105,35, bt709 241,95,40). A final render
+  therefore no longer matches `project-3-development` by framemd5; compare with the same flag.
+- **Not checked:** contrast is left to the critic, and nothing here can hear the video.
+- **Test:** `tests/e2e/t19_quality_gate.mjs` plants one of every fault in a video.
+
 ## Commands
 
 ```
 ce app [--no-open]                 # the website (see above)
 ce catalog list | check <style> | preview <style> | copy <style> [--as <id>]   # the style catalog (above)
+ce review [project] [--no-critic]  # the quality gate (above)
 ce settings workspace D:\code_files\animations   # where video projects live (currently set)
 ce new <slug> --title "..."        # project-<N>-<slug> from the template: packages linked, git repo, ready for Studio
 ce list                            # projects in the workspace

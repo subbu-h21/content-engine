@@ -4,11 +4,12 @@ import { api, type Context, type ProjectInfo, type StudioInfo } from "./api";
 import { BriefBoard } from "./BriefBoard";
 import { Chat } from "./Chat";
 import { RenderPanel } from "./RenderPanel";
+import { ReviewPanel } from "./ReviewPanel";
 import { navigate } from "./nav";
 import { TopNav } from "./TopNav";
 
 const PANEL_KEY = "ce.claudePanelWidth";
-export type Tab = "brief" | "editor" | "final";
+export type Tab = "brief" | "editor" | "review" | "final";
 
 /** A video page; an old or mistyped link to a video that isn't in the workspace gets a plain message instead. */
 export const Project: React.FC<{ name: string; tab: Tab }> = ({ name, tab }) => {
@@ -157,6 +158,9 @@ const ProjectView: React.FC<{ name: string; tab: Tab }> = ({ name, tab }) => {
           <button className={tab === "editor" ? "on" : ""} onClick={() => go("editor")}>
             Editor
           </button>
+          <button className={tab === "review" ? "on" : ""} onClick={() => go("review")}>
+            Review
+          </button>
           <button className={tab === "final" ? "on" : ""} onClick={() => go("final")}>
             Final
           </button>
@@ -183,6 +187,7 @@ const ProjectView: React.FC<{ name: string; tab: Tab }> = ({ name, tab }) => {
 
       <div className="panes">
         {tab === "brief" ? <BriefBoard name={name} onOpenEditor={() => go("editor")} /> : null}
+        {tab === "review" ? <ReviewPanel name={name} /> : null}
         {tab === "final" ? <RenderPanel name={name} /> : null}
         <div className="studio-pane" style={tab !== "editor" ? { display: "none" } : undefined}>
           {src ? (

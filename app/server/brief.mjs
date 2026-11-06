@@ -24,7 +24,7 @@ const mtime = (f) => (fs.existsSync(f) ? fs.statSync(f).mtimeMs : 0);
 const WPS = 2.8; // narration pace, as in pipeline/vo.py (the phone reel measured 2.88)
 
 /** Folders of a project the page may read files from. */
-const SERVABLE = ["brief", "references", "audio", "out", "public"];
+const SERVABLE = ["brief", "references", "audio", "out", "public", "review"];
 
 export function resolveServable(dir, rel) {
   const full = path.resolve(dir, rel);

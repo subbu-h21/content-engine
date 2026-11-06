@@ -187,6 +187,24 @@ export type PublishList = { ready: PublishListRow[]; notYet: { project: string; 
 /** A refresh that failed: "Failed to fetch" means the engine isn't answering (stopped or restarting). */
 export const unreachable = (e: unknown) => (e instanceof TypeError ? "The engine isn't answering (stopped or restarting). This page catches up by itself when it's back." : (e as Error).message);
 
+export type ReviewFinding = { level: "fail" | "warn" | "info"; area: string; t: number; where: string; problem: string; change: string };
+export type ReviewNote = { p: 0 | 1 | 2; t: number; where: string; problem: string; change: string };
+export type ReviewReport = {
+  at: string;
+  scenes: number;
+  cuts: number;
+  frames: number;
+  findings: ReviewFinding[];
+  listen: { t: number; why: string }[];
+  pack: { beats: string[]; seams: string[]; phone: string[]; safe: string | null };
+  critic: { notes?: ReviewNote[]; error?: string } | null;
+  counts: { fails: number; warnings: number; p0: number; p1: number; p2: number };
+  passed: boolean;
+  summary: string;
+};
+export type ReviewFinal = { lufs: number | null; truePeak: number | null; width: number; height: number; colour: string; findings: ReviewFinding[] };
+export type ReviewInfo = { running: boolean; error: string | null; report: ReviewReport | null; final: ReviewFinal | null };
+
 async function call<T>(url: string, init?: RequestInit): Promise<T> {
   const r = await fetch(url, { ...init, headers: { "content-type": "application/json", ...(init?.headers ?? {}) } });
   const body = await r.json().catch(() => ({}));
@@ -221,6 +239,8 @@ export const api = {
   deleteInfo: (name: string) =>
     call<{ title: string; folder: string; path: string; bytes: number; files: number; hasFinalVideo: boolean; hasRenders: boolean; studio: string }>(`/api/projects/${encodeURIComponent(name)}/delete-info`),
   remove: (name: string, confirm: string) => call<{ deleted: string }>(`/api/projects/${encodeURIComponent(name)}`, { method: "DELETE", body: JSON.stringify({ confirm }) }),
+  review: (name: string) => call<ReviewInfo>(`/api/projects/${encodeURIComponent(name)}/review`),
+  reviewRun: (name: string, critic: boolean) => call<{ started: boolean }>(`/api/projects/${encodeURIComponent(name)}/review/run`, { method: "POST", body: JSON.stringify({ critic }) }),
   render: (name: string) => call<RenderInfo>(`/api/projects/${encodeURIComponent(name)}/render`),
   renderStart: (name: string, rerender: string[], autoFix: boolean) => call<RenderJob>(`/api/projects/${encodeURIComponent(name)}/render/start`, { method: "POST", body: JSON.stringify({ rerender, autoFix }) }),
   renderResume: (name: string, autoFix?: boolean) => call<RenderJob>(`/api/projects/${encodeURIComponent(name)}/render/resume`, { method: "POST", body: JSON.stringify({ autoFix }) }),
@@ -252,7 +272,7 @@ export const api = {
   publishDraftWithClaude: (name: string) => call<{ ok: boolean; pending?: boolean; reason?: string }>(`/api/projects/${encodeURIComponent(name)}/publish/draft`, { method: "POST", body: "{}" }),
   revealVideo: (name: string) => call<{ ok: boolean }>(`/api/projects/${encodeURIComponent(name)}/publish/reveal`, { method: "POST" }),
   brief: (name: string) => call<Brief>(`/api/projects/${encodeURIComponent(name)}/brief`),
-  view: (name: string, tab: "brief" | "editor" | "final" | "publish") => call<{ ok: boolean }>(`/api/projects/${encodeURIComponent(name)}/view`, { method: "POST", body: JSON.stringify({ tab }) }),
+  view: (name: string, tab: "brief" | "editor" | "review" | "final" | "publish") => call<{ ok: boolean }>(`/api/projects/${encodeURIComponent(name)}/view`, { method: "POST", body: JSON.stringify({ tab }) }),
   link: (name: string, url: string) => call<{ started: boolean }>(`/api/projects/${encodeURIComponent(name)}/link`, { method: "POST", body: JSON.stringify({ url }) }),
   study: (name: string) => call<{ started: boolean }>(`/api/projects/${encodeURIComponent(name)}/study`, { method: "POST" }),
   say: (name: string, text: string) => call<{ sent: boolean; reason?: string }>(`/api/projects/${encodeURIComponent(name)}/say`, { method: "POST", body: JSON.stringify({ text }) }),
@@ -294,7 +314,7 @@ async function putFile<T>(url: string, file: File): Promise<T> {
 
 /** The catalog (server: app/server/catalog.mjs, format: library/catalog/README.md). */
 export const CATALOG_CHAT = "_catalog";
-export type CatalogStyle = { id: string; name: string; status: "built-in" | "approved" | "experimental" | null; summary: string; tags: string[]; builtIn: boolean; editedBuiltIn: boolean; stills: string[]; cover: boolean; stamp: number };
+export type CatalogStyle = { id: string; name: string; status: "built-in" | "approved" | "experimental" | null; summary: string; tags: string[]; builtIn: boolean; editedBuiltIn: boolean; stills: string[]; cover: boolean; reel: boolean; stamp: number };
 export type StyleJson = {
   name?: string;
   status?: string;
@@ -308,7 +328,7 @@ export type StyleJson = {
   banned?: string[];
   sources?: { what?: string; where?: string; licence?: string }[];
 };
-export type StyleDetail = { id: string; dir: string; builtIn: boolean; editedBuiltIn: boolean; style: StyleJson; md: string; stills: string[]; stamp: number; sources: string[]; fonts: string[]; check: { ok: boolean; problems: string[] } };
+export type StyleDetail = { id: string; dir: string; builtIn: boolean; editedBuiltIn: boolean; style: StyleJson; md: string; stills: string[]; reel: boolean; stamp: number; sources: string[]; fonts: string[]; check: { ok: boolean; problems: string[] } };
 export type CatalogDraft = { id: string; files: string[]; links: string[]; note: string; started: string | null; result: string | null };
 /** A style's preview image; `v` changes when the style changes so a re-render shows. */
 export const previewUrl = (id: string, file: string, v?: string | number) => `/api/catalog/styles/${encodeURIComponent(id)}/preview/${file}${v ? `?v=${encodeURIComponent(String(v))}` : ""}`;

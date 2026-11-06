@@ -84,11 +84,13 @@ export const CatalogGallery: React.FC = () => {
   );
 };
 
-/** A style's cover; on hover it steps through the style's preview stills. */
+/** A style's cover; on hover it plays the style's reel, or steps through its stills if it has no reel yet. */
 const StyleCard: React.FC<{ s: CatalogStyle }> = ({ s }) => {
   const [i, setI] = useState(0);
+  const [playing, setPlaying] = useState(false);
   const timer = useRef<ReturnType<typeof setInterval> | null>(null);
   const start = () => {
+    if (s.reel) return setPlaying(true);
     if (timer.current || s.stills.length < 2) return;
     timer.current = setInterval(() => setI((x) => (x + 1) % s.stills.length), 750);
   };
@@ -96,6 +98,7 @@ const StyleCard: React.FC<{ s: CatalogStyle }> = ({ s }) => {
     if (timer.current) clearInterval(timer.current);
     timer.current = null;
     setI(0);
+    setPlaying(false);
   };
   useEffect(() => stop, []);
   const img = s.stills.length ? `${s.stills[i]}.jpg` : s.cover ? "cover.jpg" : null;
@@ -113,7 +116,10 @@ const StyleCard: React.FC<{ s: CatalogStyle }> = ({ s }) => {
         onFocus={start}
         onBlur={stop}
       >
-        <span className="style-cover">{img ? <img src={previewUrl(s.id, img, s.stamp)} alt="" loading="lazy" /> : <span className="dim">no preview yet</span>}</span>
+        <span className="style-cover">
+          {img ? <img src={previewUrl(s.id, img, s.stamp)} alt="" loading="lazy" /> : <span className="dim">no preview yet</span>}
+          {playing ? <video src={previewUrl(s.id, "reel.mp4", s.stamp)} autoPlay muted loop playsInline /> : null}
+        </span>
         <span className="style-name">{s.name}</span>
         <span className="style-summary">{s.summary}</span>
         <span className="style-badges">
@@ -309,6 +315,7 @@ export const StylePage: React.FC<{ id: string }> = ({ id }) => {
           ) : null}
 
           <h3>Preview</h3>
+          {d.reel ? <video className="style-reel" src={previewUrl(id, "reel.mp4", d.stamp)} poster={d.stills.length ? previewUrl(id, `${d.stills[0]}.jpg`, d.stamp) : undefined} autoPlay muted loop playsInline controls /> : null}
           {d.stills.length ? (
             <>
               <div className="still-strip">

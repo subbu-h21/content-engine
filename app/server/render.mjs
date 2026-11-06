@@ -634,7 +634,8 @@ const STEPS = {
     const tmp = path.join(dir, "out", "render", "video.partial.mp4");
     fs.rmSync(tmp, { force: true });
     const cli = path.join(dir, "node_modules", "@remotion", "cli", "remotion-cli.js");
-    const r = await runProc(entry, step, process.execPath, [cli, "render", "src/index.ts", "Reel", tmp, "--codec=h264", "--crf=16", "--props=./props/final.json"], {
+    // bt709: without it the file is untagged BT.601 and players show the colours hotter (measured: 241,93,39 as 255,105,35)
+    const r = await runProc(entry, step, process.execPath, [cli, "render", "src/index.ts", "Reel", tmp, "--codec=h264", "--crf=16", "--color-space=bt709", "--props=./props/final.json"], {
       onData: (s) => {
         const all = [...s.matchAll(/Rendered (\d+)\/(\d+)(?:, time remaining: ([^\r\n]+))?/g)];
         const m = all[all.length - 1];

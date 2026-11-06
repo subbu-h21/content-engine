@@ -54,7 +54,7 @@ const styleDir = (ws, id) => (/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(String(id)) ? fi
 
 /** When the style's previews were last rendered (ms), so the page's image links change after a re-render. */
 const previewStamp = (dir) => {
-  for (const f of ["sheet.jpg", "cover.jpg"]) {
+  for (const f of ["reel.mp4", "sheet.jpg", "cover.jpg"]) {
     try {
       return Math.round(fs.statSync(path.join(dir, "preview", f)).mtimeMs);
     } catch {
@@ -64,9 +64,11 @@ const previewStamp = (dir) => {
   return 0;
 };
 
+const hasReel = (dir) => fs.existsSync(path.join(dir, "preview", "reel.mp4"));
+
 /** The gallery: every style, with its preview stills' ids. */
 export function catalogList(ws) {
-  return listStyles(ws).map(({ dir, cover, ...s }) => ({ ...s, stills: stillsOf(dir), cover: !!cover, stamp: previewStamp(dir) }));
+  return listStyles(ws).map(({ dir, cover, ...s }) => ({ ...s, stills: stillsOf(dir), cover: !!cover, reel: hasReel(dir), stamp: previewStamp(dir) }));
 }
 
 /** Everything the style page shows. */
@@ -82,6 +84,7 @@ export function styleDetail(ws, id) {
     style: readJson(path.join(dir, "style.json"), {}),
     md: fs.existsSync(path.join(dir, "STYLE.md")) ? fs.readFileSync(path.join(dir, "STYLE.md"), "utf8") : "",
     stills: stillsOf(dir),
+    reel: hasReel(dir),
     stamp: previewStamp(dir),
     sources: list("sources"),
     fonts: list("fonts", FONT_RE),
@@ -91,7 +94,7 @@ export function styleDetail(ws, id) {
 
 /** A preview image of a style (cover, sheet or a still), or null. */
 export function previewFile(ws, id, file) {
-  if (!/^[a-z0-9-]+\.jpg$/.test(file)) return null;
+  if (!/^[a-z0-9-]+\.jpg$/.test(file) && file !== "reel.mp4") return null;
   const dir = styleDir(ws, id);
   const full = dir ? path.join(dir, "preview", file) : null;
   return full && fs.existsSync(full) ? full : null;

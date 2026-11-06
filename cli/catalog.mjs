@@ -225,6 +225,98 @@ export function setStyleStatus(workspace, id, status) {
   return s;
 }
 
+const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
+const num = (v, fallback) => (typeof v === "number" && Number.isFinite(v) ? v : fallback);
+
+/** The CSS font stack of a style's font: a preferred installed face first, then the family as Remotion loads it. */
+function fontStack(f, generic) {
+  let family = f.family;
+  if (f.source === "google") {
+    // Remotion spells some names its own way (Jersey 10 → Jersey OneZero): take the name from its font module
+    const m = /fontFamily:\s*"([^"]+)"/.exec(fs.readFileSync(path.join(GOOGLE_FONTS, `${f.family.replace(/\s+/g, "")}.mjs`), "utf8"));
+    if (m) family = m[1];
+  }
+  return [f.prefer, family].filter(Boolean).map((n) => `"${n}"`).concat(generic).join(", ");
+}
+
+/**
+ * Set a video's look from a style, in the video's own files: the theme, type and finish in src/Root.tsx, the margins
+ * in src/lib/theme.ts, and the style's fonts in src/lib/fonts.ts. Values are kept inside the ranges of the props
+ * schema (src/lib/schema.ts), because a value outside them stops the render. Returns false when src/Root.tsx no longer
+ * has the expected blocks, so Claude sets them by hand.
+ */
+function applyTheme(projectDir, s) {
+  const role = (...names) => names.map((n) => s.palette.find((p) => p.role === n)?.hex).find(Boolean);
+  const rootFile = path.join(projectDir, "src", "Root.tsx");
+  if (!fs.existsSync(rootFile)) return false;
+  let root = fs.readFileSync(rootFile, "utf8");
+  const theme = /theme:\s*\{[^{}]*\}/;
+  const type = /type:\s*\{[^{}]*\}/;
+  const look = /look:\s*\{[^{}]*\}/;
+  if (!theme.test(root) || !type.test(root) || !look.test(root)) return false;
+  const q = (v) => `'${v}'`;
+  root = root.replace(
+    theme,
+    `theme: {
+        ink: "${role("background")}",
+        bone: "${role("text")}",
+        ash: "${role("muted", "text")}",
+        dim: "${role("faint", "muted", "text")}",
+        ember: "${role("accent", "text")}",
+        ice: "${role("accent2", "accent", "text")}",
+        displayFont: ${q(fontStack(s.fonts.display, ["Georgia", "serif"]))},
+        bodyFont: ${q(fontStack(s.fonts.body, ["system-ui", "sans-serif"]))},
+      }`,
+  );
+  const set = (block, key, value) => block.replace(new RegExp(`(\\b${key}:\\s*)[-\\d.]+`), `$1${value}`);
+  const enter = s.motion?.recipes?.[s.motion?.enter];
+  root = root.replace(type, (b) => {
+    let out = set(b, "leading", clamp(num(s.type?.leading, 1.04), 0.9, 1.3));
+    out = set(out, "stagger", clamp(num(s.motion?.stagger, 0.09), 0, 0.3));
+    if (enter?.kind === "ease") out = set(out, "wordDuration", clamp(num(enter.duration, 0.55), 0.1, 1.5));
+    if (enter?.kind === "ease") out = set(out, "rise", clamp(num(enter.distance, 0), 0, 60));
+    return set(out, "halo", clamp(num(s.finish?.halo, 0), 0, 2));
+  });
+  root = root.replace(look, (b) => set(set(b, "grain", clamp(num(s.finish?.grain, 0), 0, 0.12)), "vignette", clamp(num(s.finish?.vignette, 0), 0, 0.8)));
+  fs.writeFileSync(rootFile, root);
+
+  const themeFile = path.join(projectDir, "src", "lib", "theme.ts");
+  if (fs.existsSync(themeFile)) {
+    const margins = { MARGIN: s.layout.margin, SAFE_TOP: s.layout.safe.top, SAFE_BOTTOM: s.layout.safe.bottom };
+    let t = fs.readFileSync(themeFile, "utf8");
+    for (const [k, v] of Object.entries(margins)) t = t.replace(new RegExp(`(export const ${k} = )\\d+`), `$1${v}`);
+    fs.writeFileSync(themeFile, t);
+  }
+
+  // the plate layer paints a solid ground behind everything: it has to be the style's, or a light style comes out black
+  const plateFile = path.join(projectDir, "src", "components", "Plate.tsx");
+  if (fs.existsSync(plateFile)) fs.writeFileSync(plateFile, fs.readFileSync(plateFile, "utf8").replace(/backgroundColor: "#[0-9a-fA-F]{3,8}"/, `backgroundColor: "${role("background")}"`));
+
+  // the style's own font file loads its fonts; the video waits for its faces before capturing a frame
+  const fontsFile = path.join(projectDir, "src", "lib", "fonts.ts");
+  if (fs.existsSync(fontsFile)) {
+    let f = fs.readFileSync(fontsFile, "utf8");
+    if (!f.includes("STYLE_FACES")) {
+      f = f.replace('import { continueRender, delayRender } from "remotion";', 'import { continueRender, delayRender } from "remotion";\nimport { FACES as STYLE_FACES } from "../style/scenes/fonts";');
+      f = f.replace("const LOCAL_FACES = [", "const LOCAL_FACES = [\n  ...STYLE_FACES,");
+      fs.writeFileSync(fontsFile, f);
+    }
+  }
+  return true;
+}
+
+const STYLE_MD_MARK = "<!-- catalog style: the engine rewrites everything above \"## This video\" when the style changes -->";
+
+/** The video's style.md (the board's Look text): the style's document, then this video's own notes, which are kept. */
+function writeStyleMd(projectDir, s, styleDir) {
+  const file = path.join(projectDir, "style.md");
+  const cur = fs.existsSync(file) ? fs.readFileSync(file, "utf8") : null;
+  if (cur !== null && !cur.includes(STYLE_MD_MARK)) return; // written by hand or by Claude before: not the engine's to replace
+  const notes = cur?.match(/^## This video[\s\S]*$/m)?.[0] ?? "## This video\n\nNothing special yet: Claude adds what's specific to this video here.\n";
+  const body = fs.readFileSync(path.join(styleDir, "STYLE.md"), "utf8").replace(/^---[\s\S]*?---\s*/, "").trim();
+  fs.writeFileSync(file, `${STYLE_MD_MARK}\n\nCatalog style: ${s.name} (${s.id})\n\n${body}\n\n${notes}`);
+}
+
 /**
  * Give a video project its own copy of a style, replacing an earlier one (the catalog can change later without
  * changing the video):
@@ -233,8 +325,8 @@ export function setStyleStatus(workspace, id, status) {
  *   public/style/fonts/                 the style's font files (staticFile("style/fonts/…"))
  *   brief/style-cover.jpg               the cover the Brief board shows
  *   .claude/skills/style-<id>/SKILL.md  STYLE.md as a skill, so the video's Claude reads it
- *   project.json → style                {id, name, version, builtIn, locked, applied}
- * The video's style.md (its own notes, the board's Look text) is Claude's to write from STYLE.md (make-video skill).
+ *   project.json → style                {id, name, version, builtIn, locked, themed, applied}
+ *   src/Root.tsx, src/lib/theme.ts, src/lib/fonts.ts, style.md   set from the style (applyTheme, writeStyleMd)
  */
 export function applyStyle(projectDir, workspace, id, { locked = false } = {}) {
   if (!ID_RE.test(String(id))) throw new Error(`"${id}" isn't a style id.`);
@@ -266,8 +358,11 @@ export function applyStyle(projectDir, workspace, id, { locked = false } = {}) {
   fs.mkdirSync(path.join(skills, `style-${id}`), { recursive: true });
   fs.copyFileSync(path.join(styleDir, "STYLE.md"), path.join(skills, `style-${id}`, "SKILL.md"));
 
+  const themed = applyTheme(projectDir, s);
+  writeStyleMd(projectDir, s, styleDir);
+
   const manifest = readJson(manifestFile);
-  manifest.style = { id, name: s.name, version: s.version, builtIn: path.dirname(styleDir) === BUILTIN_VISUAL_DIR, locked: !!locked, applied: new Date().toISOString() };
+  manifest.style = { id, name: s.name, version: s.version, builtIn: path.dirname(styleDir) === BUILTIN_VISUAL_DIR, locked: !!locked, themed, applied: new Date().toISOString() };
   fs.writeFileSync(manifestFile, JSON.stringify(manifest, null, 2) + "\n");
   return manifest.style;
 }
@@ -310,10 +405,11 @@ export function ensurePreviewProject(workspace) {
 }
 
 /**
- * Render a style's preview stills into its preview/ folder: <sample>.jpg, cover.jpg (the first sample) and sheet.jpg
- * (all of them side by side). Nothing paid is called. Returns { stills, cover, sheet }.
+ * Render a style's previews into its preview/ folder: <sample>.jpg, cover.jpg (the first sample), sheet.jpg (all of
+ * them side by side) and reel.mp4 (every sample playing in a row). reelOnly leaves the stills alone and replaces only
+ * reel.mp4. Nothing paid is called. Returns { stills, cover, sheet, reel }.
  */
-export function previewStyle(styleDir, workspace, { scale = 0.5 } = {}) {
+export function previewStyle(styleDir, workspace, { scale = 0.5, reelOnly = false } = {}) {
   const check = checkStyle(styleDir);
   if (!check.ok) throw new Error(`The style has problems:\n- ${check.problems.join("\n- ")}`);
   const proj = ensurePreviewProject(workspace);
@@ -330,16 +426,23 @@ export function previewStyle(styleDir, workspace, { scale = 0.5 } = {}) {
   const now = new Date();
   for (const f of fs.readdirSync(src, { recursive: true, withFileTypes: true })) if (f.isFile()) fs.utimesSync(path.join(f.parentPath, f.name), now, now);
 
-  const r = spawnSync(process.execPath, ["render.mjs", "--scale", String(scale)], { cwd: proj, encoding: "utf8", maxBuffer: 64 * 1024 * 1024 });
+  const r = spawnSync(process.execPath, ["render.mjs", "--scale", String(scale), ...(reelOnly ? ["--reel-only"] : [])], { cwd: proj, encoding: "utf8", maxBuffer: 64 * 1024 * 1024 });
   const lastLine = (r.stdout ?? "").trim().split(/\r?\n/).pop() ?? "";
   if (r.status !== 0 || !lastLine.startsWith("{")) {
     const log = `${r.stderr ?? ""}\n${r.stdout ?? ""}`.trim().split(/\r?\n/).slice(-30).join("\n");
     throw new Error(`The preview render failed:\n${log}`);
   }
-  const { stills } = JSON.parse(lastLine);
+  const { stills, reel: reelFile } = JSON.parse(lastLine);
   const out = path.join(styleDir, "preview");
+  const reel = path.join(out, "reel.mp4");
+  if (reelOnly) {
+    fs.mkdirSync(out, { recursive: true });
+    fs.copyFileSync(reelFile, reel);
+    return { stills: [], cover: null, sheet: null, reel };
+  }
   fs.rmSync(out, { recursive: true, force: true });
   fs.mkdirSync(out, { recursive: true });
+  fs.copyFileSync(reelFile, reel);
   const files = stills.map((s) => {
     const f = path.join(out, `${s.id}.jpg`);
     fs.copyFileSync(s.file, f);
@@ -366,5 +469,5 @@ export function previewStyle(styleDir, workspace, { scale = 0.5 } = {}) {
   } catch {
     // no ffmpeg: the stills are enough
   }
-  return { stills: files, cover, sheet };
+  return { stills: files, cover, sheet, reel };
 }

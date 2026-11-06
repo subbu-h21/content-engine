@@ -11,9 +11,11 @@
  *   ce app [--no-open]               start the website (projects, editor with Studio + Claude) and open it
  *   ce catalog list                  the visual styles (built-in and your own)
  *   ce catalog check <style...>      check styles against the format (library/catalog/README.md)
- *   ce catalog preview <style...>    render a style's preview stills into its preview/ folder
+ *   ce catalog preview <style...>    render a style's preview stills and moving reel into its preview/ folder
+ *                                    (--reel-only: just the reel)
  *   ce catalog copy <style> [--as <id>]   your own copy of a style (same id: an editable built-in; --as: a new style)
  *   ce catalog use <style> [--project <p>]  give a video its own copy of a style (inside a video folder: that video)
+ *   ce review [project] [--no-critic]   the quality gate: review pack, measured checks, a fresh critic's notes
  *   ce doctor                        check the machine: node, python packages, ffmpeg, Blender, disk
  *
  * <project> is a path, a folder name in the workspace, or a project number.
@@ -23,6 +25,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { applyStyle, checkStyle, copyStyle, findStyle, listStyles, previewStyle } from "./catalog.mjs";
 import { createProject, ENGINE_DIR, linkProject, listProjects, loadSettings, resolveProject, RUNTIME_MODULES, saveSettings } from "./projects.mjs";
+import { runReview } from "./review.mjs";
 
 const [cmd, ...rest] = process.argv.slice(2);
 const settings = loadSettings();
@@ -108,12 +111,23 @@ const commands = {
     if (!rest.includes("--no-open")) setTimeout(() => spawn("cmd.exe", ["/c", "start", "", url], { stdio: "ignore", detached: true }).unref(), 1500);
   },
 
+  review() {
+    const workspace = flag("workspace") ?? process.env.CE_WORKSPACE ?? settings.workspace;
+    const critic = !rest.includes("--no-critic");
+    const names = rest.filter((a) => a !== "--no-critic");
+    const dir = names[0] ? resolveProject(names[0], workspace) : process.cwd();
+    if (!fs.existsSync(path.join(dir, "project.json"))) throw new Error("usage: ce review [project] [--no-critic]  (or run it inside a video folder)");
+    const r = runReview(dir, { critic });
+    console.log(`${r.summary}\n${path.join(dir, "review", "REPORT.md")}`);
+  },
+
   catalog() {
     const workspace = flag("workspace") ?? process.env.CE_WORKSPACE ?? settings.workspace;
     const scale = flag("scale");
     const as = flag("as");
     const projectFlag = flag("project");
-    const [sub, ...names] = rest;
+    const reelOnly = rest.includes("--reel-only");
+    const [sub, ...names] = rest.filter((a) => a !== "--reel-only");
     const styles = () => {
       if (!names.length) throw new Error(`usage: ce catalog ${sub} <style id or folder> [...]`);
       return names.map((n) => {
@@ -135,8 +149,8 @@ const commands = {
       }
     } else if (sub === "preview") {
       for (const dir of styles()) {
-        const r = previewStyle(dir, workspace, scale ? { scale: Number(scale) } : {});
-        console.log(`${dir}\n  ${r.stills.length} stills, cover.jpg${r.sheet ? ", sheet.jpg" : ""} in ${path.join(dir, "preview")}`);
+        const r = previewStyle(dir, workspace, { ...(scale ? { scale: Number(scale) } : {}), reelOnly });
+        console.log(`${dir}\n  ${reelOnly ? "reel.mp4" : `${r.stills.length} stills, cover.jpg${r.sheet ? ", sheet.jpg" : ""}, reel.mp4`} in ${path.join(dir, "preview")}`);
       }
     } else if (sub === "use") {
       // ce catalog use <style> [--project <project>]: from inside a video folder the project is that folder

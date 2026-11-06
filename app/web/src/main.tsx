@@ -31,8 +31,8 @@ const App: React.FC = () => {
   if (draft) return <DraftPage draft={draft[1]} />;
   const style = /^\/catalog\/([a-z0-9-]+)\/?$/.exec(path);
   if (style) return <StylePage key={style[1]} id={style[1]} />;
-  const m = /^\/p\/([^/]+)(?:\/(brief|final))?/.exec(path);
-  return m ? <Project name={decodeURIComponent(m[1])} tab={(m[2] as "brief" | "final" | undefined) ?? "editor"} /> : <Home />;
+  const m = /^\/p\/([^/]+)(?:\/(brief|final|review))?/.exec(path);
+  return m ? <Project name={decodeURIComponent(m[1])} tab={(m[2] as "brief" | "final" | "review" | undefined) ?? "editor"} /> : <Home />;
 };
 
 createRoot(document.getElementById("root")!).render(<App />);

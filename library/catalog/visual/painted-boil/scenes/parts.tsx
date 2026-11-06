@@ -361,9 +361,10 @@ export const Pip: React.FC<{ id: string; x: number; y: number; s?: number; pose?
 
 /** Painted reaction marks: "!", "?", a sparkle, a heart, sweat; they pop in with backOut. */
 export const Mark: React.FC<{ kind: "!" | "?" | "sparkle" | "heart"; x: number; y: number; s?: number; at: number; k?: number; c?: string }> = ({ kind, x, y, s = 1, at, k = 7, c }) => {
-  const p = backOut(useSeconds() - at);
+  const t = useSeconds();
+  const p = backOut(t - at);
   if (p <= 0) return null;
-  const tilt = -6 + 4 * Math.sin(useSeconds() * 3);
+  const tilt = -6 + 4 * Math.sin(t * 3);
   let g: React.ReactNode;
   if (kind === "!")
     g = (

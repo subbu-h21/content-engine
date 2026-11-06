@@ -565,7 +565,7 @@ Part of the vision	State
 Catalog page, with uploads turned into one style format	Built, tested with a fake Claude
 Taste skill and curated styles	Built: 73 styles
 Channels with a lock, last video's style as the default	Built and tested
-Quality gate: review pack, automatic checks, critic	Not built
+Quality gate: review pack, automatic checks, critic	Built and tested; two critics for the autopilot come with the autopilot
 Word timing, sound on words, animated captions	Not built
 Hooks, titles, thumbnails	Not built
 Editing your own footage (talking head, podcast clips)	Not built

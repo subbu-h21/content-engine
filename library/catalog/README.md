@@ -25,7 +25,7 @@ visual/<id>/
   scenes/       Remotion scenes that draw the style; they make the previews
     index.tsx   exports `samples` (see "Scenes" below)
   fonts/        font files that aren't on Google Fonts (optional)
-  preview/      rendered frames: <sample>.jpg, cover.jpg, sheet.jpg (made by `ce catalog preview`)
+  preview/      rendered previews: <sample>.jpg, cover.jpg, sheet.jpg, reel.mp4 (made by `ce catalog preview`)
   sources/      what the style was made from, untouched (uploads, links), plus notes.md
 ```
 
@@ -151,6 +151,7 @@ ce catalog preview <style folder>
 
 - **Where it renders:** in a hidden preview project, `<workspace>/catalog/_preview`. It's made from `preview/` here on
   first use and isn't listed as a video.
-- **What it writes:** one JPEG still per sample at half size (540×960), `cover.jpg` and `sheet.jpg`, into the style's
+- **What it writes:** one JPEG still per sample at half size (540×960), `cover.jpg`, `sheet.jpg` and `reel.mp4` (every
+  sample playing in a row, 360×640, silent, about 200 KB; `--reel-only` makes just this one), into the style's
   `preview/` folder. JPEG because film grain makes PNGs about 500 KB each.
 - **Cost:** nothing paid is called.

@@ -20,6 +20,17 @@ const args = process.argv.slice(2);
 const log = (file, o) => fs.appendFileSync(path.join(dir, file), JSON.stringify({ at: new Date().toISOString(), ...o }) + "\n");
 log("runs.jsonl", { args });
 
+// ---- the quality gate's critic (cli/review.mjs): one prompt on stdin, one JSON reply. CE_FAKE_CRITIC sets the reply;
+// its folder is deleted afterwards, so CE_FAKE_CRITIC_LOG says where to keep what it was asked.
+if (args.join(" ").includes("--output-format json")) {
+  let prompt = "";
+  for await (const c of process.stdin) prompt += c;
+  if (process.env.CE_FAKE_CRITIC_LOG) fs.appendFileSync(process.env.CE_FAKE_CRITIC_LOG, JSON.stringify({ args, cwd: process.cwd(), prompt }) + "\n");
+  const result = process.env.CE_FAKE_CRITIC ?? JSON.stringify([{ p: 2, t: 2, where: "the end", problem: "soft", change: "sharpen it" }, { p: 1, t: 1.5, where: "the title", problem: "too low", change: "move it up 40 px" }]);
+  process.stdout.write(JSON.stringify({ type: "result", is_error: false, result }));
+  process.exit(0);
+}
+
 if (!args.includes("-p")) {
   // ---- terminal window mode
   const out = (s) => process.stdout.write(s);

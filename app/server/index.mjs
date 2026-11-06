@@ -6,7 +6,7 @@
  *   /mcp/<project>    MCP endpoint for Claude Code (tools: editor_state, timeline, view_frame, seek, playback, show_setting)
  *   /ws/chat/<p>      the Claude chat's live updates
  */
-import { execFile, execFileSync } from "node:child_process";
+import { execFile, execFileSync, spawn } from "node:child_process";
 import crypto from "node:crypto";
 import fs from "node:fs";
 import http from "node:http";
@@ -14,7 +14,8 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import express from "express";
 import { WebSocketServer } from "ws";
-import { createProject, findProject, linkStatus, listProjects, loadSettings, RUNTIME_MODULES, saveSettings } from "../../cli/projects.mjs";
+import { createProject, ENGINE_DIR, findProject, linkStatus, listProjects, loadSettings, RUNTIME_MODULES, saveSettings } from "../../cli/projects.mjs";
+import { readReview } from "../../cli/review.mjs";
 import { briefData, downloadLink, resolveServable, saveUpload, studyReferences } from "./brief.mjs";
 import { getState, openChannel, resolveResult, updateState } from "./bridge.mjs";
 import { contextText, describe, loadProject } from "./context.mjs";
@@ -233,7 +234,7 @@ app.post("/api/projects/:name/studio/restart", wrap(async (req, res) => {
 const views = new Map();
 app.post("/api/projects/:name/view", (req, res) => {
   if (!project(req, res)) return;
-  views.set(req.params.name, ["brief", "final", "publish"].includes(req.body.tab) ? req.body.tab : "editor");
+  views.set(req.params.name, ["brief", "final", "publish", "review"].includes(req.body.tab) ? req.body.tab : "editor");
   res.json({ ok: true });
 });
 app.get("/api/projects/:name/context", (req, res) => {
@@ -534,6 +535,28 @@ app.post("/api/projects/:name/publish/reveal", (req, res) => {
   execFile("explorer.exe", [`/select,${path.join(dir, rel)}`], () => undefined);
   res.json({ ok: true });
 });
+
+// ---- Review tab: the quality gate (cli/review.mjs), in a process of its own because it renders and waits for the critic
+const reviews = new Map(); // name -> { running, error }
+app.get("/api/projects/:name/review", wrap((req, res) => {
+  const dir = project(req, res);
+  if (!dir) return;
+  res.json({ running: false, error: null, report: null, final: null, ...reviews.get(req.params.name), ...readReview(dir) });
+}));
+app.post("/api/projects/:name/review/run", wrap((req, res) => {
+  const dir = project(req, res);
+  if (!dir) return;
+  const name = req.params.name;
+  if ([...reviews.values()].some((r) => r.running)) return res.status(409).json({ error: "Another review is running; try again when it's done." });
+  if (liveInfo(name)?.active) return res.status(409).json({ error: "This video is rendering; review it when that's finished." });
+  const proc = spawn(process.execPath, [path.join(ENGINE_DIR, "cli", "ce.mjs"), "review", dir, ...(req.body?.critic === false ? ["--no-critic"] : [])], { stdio: ["ignore", "ignore", "pipe"], windowsHide: true });
+  let stderr = "";
+  proc.stderr.on("data", (d) => (stderr = (stderr + d).slice(-2000)));
+  reviews.set(name, { running: true, error: null });
+  proc.on("error", (e) => reviews.set(name, { running: false, error: e.message }));
+  proc.on("close", (code) => reviews.set(name, { running: false, error: code ? stderr.trim().split(/\r?\n/).slice(-6).join(" ") || "The review stopped." : null }));
+  res.json({ started: true });
+}));
 
 // ---- Brief page
 app.get("/api/projects/:name/brief", (req, res) => {

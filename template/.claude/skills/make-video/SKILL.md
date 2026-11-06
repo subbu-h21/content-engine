@@ -67,9 +67,10 @@ folder name stays). Ask a few questions at a time, never a long form. Settle, in
      `make-style` skill (in `<workspace>\catalog\visual\<id>\`, status `experimental`), then `ce catalog use <id>`.
    - **Without any catalog style** the template's default look applies (Editorial Neuro: `src/lib/theme.ts` and
      `src/components`).
-   - **Write `style.md`** (sections below), the board's Look text. Start with `Catalog style: <name> (<id>)`, then write
-     what this video takes from the style and what is its own: which accent means what here, which scenes are 3D. Add
-     to the style's rules; never contradict them.
+   - **`style.md`**, the board's Look text: with a catalog style the engine writes it from the style. Add what is this
+     video's own under its `## This video` heading (which accent means what here, which scenes are 3D), and never
+     contradict the style. The engine keeps that section when the style changes. Without a catalog style, write
+     `style.md` yourself (sections below).
 5. **Sound**: narrator voice (`project.json` → `voice.voice`, e.g. cedar, marin, alloy, ash, coral, sage, verse —
    offer a sample with `ce pipeline . vo --sample "<a line from the script>"`, about $0.003, the board plays it) and the
    voice direction (`voice.style`); music mood → `music.prompt` (instrumental, tempo, instruments, structure, "sits
@@ -94,9 +95,9 @@ words on screen, emphasis) · 4 2D elements (labels, diagrams, lines, pills) · 
 When idea, script, look, sound and plan are agreed:
 
 1. `ce pipeline . vo --estimate` (free: timing from word counts) and build the 2D scenes for real (section 3, step 3),
-   then render 2–3 **style frames** of key moments into `brief/frames/` (`npx remotion still src/index.ts Reel
-   brief/frames/01_<scene>.png --frame=<n> --scale=0.5`). For a 3D scene, one quick Blender still is enough. Look at
-   every frame yourself before showing it.
+   then render the **storyboard**: one frame per scene at its key moment, in order, into `brief/frames/`
+   (`npx remotion still src/index.ts Reel brief/frames/01_<scene>.png --frame=<n> --scale=0.5`). For a 3D scene, one
+   quick Blender still is enough. Look at every frame yourself before showing it.
 2. Write `brief/status.json`: `{"stage": "awaiting-approval", "note": "Script (N lines, ~M s), look and plan ready. Building costs about $X (voice ~$0.01–0.05, music ~$0.08) and ~T min of 3D drafts."}`
 3. Tell the user to check the board and press **Approve and build** (or say OK). **Wait.** Don't record voice,
    generate music or render 3D before the OK; that is the point of the checkpoint. Changes now are cheap: edit, re-render
@@ -113,10 +114,11 @@ After the OK set the stage to `building` and give a one-line update after each s
    in `src/Root.tsx` (an inline literal; never a variable). Remove the example `S01Intro` scene. Key every animation to
    `cue(scene, id)` + offsets; name a headline's props after its cue (`scenes.s03.response` for cue `response`).
    **With a catalog style** (`src/style/`):
-   - set the theme in `src/Root.tsx` from `src/style/style.json`:
-     - colours by palette role: ink = background, bone = text, ash = muted, dim = faint, ember = accent, ice = accent2;
-     - displayFont and bodyFont = its display and body fonts, with fallbacks;
-   - load its fonts the way `src/style/scenes/fonts.ts` does;
+   - the engine has already set the theme, type values, grain, vignette, margins and fonts from the style
+     (`project.json` → `style.themed` is true). Don't redo them. If `themed` is false, set the theme in `src/Root.tsx`
+     from `src/style/style.json` by hand: ink = background, bone = text, ash = muted, dim = faint, ember = accent,
+     ice = accent2;
+   - for fonts beyond display and body, import them from `src/style/scenes/fonts.ts`;
    - build each scene from the style's pieces in `src/style/scenes/` (parts and sample scenes are the starting
      point: copy and adapt them into `src/scenes/`), reading every value from `style.json`;
    - the template's `src/components` are Editorial Neuro's: use them only where they fit the style.
@@ -135,8 +137,17 @@ After the OK set the stage to `building` and give a one-line update after each s
 5. **Sound effects**: `sfx.json` (events relative to cues; kinds in the engine's `pipeline/sfx_lib.py`), then
    `ce pipeline . sfx`, `ce pipeline . stems`, `ce pipeline . captions`.
 6. **Check**: `npm run typecheck`; render a still from every scene and look at each; fix what's off.
-7. Set `{"stage": "preview-ready", "note": "Preview ready: open the Editor tab."}` and tell the user what to look at
-   first and the 2–3 weakest points you know of.
+7. **Quality gate**: `ce review .` (a few minutes, nothing paid). It renders the review sheets, measures the text,
+   pacing and sound, then a fresh Claude that has never seen the video writes notes. Read `review/REPORT.md`:
+   - fix everything marked FAIL and every P0 and P1 note, text first, then timing, then detail, and run `ce review .`
+     again. At most 3 rounds, then stop and tell the user what's left and why;
+   - WARN lines are questions: fix them or keep them on purpose and say why;
+   - ask first if a note means spending money (re-recording voice, new music, final 3D) or changes the script or the
+     style the user approved. Then leave it open and say so;
+   - look at the sheets yourself too: the numbers can't see a bad picture.
+8. Set `{"stage": "preview-ready", "note": "Preview ready: open the Editor tab."}` and tell the user what to look at
+   first, the 2–3 weakest points you know of, and the moments `review/REPORT.md` lists under *For your ears*: you
+   can't hear the video, so say so.
 
 ## Final render (after the preview)
 

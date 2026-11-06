@@ -1,4 +1,4 @@
-# Handoff: state of the content engine and what's left (2026-10-21)
+# Handoff: state of the content engine and what's left (2026-11-06)
 
 For a fresh Claude Code session opened in `D:\code_files\content-engine`. Read this, then `docs/ENGINE.md` and `CLAUDE.md`
 (this folder; `README.md` is the setup guide for a new PC), `template/README.md` and `template/.claude/skills/make-video/SKILL.md`. Earlier sessions ran from
@@ -143,7 +143,40 @@ in git).
 
 ## What's left
 
-000. **The visual catalog (2026-10-31 → 11-01; not committed).**
+00. **Done on 2026-11-06, after the catalog commit (`05f8924` on `visual-catalog`, not pushed; nothing since is
+    committed: the user asked for that one backup only).**
+   - **Automatic theme:** `applyStyle` sets the video's theme, type, margins, fonts, plate ground and `style.md` from
+     the style. Light styles used to come out black: the template's `Plate.tsx` paints `#000`.
+   - **First real video in a catalog style:** `project-9-a-20-second-vertical-video-on` ("Why the Sea Is Salty", channel
+     Daily Insights, HUD Detection), made through the real chat and the real render queue.
+   - **Moving previews:** every style has `preview/reel.mp4` (360×640, silent, 19 MB for all 73), played on hover in
+     the gallery and on the style's page. Rendering them found a real crash in Painted Boil (a hook after an early
+     return in `Mark`): stills can't see this kind of bug, so a new style should always get its reel.
+   - **Quality gate (step 2):** see `docs/ENGINE.md` "Quality gate". `ce review`, the Review tab, storyboard at the
+     approval step, final render in BT.709. Test: `tests/e2e/t19_quality_gate.mjs`.
+   - **Project 9 after the gate:** 3 rounds took it from 9 P1 notes to 3, all new; 0 failed, 0 P0, 11 P2. Final render
+     done (20.46 s, BT.709, −15.7 LUFS), but the gate hasn't passed. The user decides whether to fix the 3 P1 notes.
+     Nobody has heard it yet.
+   - **Critic memory:** two of those 3 P1 notes reversed earlier notes, so the critic now gets earlier P0 and P1 notes
+     (`review/history.json`). Tested with the fake Claude only; a real critic hasn't run with it yet.
+   - **Not built from vision §7:** two critics for the autopilot (it comes with the autopilot); a contrast measurement
+     (left to the critic); re-rendering only the stills a fix touched (each round redoes the sheets, about 20 s).
+   - **Existing videos:** `template/` changes don't reach them, so only new videos run the gate by themselves. The
+     Review tab works on every video with `src/data/timing.json`.
+   - **The user's engine on 4100** was restarted from a Claude Code tool session on 2026-11-06, so it stops when that
+     session ends. Start it from a terminal with `start.bat` or `ce app`.
+   - **The PC ran out of memory at 16:14 on 2026-11-06 and restarted; the cause is not identified.** The user was
+     working on other things at both times and may have started it themselves.
+     - **What happened:** a `node.exe` that started at 16:13:20 reached 47 GB in about 50 s, and commit memory hit
+       102.7 of 102.7 GB. dwm, Edge, the video's Claude and another session's build all died at 16:14:22. The same had
+       happened at 11:24:30 (53 GB) without a crash.
+     - **Cleared, measured under a 6 GB watchdog:** the gate's render peaked at 1.13 GB; Studio at 1.09 GB, with a
+       browser attached, on project 9 and on project 7 (the heaviest). The gate started 46 s after that `node.exe`.
+     - **Where to look next time:** System log event 2004. Its `ToXml()` gives each process's PID and start time; the
+       summary line doesn't. It doesn't give the path. No Claude session started anything at 11:24:30.
+     - **Also:** `C:` has only about 7 GB free. Temp files land there.
+
+000. **The visual catalog (2026-10-31 → 11-01; committed 2026-11-06).**
    - **Plans:** the vision is in `vision.md` (the user's decisions are marked "Decided"); step 1's design is in
      `docs/visual-catalog.md`.
    - **Research:** the notes on the resources the user collected are in `docs/research/` (styles in
@@ -171,8 +204,8 @@ in git).
      Demo (sparse title), Stained Glass (gold title on stone is low contrast), Capsule (pill touches the "y" tail),
      Cartesian (very quiet at phone size), Broadside (close to Signal Slam in colour), Mid-century (end title is low
      contrast).
-   - **Open decisions:** the first real video test in a catalog style (recommended, not done); nothing committed yet,
-     and the user's rule is no co-author line.
+   - **Open decisions:** none on the first real video (done, see above); the user's rule stays: commit only when asked,
+     with no co-author line.
    - **Step 1d: built 2026-11-04.** It's the flow the user approved.
      - **Settings → Channels:** name, style, Look locked; stored in `settings.json` → `channels`.
      - **Home:** "For <channel>" next to Create, defaulting to the channel used last.
