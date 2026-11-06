@@ -1,0 +1,114 @@
+{
+  "id": "iso-infographic",
+  "name": "Isometric Infographic",
+  "kind": "visual",
+  "version": 1,
+  "status": "built-in",
+  "summary": "A system diagram alive as a floating true-isometric diorama: flat three-tone blocks with no outlines on a cream ground, thin ink label pins, Isotype numbers counted in identical cubes, extruded block titles and map-label captions.",
+  "tags": ["light", "isometric", "infographic", "diagram", "flat", "sans", "data", "cream"],
+  "suits": ["process explainers", "how a system works", "supply chains", "annual reports", "numbers that add up", "science explainers"],
+  "needs": { "footage": false, "3d": false },
+  "frame": { "width": 1080, "height": 1920 },
+  "palette": [
+    { "role": "background", "hex": "#f2e6d0", "use": "the ground behind the board, with a faint isometric dot lattice" },
+    { "role": "surface", "hex": "#fbf4e6", "use": "caption cards, the light face of plates" },
+    { "role": "text", "hex": "#2e2522", "use": "ink: 3 px infographic lines, labels, numbers" },
+    { "role": "muted", "hex": "#8a5b3a", "use": "soil mid: the second line of a label" },
+    { "role": "faint", "hex": "#d9c8a9", "use": "the dark face of cream plates; the dot lattice" },
+    { "role": "accent", "hex": "#cf5140", "use": "red top: red light and the legend chip; the sides of extruded titles" },
+    { "role": "accent2", "hex": "#3c7fb1", "use": "sea blue: blue light only, always the same blue" },
+    { "role": "red-top", "hex": "#cf5140", "use": "red, top face" },
+    { "role": "red-left", "hex": "#b3352b", "use": "red, +y face" },
+    { "role": "red-right", "hex": "#8c2620", "use": "red, +x face" },
+    { "role": "green-top", "hex": "#7ba75f", "use": "land, top face" },
+    { "role": "green-left", "hex": "#5e8c4a", "use": "land, +y face" },
+    { "role": "green-right", "hex": "#476f37", "use": "land, +x face" },
+    { "role": "blue-top", "hex": "#5a9bcb", "use": "blue light, top face" },
+    { "role": "blue-left", "hex": "#3c7fb1", "use": "blue light, +y face" },
+    { "role": "blue-right", "hex": "#2d6390", "use": "blue light, +x face" },
+    { "role": "cream-top", "hex": "#fbf4e6", "use": "plates and plinths, top face" },
+    { "role": "cream-left", "hex": "#f2e6d0", "use": "plates and plinths, +y face" },
+    { "role": "cream-right", "hex": "#d9c8a9", "use": "plates and plinths, +x face" },
+    { "role": "soil-top", "hex": "#a77850", "use": "board strata, top" },
+    { "role": "soil-left", "hex": "#8a5b3a", "use": "board strata, +y face" },
+    { "role": "soil-right", "hex": "#6a432a", "use": "board strata, +x face" },
+    { "role": "mustard-top", "hex": "#e9be5c", "use": "sunlight, top face" },
+    { "role": "mustard-left", "hex": "#d9a53a", "use": "sunlight, +y face" },
+    { "role": "mustard-right", "hex": "#b0832a", "use": "sunlight, +x face" },
+    { "role": "orange-top", "hex": "#e8945a", "use": "the orange lane of the spectrum (proposed)" },
+    { "role": "violet-top", "hex": "#8876b8", "use": "the violet lane of the spectrum (proposed)" },
+    { "role": "shadow", "hex": "#231a2c", "use": "the mix target of dark faces; the board's soft shadow" }
+  ],
+  "fonts": {
+    "display": { "family": "Jost", "source": "google", "weights": [400, 500, 600, 700] },
+    "body": { "family": "Jost", "source": "google", "weights": [500, 600] }
+  },
+  "type": {
+    "display": 72,
+    "title": 132,
+    "number": 260,
+    "unit": 130,
+    "body": 46,
+    "label": 36,
+    "note": 30,
+    "min": 28,
+    "leading": 1.12,
+    "tracking": 0.12,
+    "case": "all caps for titles and labels; sentence case in the caption card",
+    "emphasis": "colour as a legend, a label pin with a row of icons",
+    "halo": 7,
+    "maxWords": 8
+  },
+  "layout": {
+    "margin": 96,
+    "safe": { "top": 230, "bottom": 330 },
+    "align": "left",
+    "caption": { "y": 1500, "height": 96, "radius": 10 },
+    "lattice": 44
+  },
+  "elements": {
+    "line": 3,
+    "pinRing": 11,
+    "cube": 58,
+    "cubeGap": 6,
+    "insetRadius": 190,
+    "strata": [34, 22],
+    "shadow": { "blur": 34, "alpha": 0.28, "drop": 90 }
+  },
+  "motion": {
+    "recipes": {
+      "drop": { "kind": "spring", "damping": 13, "stiffness": 190, "mass": 1 },
+      "isotype": { "kind": "ease", "curve": [0.34, 1.9, 0.64, 1], "duration": 0.28, "overshoot": 2.2 },
+      "route": { "kind": "ease", "curve": "cubic-in-out", "duration": 0.7 },
+      "leader": { "kind": "ease", "curve": "cubic-out", "duration": 0.35 },
+      "card": { "kind": "ease", "curve": "cubic-out", "duration": 0.2 },
+      "cut": { "kind": "ease", "curve": "cubic-in-out", "duration": 0.3 },
+      "skin": { "kind": "ease", "curve": "cubic-out", "duration": 0.35 },
+      "inset": { "kind": "ease", "curve": "expo-out", "duration": 0.45 }
+    },
+    "enter": "drop",
+    "exit": "skin",
+    "dropHeight": 150,
+    "squash": 0.18,
+    "stagger": 0.11,
+    "hold": 1.8
+  },
+  "finish": { "grain": 0, "vignette": 0, "glow": false },
+  "banned": [
+    "perspective: the projection is true isometric, axes at 30°, and never rotates or tilts",
+    "outlines on solids: they are separated by their three tones only",
+    "lighting beyond the three face tones; textures; gradients on solids",
+    "a flat 2D explainer, a blueprint or a low-poly 3D island",
+    "semi-transparent moving solids: solids arrive by motion, never by alpha",
+    "one hue with two meanings",
+    "numbers that don't add up: every Isotype count is the real count",
+    "copying any game's, explainer channel's or Isotype archive's characters, buildings, icons, palettes or music"
+  ],
+  "sources": [
+    {
+      "what": "Lemo-Opuscar style No. 24 \"Isometric Infographic\" (STYLE.md, DEMO.md, style.json), via research notes",
+      "where": "github.com/lemomo-ai/lemo-opuscar styles/iso-infographic; docs/research/styles/five-skills.md, section \"Isometric Infographic (flat three-tone diorama)\"",
+      "licence": "MIT (code and docs); demo film and stills CC BY 4.0 (LemoLab). No code copied. Jost: SIL OFL"
+    }
+  ]
+}

@@ -1,0 +1,105 @@
+{
+  "id": "paper-launch",
+  "name": "Paper Launch",
+  "kind": "visual",
+  "version": 1,
+  "status": "built-in",
+  "summary": "A SaaS launch recipe on newsprint off-white: near-black grotesk headlines with one serif-italic word, mono kickers, and white hairline product windows that tilt back and rise into place with a deepening shadow; one raspberry accent; hard cuts on a 120 BPM downbeat.",
+  "tags": ["launch", "light", "off-white", "product", "windows", "sans", "serif accent", "raspberry"],
+  "suits": ["SaaS and app launches", "feature promos", "product explainers", "facts told through a product's screens"],
+  "needs": { "footage": false, "3d": false },
+  "frame": { "width": 1080, "height": 1920 },
+  "palette": [
+    { "role": "background", "hex": "#efeee9", "use": "newsprint off-white: the ground of every light frame" },
+    { "role": "surface", "hex": "#ffffff", "use": "product windows" },
+    { "role": "text", "hex": "#1b1a18", "use": "ink: headlines and UI text; the dark register's ground" },
+    { "role": "muted", "hex": "#6e6c66", "use": "secondary text, kickers, window labels" },
+    { "role": "faint", "hex": "#d6d4cc", "use": "window hairlines, chrome dots, tracks" },
+    { "role": "accent", "hex": "#c8235a", "use": "raspberry: the one accent: the active control, a selection ring, a button, the serif word's underline" },
+    { "role": "accentSoft", "hex": "#f7dde6", "use": "raspberry tint: selected rows and fills behind the accent" },
+    { "role": "dark", "hex": "#161513", "use": "the dark register's ground (hook and the use-case roll only)" },
+    { "role": "darkWindow", "hex": "#22211e", "use": "windows inside the dark register" },
+    { "role": "skyBlue", "hex": "#4a90d9", "use": "content colour inside a window (data, a picture), never UI" },
+    { "role": "skyPale", "hex": "#cfe3f6", "use": "content colour: the pale end of a sky picture" },
+    { "role": "lightRed", "hex": "#d9534a", "use": "content colour: red light in a chart" }
+  ],
+  "fonts": {
+    "display": { "family": "Hanken Grotesk", "source": "google", "weights": [500, 700] },
+    "body": { "family": "Hanken Grotesk", "source": "google", "weights": [500, 700] },
+    "mono": { "family": "IBM Plex Mono", "source": "google", "weights": [500], "prefer": "iA Writer Mono S" },
+    "serif": { "family": "Newsreader", "source": "google", "weights": [500], "italic": true }
+  },
+  "type": {
+    "display": 112,
+    "number": 300,
+    "secondary": 38,
+    "ui": 30,
+    "uiSmall": 26,
+    "kicker": 26,
+    "body": 38,
+    "min": 26,
+    "leading": 1.0,
+    "tracking": -0.035,
+    "kickerTracking": 0.12,
+    "serifScale": 1.06,
+    "charEm": 0.52,
+    "case": "sentence",
+    "emphasis": "one serif-italic word per frame",
+    "maxWords": 7
+  },
+  "layout": {
+    "margin": 96,
+    "safe": { "top": 230, "bottom": 330 },
+    "align": "left",
+    "kickerY": 330,
+    "perspective": 1600,
+    "window": { "radius": 20, "border": 1.5, "bar": 64, "dot": 12 }
+  },
+  "motion": {
+    "recipes": {
+      "arrive": { "kind": "ease", "curve": "expo-out", "duration": 0.6, "distance": 40 },
+      "window": { "kind": "ease", "curve": "expo-out", "duration": 1.1 },
+      "settle": { "kind": "ease", "curve": [0.25, 1, 0.5, 1], "duration": 0.5 },
+      "exit": { "kind": "ease", "curve": [0.32, 0, 0.67, 0], "duration": 0.3 },
+      "zoomOut": { "kind": "ease", "curve": [0.5, 0, 0.75, 0], "duration": 0.2 },
+      "zoomIn": { "kind": "ease", "curve": "expo-out", "duration": 0.5 },
+      "slideOut": { "kind": "ease", "curve": [0.64, 0, 0.78, 0], "duration": 0.3, "distance": 230 },
+      "slideIn": { "kind": "ease", "curve": [0.22, 1, 0.36, 1], "duration": 0.5, "distance": 230 },
+      "pop": { "kind": "spring", "damping": 12, "stiffness": 220, "mass": 0.8 },
+      "ui": { "kind": "ease", "curve": [0.25, 1, 0.5, 1], "duration": 0.6 }
+    },
+    "enter": "arrive",
+    "exit": "exit",
+    "stagger": 0.02,
+    "bpm": 120,
+    "beat": 0.5,
+    "hold": 1.5
+  },
+  "elements": {
+    "windowIn": { "rotateX": 24, "y": 200, "scale": 0.94, "blur": 8 },
+    "shadowFrom": "0 6px 16px rgba(27,26,24,.05)",
+    "shadowTo": "0 44px 90px rgba(27,26,24,.16)",
+    "textBlur": 10,
+    "frameBlur": 18,
+    "zoom": { "out": 1.2, "outOpacity": 0.15, "in": 0.75, "max": 2.4 },
+    "button": { "height": 84, "radius": 42 },
+    "underline": 4,
+    "spectrum": { "nm": [400, 450, 500, 550, 600, 650, 700], "hex": ["#7b5cd6", "#4a90d9", "#3fb6c9", "#5cb85c", "#e8c63a", "#ef8a3c", "#d9534a"] },
+    "sun": "#fffdf6"
+  },
+  "finish": { "grain": 0, "vignette": 0, "glow": false },
+  "banned": [
+    "browser chrome, address bars, real OS cursors, scrollbars, notification badges (window chrome is three hairline dots only)",
+    "more than one serif-italic word in a frame; serif for whole headlines",
+    "a second accent colour; the accent on body text; content colours (sky blue, red light) used as UI",
+    "purple AI gradients, neon, glassmorphism, bokeh, generic stock shapes",
+    "bounce (one deliberate pop per film), screensaver float, breathing, drifting cameras",
+    "showing the whole frame at once: things arrive one after another",
+    "invented numbers; em dashes in copy",
+    "the dark register outside the hook and the use-case roll",
+    "a real brand's palette, type, logo or screens"
+  ],
+  "sources": [
+    { "what": "Moritz Kremb's launch-video reproduction recipe (playbook + assets, story, shots, music, HyperFrames notes, a practice piece)", "where": "docs/research/styles/ecc-nullmotion-3b1b-web.md, \"Paper Launch (Moritz Kremb's launch-video recipe)\"; https://ai-x-leaders.com/en/prompt/video/revid-2103066071838466494/", "licence": "MIT, (c) 2026 Moritz Kremb" }
+  ]
+}

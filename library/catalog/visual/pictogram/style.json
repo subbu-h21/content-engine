@@ -1,0 +1,107 @@
+{
+  "id": "pictogram",
+  "name": "Pictogram",
+  "kind": "visual",
+  "version": 1,
+  "status": "built-in",
+  "summary": "A beat-locked flash-card catalogue: a square grid of discs and motif cells whose rows drift sideways, faceless geometric pictogram figures on a sun disc, huge Inter Tight capitals sliding out of masks, DM Mono meta and a progress HUD; one hue per chapter in five tones.",
+  "tags": ["bold", "flat", "geometric", "pictogram", "pattern", "beat-locked", "colourful", "sans"],
+  "suits": ["lists of 20–80 items", "event openers and identities", "countdowns", "a day in pictograms", "step-by-step facts"],
+  "needs": { "footage": false, "3d": false },
+  "frame": { "width": 1080, "height": 1920 },
+  "palette": [
+    { "role": "background", "hex": "#2a74b5", "use": "the sky hue's t1: the default card ground and pattern fill" },
+    { "role": "text", "hex": "#fbf6ec", "use": "cream: type and figures on dark and mid hues; the end card" },
+    { "role": "muted", "hex": "#9cc8e9", "use": "the sky hue's t4: ghost titles, done ticks" },
+    { "role": "faint", "hex": "#1e5f99", "use": "the sky hue's t0: hairlines and the panel" },
+    { "role": "accent", "hex": "#e4624a", "use": "coral t2: the NEW tag, one accent per card (proposed)" },
+    { "role": "accent2", "hex": "#d8b266", "use": "sand t2: the accent on the dark ink chapter" },
+    { "role": "ink", "hex": "#15111c", "use": "global ink" },
+    { "role": "darkFg", "hex": "#1e1708", "use": "type and figures on the light sand hue" }
+  ],
+  "hues": {
+    "sky": ["#1e5f99", "#2a74b5", "#3a8bd0", "#62a5dc", "#9cc8e9"],
+    "navy": ["#141c48", "#1b2660", "#26357c", "#3a4b92", "#5466a8"],
+    "teal": ["#00575a", "#006b6e", "#0a8483", "#3a9c98", "#6cb5ae"],
+    "coral": ["#b83a2a", "#cc4a35", "#e4624a", "#ec8167", "#f2a185"],
+    "sand": ["#b48c3e", "#c69d4e", "#d8b266", "#e2c486", "#ecd7a8"],
+    "ink": ["#0f0e14", "#16151d", "#1e1d27", "#2a2935", "#3a3947"]
+  },
+  "light": ["sand"],
+  "fonts": {
+    "display": { "family": "Inter Tight", "source": "google", "weights": [500, 900] },
+    "body": { "family": "Inter Tight", "source": "google", "weights": [500] },
+    "mono": { "family": "DM Mono", "source": "google", "weights": [500] }
+  },
+  "type": {
+    "display": 150,
+    "title": 170,
+    "ghost": 360,
+    "second": 52,
+    "number": 430,
+    "index": 300,
+    "meta": 26,
+    "hud": 24,
+    "body": 52,
+    "min": 24,
+    "leading": 0.9,
+    "tracking": -0.02,
+    "metaTracking": 3,
+    "charEm": 0.62,
+    "case": "titles in capitals",
+    "emphasis": "the hue and the scale of the title; a NEW tag in coral",
+    "maxWords": 6
+  },
+  "layout": {
+    "margin": 90,
+    "safe": { "top": 230, "bottom": 330 },
+    "align": "left",
+    "cell": 180,
+    "hudTop": 250,
+    "hudBottom": 1560,
+    "stageGap": 100
+  },
+  "elements": {
+    "pattern": { "disc": 0.34, "ringed": 0.16, "density": 0.5, "drift": 26, "underType": 0.42, "chapter": 0.95 },
+    "figure": {
+      "torso": 0.30, "neck": 0.045, "head": 0.082, "upperArm": 0.16, "forearm": 0.15, "thigh": 0.225, "shin": 0.225,
+      "torsoW": 0.145, "armW": 0.076, "legW": 0.094, "farMix": 0.42, "band": 54
+    },
+    "disc": { "r": 330, "sweep": 0.09 },
+    "ticks": { "now": 4, "done": 0.75, "todo": 0.28 }
+  },
+  "motion": {
+    "recipes": {
+      "title": { "kind": "ease", "curve": "expo-out", "duration": 0.5, "second": 0.08, "tag": 0.2 },
+      "whip": { "kind": "ease", "curve": [0.87, 0, 0.13, 1], "duration": 0.38 },
+      "panel": { "kind": "ease", "curve": [0.22, 1, 0.36, 1], "duration": 0.5 },
+      "disc": { "kind": "ease", "curve": [0.33, 1, 0.68, 1], "duration": 0.45 },
+      "assemble": { "kind": "ease", "curve": "expo-out", "duration": 0.42 },
+      "count": { "kind": "ease", "curve": "expo-out", "duration": 1.6 },
+      "type": { "kind": "ease", "curve": "linear", "duration": 0.03 }
+    },
+    "enter": "title",
+    "exit": "whip",
+    "stagger": 0.08,
+    "hold": 1.6,
+    "bpm": 150
+  },
+  "finish": { "grain": 0.02, "vignette": 0, "glow": false },
+  "banned": [
+    "depth, 3D or isometric; dissolves, 3D camera moves, handheld shake, depth of field",
+    "faces or emotions on figures (not a cartoon)",
+    "outlines; gradients except the one light sweep",
+    "text and figure overlapping",
+    "cream type on light hues",
+    "numbers as charts: numbers are labels",
+    "mascots, landmarks or logos in pattern cells",
+    "copying a real event's pictograms, emblem, slogan, pattern or colour names"
+  ],
+  "sources": [
+    {
+      "what": "Lemo-Opuscar style No. 21 \"Pictogram\" (Pictogram Motion): STYLE.md, DEMO.md, style.json",
+      "where": "github.com/lemomo-ai/lemo-opuscar styles/pictogram-motion; research notes docs/research/styles/five-skills.md, \"Pictogram Motion\"",
+      "licence": "MIT (code and docs); demo films and stills CC BY 4.0. The demo copies a real event's identity: its palette, mark, slogan and pattern art are not used; this palette is new (a coastal set). No code copied. Inter Tight and DM Mono are SIL OFL."
+    }
+  ]
+}

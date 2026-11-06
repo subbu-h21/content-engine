@@ -9,6 +9,11 @@
  *   ce pipeline <project> <step> ... run a pipeline step (vo, music, stems, sfx, plates, captions)
  *   ce blender <project> <script> [args...]   run a Blender script from the project's blender/ folder headless
  *   ce app [--no-open]               start the website (projects, editor with Studio + Claude) and open it
+ *   ce catalog list                  the visual styles (built-in and your own)
+ *   ce catalog check <style...>      check styles against the format (library/catalog/README.md)
+ *   ce catalog preview <style...>    render a style's preview stills into its preview/ folder
+ *   ce catalog copy <style> [--as <id>]   your own copy of a style (same id: an editable built-in; --as: a new style)
+ *   ce catalog use <style> [--project <p>]  give a video its own copy of a style (inside a video folder: that video)
  *   ce doctor                        check the machine: node, python packages, ffmpeg, Blender, disk
  *
  * <project> is a path, a folder name in the workspace, or a project number.
@@ -16,6 +21,7 @@
 import { execFileSync, spawn, spawnSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
+import { applyStyle, checkStyle, copyStyle, findStyle, listStyles, previewStyle } from "./catalog.mjs";
 import { createProject, ENGINE_DIR, linkProject, listProjects, loadSettings, resolveProject, RUNTIME_MODULES, saveSettings } from "./projects.mjs";
 
 const [cmd, ...rest] = process.argv.slice(2);
@@ -100,6 +106,51 @@ const commands = {
     server.on("exit", (code) => (process.exitCode = code ?? 0));
     process.on("SIGINT", () => server.kill("SIGINT"));
     if (!rest.includes("--no-open")) setTimeout(() => spawn("cmd.exe", ["/c", "start", "", url], { stdio: "ignore", detached: true }).unref(), 1500);
+  },
+
+  catalog() {
+    const workspace = flag("workspace") ?? process.env.CE_WORKSPACE ?? settings.workspace;
+    const scale = flag("scale");
+    const as = flag("as");
+    const projectFlag = flag("project");
+    const [sub, ...names] = rest;
+    const styles = () => {
+      if (!names.length) throw new Error(`usage: ce catalog ${sub} <style id or folder> [...]`);
+      return names.map((n) => {
+        const dir = findStyle(workspace, n);
+        if (!dir) throw new Error(`No style "${n}" (ce catalog list shows them)`);
+        return dir;
+      });
+    };
+    if (sub === "list") {
+      const all = listStyles(workspace);
+      if (!all.length) return console.log("no styles yet");
+      for (const s of all) console.log(`${s.id.padEnd(24)} ${(s.builtIn ? "built-in" : s.editedBuiltIn ? "edited" : s.status ?? "?").padEnd(13)} ${s.cover ? "preview " : "        "} ${s.summary}`);
+    } else if (sub === "check") {
+      for (const dir of styles()) {
+        const r = checkStyle(dir);
+        console.log(`${r.ok ? " ok " : "FAIL"}  ${dir}`);
+        for (const p of r.problems) console.log(`      - ${p}`);
+        if (!r.ok) process.exitCode = 1;
+      }
+    } else if (sub === "preview") {
+      for (const dir of styles()) {
+        const r = previewStyle(dir, workspace, scale ? { scale: Number(scale) } : {});
+        console.log(`${dir}\n  ${r.stills.length} stills, cover.jpg${r.sheet ? ", sheet.jpg" : ""} in ${path.join(dir, "preview")}`);
+      }
+    } else if (sub === "use") {
+      // ce catalog use <style> [--project <project>]: from inside a video folder the project is that folder
+      const proj = projectFlag ?? (fs.existsSync(path.join(process.cwd(), "project.json")) ? process.cwd() : null);
+      if (names.length !== 1 || !proj) throw new Error("usage: ce catalog use <style id> [--project <project>]  (or run it inside a video folder)");
+      const dir = resolveProject(proj, workspace);
+      const cur = JSON.parse(fs.readFileSync(path.join(dir, "project.json"), "utf8")).style;
+      if (cur?.locked && cur.id !== names[0]) throw new Error(`This video's channel has its look locked to "${cur.id}" (Settings → Channels).`);
+      const s = applyStyle(dir, workspace, names[0], { locked: !!cur?.locked });
+      console.log(`${path.basename(dir)} now uses "${s.name}" (${s.id}): src/style/STYLE.md, src/style/scenes, src/kit`);
+    } else if (sub === "copy") {
+      if (names.length !== 1) throw new Error("usage: ce catalog copy <style id> [--as <new id>]");
+      console.log(copyStyle(workspace, names[0], as));
+    } else throw new Error("usage: ce catalog list | check <style...> | preview <style...> | copy <style> [--as <new id>] | use <style> [--project <p>]");
   },
 
   doctor() {

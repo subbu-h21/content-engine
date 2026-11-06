@@ -1,0 +1,113 @@
+{
+  "id": "stained-glass",
+  "name": "Stained Glass",
+  "kind": "visual",
+  "version": 1,
+  "status": "built-in",
+  "summary": "A hand-cut window seen from a dark stone hall, alive only where the sun touches it: jewel glass in black lead, titles carved in stone, a parchment banderole, and light as the clock.",
+  "tags": ["jewel", "medieval craft", "light", "stone", "dark", "storybook"],
+  "suits": ["legends", "heritage", "holidays", "stations and steps", "seasons", "repair stories"],
+  "needs": { "footage": false, "3d": false },
+  "frame": { "width": 1080, "height": 1920 },
+  "palette": [
+    { "role": "background", "hex": "#14120f", "use": "the dark of the hall, the shadow over stone" },
+    { "role": "surface", "hex": "#e7d9b6", "use": "parchment: the banderole" },
+    { "role": "text", "hex": "#e7d9b6", "use": "light type on a dark ground, when a video needs it" },
+    { "role": "muted", "hex": "#a69c8b", "use": "lit stone: the string course and the embrasure" },
+    { "role": "faint", "hex": "#6e675c", "use": "ashlar wall stone" },
+    { "role": "accent", "hex": "#a8101c", "use": "ruby: the hot hue, the border band" },
+    { "role": "accent2", "hex": "#1d3a9c", "use": "cobalt: the dominant glass" },
+    { "role": "deep", "hex": "#142a70", "use": "darker blue glass" },
+    { "role": "gold", "hex": "#dc9a22", "use": "touches, pearls, gilding in carved letters" },
+    { "role": "emerald", "hex": "#2f7f36", "use": "touches" },
+    { "role": "olive", "hex": "#6b7a22", "use": "touches" },
+    { "role": "murrey", "hex": "#632a63", "use": "touches" },
+    { "role": "white", "hex": "#cfdac6", "use": "greenish white glass: scrolls, fillets, sparingly" },
+    { "role": "sky", "hex": "#7fa2cf", "use": "sky glass" },
+    { "role": "amber", "hex": "#ff9a2a", "use": "the story light: a colour no glass uses" },
+    { "role": "lead", "hex": "#1d1f23", "use": "cames" },
+    { "role": "trace", "hex": "#2c1a0c", "use": "grisaille paint on glass at 88 %, ink on parchment, the dark of a carved letter" },
+    { "role": "floor", "hex": "#4a453e", "use": "flagstones" }
+  ],
+  "fonts": {
+    "display": { "family": "Cinzel", "source": "google", "weights": [600] },
+    "body": { "family": "IM Fell English", "source": "google", "weights": [400] }
+  },
+  "type": {
+    "display": 92,
+    "title": 104,
+    "number": 210,
+    "body": 42,
+    "label": 44,
+    "scroll": 44,
+    "min": 30,
+    "leading": 1.14,
+    "tracking": 3,
+    "eyebrowTracking": 2,
+    "case": "upper",
+    "emphasis": "gilding",
+    "maxWords": 10,
+    "charEm": 0.76
+  },
+  "layout": {
+    "margin": 90,
+    "safe": { "top": 230, "bottom": 330 },
+    "align": "center",
+    "window": { "cx": 540, "w": 720, "apex": 120, "sill": 1150, "border": 46, "fillet": 14, "splay": 58 },
+    "slab": { "y": 1178, "h": 262 },
+    "banderoleY": 1512,
+    "floorY": 1622
+  },
+  "motion": {
+    "recipes": {
+      "ray": { "kind": "ease", "curve": "cubic-in-out", "duration": 1.1 },
+      "carve": { "kind": "ease", "curve": "cubic-in-out", "duration": 0.9 },
+      "unfurl": { "kind": "ease", "curve": "cubic-out", "duration": 0.7 },
+      "step": { "kind": "ease", "curve": "cubic-in-out", "duration": 0.45 },
+      "dark": { "kind": "ease", "curve": "cubic-in", "duration": 0.6 }
+    },
+    "enter": "ray",
+    "exit": "dark",
+    "stagger": 0.5,
+    "hold": 1.8
+  },
+  "finish": { "grain": 0.026, "vignette": 0.5, "glow": true, "bloom": 0.3, "bloomBlur": 14, "spill": 0.42, "floorPatch": 0.75, "floorBlur": 20, "floorSaturate": 0.8, "shaft": 0.14 },
+  "elements": {
+    "course": 86,
+    "lead": 6,
+    "leadQuarry": 4.2,
+    "leadDetail": 3.5,
+    "quarry": 62,
+    "ringPieces": 30,
+    "bandSoft": 24,
+    "toneCeiling": 0.86,
+    "toneSaturation": 1.3,
+    "toneWhite": 0.45,
+    "rayStart": { "width": 18, "skew": 0.45 },
+    "rayEnd": { "width": 960, "skew": 0.06 },
+    "saddleBars": [420, 690, 960],
+    "suns": {
+      "dawn": { "rgb": [0.7, 0.83, 1.0], "k": 2.2 },
+      "noon": { "rgb": [1.0, 0.97, 0.9], "k": 2.7 },
+      "afternoon": { "rgb": [1.0, 0.84, 0.6], "k": 2.35 },
+      "dusk": { "rgb": [1.0, 0.6, 0.34], "k": 2.6 },
+      "moon": { "rgb": [0.55, 0.66, 1.0], "k": 0.5 }
+    }
+  },
+  "banned": [
+    "vector art with black outlines, flat clip-art fills",
+    "kaleidoscope or Voronoi filters",
+    "Tiffany Art Nouveau",
+    "mosaic",
+    "crosses, saints, halos or religious imagery: secular only",
+    "morphing or bending glass",
+    "things fading in: they are lit",
+    "dissolves, wipes or flips",
+    "a sharp decal-like floor patch",
+    "full-strength shafts at the window",
+    "copying the references' characters, compositions, subjects or music"
+  ],
+  "sources": [
+    { "what": "palette, sun table, fonts, lead and glass rules, band-of-light motion, banderole, carved titles, banned list (original name: Stained Glass)", "where": "Lemo-Opuscar (lemomo-ai/lemo-opuscar) styles/stained-glass, notes in docs/research/styles/five-skills.md, section Stained Glass", "licence": "MIT" }
+  ]
+}

@@ -1,0 +1,76 @@
+{
+  "id": "one-line",
+  "name": "One Line",
+  "kind": "visual",
+  "version": 1,
+  "status": "built-in",
+  "summary": "A single warm-black ink line that never leaves the paper: it thickens on its turns and thins on its runs, the camera follows the hidden pen and pulls back to reveal one finished picture, one stretch of the line carries the only colour, and a connected script writes the title in empty paper.",
+  "tags": ["line art", "continuous line", "ink", "minimal", "paper", "elegant", "hand-drawn", "light"],
+  "suits": ["life stories and company histories", "journeys and processes", "reveals where small moments add up to one picture", "data as a drawn line", "calm explainers"],
+  "needs": { "footage": false, "3d": false },
+  "frame": { "width": 1080, "height": 1920 },
+  "palette": [
+    { "role": "background", "hex": "#f4efe4", "use": "the warm white page: nearly the whole frame" },
+    { "role": "text", "hex": "#1d1a17", "use": "the line (warm black), the title and the words" },
+    { "role": "muted", "hex": "#4a4540", "use": "the words at 84% of the line's ink (proposed hex for ink at 84%)" },
+    { "role": "faint", "hex": "#e6dfd0", "use": "paper mottling and fibres (proposed)" },
+    { "role": "accent", "hex": "#2c5d97", "use": "the one coloured stretch of the line, used once (here blue: light, sky); kept in the final picture (proposed hex; the source's demo uses red #b3332b for love)" },
+    { "role": "accentRed", "hex": "#b3332b", "use": "the source's accent (love, danger), for a film where the one stretch means that" }
+  ],
+  "fonts": {
+    "display": { "family": "Sacramento", "source": "google", "weights": [400] },
+    "body": { "family": "Caveat", "source": "google", "weights": [500, 600] }
+  },
+  "type": {
+    "display": 124,
+    "title": 124,
+    "headline": 104,
+    "body": 50,
+    "label": 46,
+    "endCard": 46,
+    "min": 32,
+    "leading": 1.12,
+    "tracking": 0,
+    "endTracking": 0.2,
+    "case": "sentence; caps only for the end card's style name",
+    "emphasis": "the one coloured stretch of the line; the stop",
+    "maxWords": 8
+  },
+  "layout": { "margin": 90, "safe": { "top": 230, "bottom": 330 }, "align": "left", "nibBox": [0.72, 0.66], "textRight": 960 },
+  "motion": {
+    "recipes": {
+      "draw": { "kind": "ease", "curve": "sine-in-out", "duration": 3.0 },
+      "title": { "kind": "ease", "curve": "sine-in-out", "duration": 1.6 },
+      "words": { "kind": "ease", "curve": "linear", "duration": 0.2 },
+      "camera": { "kind": "ease", "curve": "sine-in-out", "duration": 1.6 },
+      "blot": { "kind": "ease", "curve": "expo-out", "duration": 0.7 }
+    },
+    "enter": "the line draws it",
+    "exit": "the line moves on (a morph into the next picture); words fade over 0.45 s",
+    "perChar": 0.017,
+    "speed": 520,
+    "turnWeight": 12,
+    "hold": 1.0
+  },
+  "elements": {
+    "line": { "width": 5.2, "noise": 0.08, "bleed": 0.22, "bleedWidth": 1.6, "pool": 6, "alpha": 0.96 },
+    "pressure": { "base": 0.66, "gain": 0.8, "speed": 300 },
+    "pen": { "shadow": 0.15, "length": 300, "contact": 3 },
+    "blot": { "r": 11 },
+    "halo": 12
+  },
+  "finish": { "grain": 0, "vignette": 0.13, "glow": false },
+  "banned": [
+    "a whiteboard explainer: no hand, no marker, no erasing, no text-heavy boards",
+    "ink wash: no tones, no brush blooms",
+    "line-art animation with cuts and many strokes: one line, no cuts",
+    "fills, shading, a second line weight, background art",
+    "the pen lifting, or the pen being drawn (only its shadow and contact)",
+    "a second accent colour, or the accent on more than one stretch",
+    "stray connectors that read as wrinkles; lines drawn closer than 5 px (they braid)",
+    "copying a famous continuous-line character or illustration"
+  ],
+  "sources": [
+    { "what": "Lemo-Opuscar style 05 \"One-line Drawing\" (styles/one-line: STYLE.md, DEMO.md)", "where": "docs/research/styles/five-skills.md, \"One-line Drawing\"", "licence": "MIT (lemomo-ai/lemo-opuscar); demo films and stills CC BY 4.0, not used" }
+  ]
+}

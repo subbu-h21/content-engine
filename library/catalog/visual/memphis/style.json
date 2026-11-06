@@ -1,0 +1,120 @@
+{
+  "id": "memphis",
+  "name": "Memphis",
+  "kind": "visual",
+  "version": 1,
+  "status": "built-in",
+  "summary": "A place built as a tabletop model on warm white paper inside a grainy organic frame: flat Memphis colours, indigo ink outlines, hard cool-purple shadows filled with halftone dots, patterns instead of texture, and three quiet centred lines of type under the frame below three Memphis marks.",
+  "tags": ["playful", "calm", "paper", "model", "diorama", "flat colour", "patterns", "light ground"],
+  "suits": ["how things work", "place and city stories", "calm explainers", "seasonal series", "ambient loops"],
+  "needs": { "footage": false, "3d": false },
+  "frame": { "width": 1080, "height": 1920 },
+  "palette": [
+    { "role": "background", "hex": "#fffcf6", "use": "the paper outside the frame; nothing else is drawn there except the type and marks" },
+    { "role": "text", "hex": "#2b2840", "use": "type line 1 (the title)" },
+    { "role": "muted", "hex": "#8d8aa0", "use": "type line 2 (the sentence)" },
+    { "role": "faint", "hex": "#b7b4c6", "use": "type line 3 (the data line)" },
+    { "role": "ink", "hex": "#25214a", "use": "every outline, window frames, leader lines, section hatching" },
+    { "role": "accent", "hex": "#ff5a5f", "use": "coral: red light (700 nm), roofs" },
+    { "role": "accent2", "hex": "#2f5bff", "use": "cobalt: blue light (450 nm), the zigzag mark, the emphasised word" },
+    { "role": "yellow", "hex": "#ffd234", "use": "the sun, the sunlight strip, yellow walls" },
+    { "role": "pink", "hex": "#ff7eb3", "use": "walls, awnings" },
+    { "role": "sky", "hex": "#5cc8ff", "use": "the painted sky backdrop by day" },
+    { "role": "mint", "hex": "#5edfb0", "use": "walls, accents" },
+    { "role": "lilac", "hex": "#b9a0ff", "use": "the air molecule, walls" },
+    { "role": "peach", "hex": "#ff9c6b", "use": "orange light, walls" },
+    { "role": "green", "hex": "#2fcb7a", "use": "green light" },
+    { "role": "grass", "hex": "#9de8a6", "use": "the ground of the model (spring grass)" },
+    { "role": "crown", "hex": "#3cbe7e", "use": "tree crowns (summer set)" },
+    { "role": "crown-light", "hex": "#6fd889", "use": "lighter lobes on the sun side of crowns" },
+    { "role": "water", "hex": "#8ed8f7", "use": "river shallows" },
+    { "role": "water-deep", "hex": "#72c9f3", "use": "the deeper channel" },
+    { "role": "bank", "hex": "#7bbfe8", "use": "the river bank" },
+    { "role": "glass", "hex": "#bfe4ff", "use": "windows by day" },
+    { "role": "glass-dark", "hex": "#2c2752", "use": "unlit windows at night; the night sky" },
+    { "role": "light", "hex": "#ffd36e", "use": "every light: lit windows, lamps" },
+    { "role": "pool", "hex": "#ffe3a3", "use": "lamp pools on the ground at night" },
+    { "role": "dusk", "hex": "#ff9e7a", "use": "the dusk layer on the way to night" },
+    { "role": "mark-yellow", "hex": "#ffc93c", "use": "the yellow dot mark" },
+    { "role": "mark-pink", "hex": "#ff7faa", "use": "the pink triangle mark" },
+    { "role": "trunk", "hex": "#b07a55", "use": "tree trunks and door wood (proposed)" },
+    { "role": "soil", "hex": "#c99a76", "use": "the soil layer of the cut face (proposed)" }
+  ],
+  "fonts": {
+    "display": { "family": "Inter Tight", "source": "google", "weights": [400, 600] },
+    "body": { "family": "Inter Tight", "source": "google", "weights": [400] },
+    "mono": { "family": "IBM Plex Mono", "source": "google", "weights": [400] }
+  },
+  "type": {
+    "display": 64,
+    "title": 64,
+    "number": 96,
+    "body": 38,
+    "label": 30,
+    "data": 28,
+    "min": 26,
+    "leading": 1.12,
+    "bodyLeading": 1.28,
+    "tracking": -0.01,
+    "case": "sentence case; the data line in lower case",
+    "emphasis": "cobalt on the emphasised word of line 1",
+    "maxWords": 10
+  },
+  "layout": {
+    "margin": 64,
+    "safe": { "top": 230, "bottom": 330 },
+    "align": "center",
+    "frame": { "x": 64, "y": 236, "w": 952, "h": 834, "r": 40 },
+    "marks": 1122,
+    "lines": [1158, 1306, 1414]
+  },
+  "elements": {
+    "outline": 2.5,
+    "frameNoise": [22, 170, 5.5, 38],
+    "grain": 0.9,
+    "grainFps": 12,
+    "shadow": [0.7, 0.58, 0.9],
+    "halftone": { "cell": 16, "r": 3.2 },
+    "view": { "dx": 0.38, "dy": 0.72, "front": 1010, "cut": 60 },
+    "sun": { "dx": -0.55, "dy": -0.22 },
+    "faces": { "top": 0.12, "away": 0.78 },
+    "night": [0.45, 0.42, 0.78],
+    "marks": { "dot": 10, "triangle": 22, "zigzag": 4.4, "gap": 44 }
+  },
+  "motion": {
+    "recipes": {
+      "grow": { "kind": "ease", "curve": [0.65, 0, 0.35, 1], "duration": 1.2 },
+      "back": { "kind": "ease", "curve": [0.34, 1.56, 0.64, 1], "duration": 0.5, "overshoot": 1.7 },
+      "line": { "kind": "ease", "curve": [0.65, 0, 0.35, 1], "duration": 0.4 },
+      "squash": { "kind": "spring", "damping": 9, "stiffness": 160, "mass": 1 },
+      "wave": { "kind": "ease", "curve": "linear", "duration": 1.6 },
+      "drift": { "kind": "ease", "curve": "linear", "duration": 1 }
+    },
+    "enter": "back",
+    "exit": "line",
+    "stagger": 0.12,
+    "hold": 1.8,
+    "waveSpeed": 900
+  },
+  "finish": { "grain": 0, "vignette": 0, "glow": false, "frameGrain": true },
+  "banned": [
+    "gradients anywhere: flat fills, patterns and hard shadows only",
+    "depth of field, reflections, bloom, motion blur or volumetric light",
+    "faceted shading or plastic highlights (that's low-poly); a cool diagram look (that's an isometric infographic)",
+    "characters acting: people are distant decoration only",
+    "colours sprinkled at random: cluster colour by area and leave large calm areas",
+    "grey nights or grey days; yellows going olive at night",
+    "identical trees: at least five crown shapes",
+    "outlines on thin things (stems, rods, light pools)",
+    "type over the picture or caption boxes: the three lines sit under the frame",
+    "a white flash, a spin or a fast hard cut",
+    "copying Memphis Group objects, layouts or palettes"
+  ],
+  "sources": [
+    {
+      "what": "Lemo-Opuscar style No. 71 \"Memphis Diorama\" by @EianLu (STYLE.md, DEMO.md, frame and type constants in demo/memphis.js), via research notes",
+      "where": "github.com/lemomo-ai/lemo-opuscar styles/memphis-diorama; docs/research/styles/five-skills.md, section \"Memphis Diorama\"",
+      "licence": "MIT (code and docs); demo films and stills CC BY 4.0 (LemoLab; the demo credits Eian). Inter Tight and IBM Plex Mono: SIL OFL"
+    }
+  ]
+}

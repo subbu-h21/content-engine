@@ -1,0 +1,89 @@
+{
+  "id": "halftone-collage",
+  "name": "Halftone Collage",
+  "kind": "visual",
+  "version": 1,
+  "status": "built-in",
+  "summary": "Editorial stop-motion collage: black-and-white halftone cut-outs with cream keylines and a few coloured cardstock pieces slide in on twos and lock together on a flat saturated paper field; words only as printed paper strips; between beats an endless zoom through the layers.",
+  "tags": ["collage", "paper", "halftone", "print", "stop-motion", "editorial", "flat colour", "b-roll", "retro"],
+  "suits": ["b-roll under a voice-over", "essay and idea explainers", "history and nostalgia", "music loops", "one metaphor per line"],
+  "needs": { "footage": false, "3d": false },
+  "frame": { "width": 1080, "height": 1920 },
+  "palette": [
+    { "role": "background", "hex": "#a62f23", "use": "field red: time being spent, labour, urgency (the default field)" },
+    { "role": "fieldMustard", "hex": "#dba719", "use": "field: tools, warnings, lost experience" },
+    { "role": "fieldTeal", "hex": "#0d7169", "use": "field: judgement, collaboration, automation" },
+    { "role": "fieldPurple", "hex": "#554767", "use": "field: norms, things settling into memory" },
+    { "role": "fieldGreen", "hex": "#1f4a3a", "use": "field: cognition, taste, a reset (ink green, proposed)" },
+    { "role": "fieldOrange", "hex": "#c4551f", "use": "field: burnt orange, time and urgency (proposed)" },
+    { "role": "surface", "hex": "#ede6d6", "use": "newsprint: the paper of every halftone cut-out and word strip" },
+    { "role": "text", "hex": "#1a1714", "use": "printing ink: halftone dots and the type on strips" },
+    { "role": "keyline", "hex": "#f3e9d2", "use": "the thin warm-cream keyline round every piece" },
+    { "role": "muted", "hex": "#6b6358", "use": "grey ink for small print on strips (proposed)" },
+    { "role": "faint", "hex": "#cfc6b4", "use": "paper fibre and the strip's torn shadow side (proposed)" },
+    { "role": "accent", "hex": "#3aa6c8", "use": "cyan cardstock: the key item of a line (here blue light)" },
+    { "role": "accent2", "hex": "#e9b92f", "use": "yellow cardstock: a second key item (here the sun)" },
+    { "role": "cardRed", "hex": "#c8372d", "use": "red cardstock" },
+    { "role": "cardOrange", "hex": "#e07a2e", "use": "orange cardstock" },
+    { "role": "cardPurple", "hex": "#6d5a9c", "use": "purple cardstock" },
+    { "role": "cardCream", "hex": "#f1e6cc", "use": "cream cardstock: beams, strips" }
+  ],
+  "fonts": {
+    "display": { "family": "Libre Franklin", "source": "google", "weights": [800, 900] },
+    "body": { "family": "Libre Franklin", "source": "google", "weights": [600] }
+  },
+  "type": {
+    "display": 80,
+    "hero": 150,
+    "number": 280,
+    "label": 30,
+    "body": 34,
+    "min": 28,
+    "leading": 1.0,
+    "tracking": -0.01,
+    "labelTracking": 0.04,
+    "charEm": 0.62,
+    "case": "upper",
+    "emphasis": "the word printed on a cardstock strip instead of newsprint",
+    "maxWords": 6
+  },
+  "layout": { "margin": 96, "safe": { "top": 230, "bottom": 330 }, "align": "center", "subject": 0.7 },
+  "motion": {
+    "recipes": {
+      "slide": { "kind": "ease", "curve": [0.22, 1.18, 0.45, 1], "duration": 0.5 },
+      "zoom": { "kind": "ease", "curve": "linear", "duration": 8.0 }
+    },
+    "enter": "slide",
+    "exit": "slide",
+    "twos": 12,
+    "groupGap": 0.25,
+    "pieceGap": 0.08,
+    "zoomRate": 0.35,
+    "parallax": [0.45, 0.8, 1.22],
+    "hold": 1.5
+  },
+  "elements": {
+    "halftone": { "pitch": 14, "angle": 45, "gain": 1.12, "min": 0.03 },
+    "keyline": 7,
+    "shadow": { "dx": 6, "dy": 12, "blur": 9, "opacity": 0.32 },
+    "strip": { "padX": 0.32, "padY": 0.14, "tilt": 3 },
+    "fibre": 0.1,
+    "flicker": 0.025
+  },
+  "finish": { "grain": 0.03, "vignette": 0.25, "glow": false, "flicker": 0.025 },
+  "banned": [
+    "type anywhere but on a printed paper or cardstock strip; subtitles; the whole voice-over line on screen",
+    "logos, watermarks, UI, readable signage inside the cut-outs",
+    "fades, slight drift or shake, slow zooms inside an assembling shot, morphing, objects appearing from nothing",
+    "glossy 3D, photoreal environments, gradients on the field",
+    "colour for colour's sake: cut-outs are black-and-white halftone; cardstock colour only on the key item",
+    "cobalt blue as a field, and a field that changes inside one shot",
+    "a screen full of small fragments: 3–6 large separable pieces",
+    "a moving camera while pieces assemble (the camera moves only in the zoom between beats)",
+    "AI-generated or downloaded photos standing in for drawn halftone cut-outs in this catalog version"
+  ],
+  "sources": [
+    { "what": "pyang5166/gbro-collage-broll: halftone paper-collage B-roll (SKILL.md, README, agents/openai.yaml, evals, scripts/generate_video.py)", "where": "docs/research/styles/five-skills.md, \"Halftone Paper-Collage B-roll\" (Part 2)", "licence": "MIT (© 2026 狗哥笔记)" },
+    { "what": "\"Halftone Collage Zoom\", entry 77 of X-RayLuan/awesome-opus-5-5-video-prompts (by @koldo2k): the endless zoom, depth layers and print finish", "where": "docs/research/styles/ecc-nullmotion-3b1b-web.md, \"Halftone Collage Zoom (GitHub #77, vintage collage infinite zoom)\"", "licence": "the creator keeps all rights: the look's rules are described only, nothing copied" }
+  ]
+}

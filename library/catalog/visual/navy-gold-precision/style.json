@@ -1,0 +1,94 @@
+{
+  "id": "navy-gold-precision",
+  "name": "Navy & Gold Precision",
+  "kind": "visual",
+  "version": 1,
+  "status": "built-in",
+  "summary": "Expensive, restrained product-film look: navy-black metal, one precious warm-gold accent that glints, matte dimensional UI surfaces tilted like a macro product shoot, mono numbers, and very few words.",
+  "tags": ["premium", "dark", "navy", "gold", "ui", "restrained", "sans", "mono"],
+  "suits": ["explainer", "finance", "product film", "facts", "premium reveal"],
+  "needs": { "footage": false, "3d": false },
+  "frame": { "width": 1080, "height": 1920 },
+  "palette": [
+    { "role": "background", "hex": "#090d1f", "use": "the navy-black base of every frame" },
+    { "role": "surface", "hex": "#10162c", "use": "cards and panels (matte navy metal)" },
+    { "role": "surface2", "hex": "#151c36", "use": "raised rows, the mark's tile" },
+    { "role": "surface3", "hex": "#1d2546", "use": "the highest surfaces, tracks, dividers" },
+    { "role": "text", "hex": "#e3e7f2", "use": "UI text" },
+    { "role": "warm", "hex": "#f5f1e4", "use": "strong headlines" },
+    { "role": "muted", "hex": "#7f89ad", "use": "labels, captions, mono headers" },
+    { "role": "faint", "hex": "#2a3358", "use": "hairlines, inactive rings" },
+    { "role": "accent", "hex": "#d6a03e", "use": "the precious gold: the active state, the glint, the wordmark, the one key word" },
+    { "role": "goldHighlight", "hex": "#f0d48e", "use": "specular highlight on gold" },
+    { "role": "goldDepth", "hex": "#87601a", "use": "shadowed gold" },
+    { "role": "accent2", "hex": "#7d97d8", "use": "steel blue: the second data colour in diagrams and charts only, never type (proposed)" },
+    { "role": "positive", "hex": "#3ccf95", "use": "only for a truly positive state" },
+    { "role": "negative", "hex": "#f27878", "use": "only where semantically needed" }
+  ],
+  "fonts": {
+    "display": { "family": "Plus Jakarta Sans", "source": "google", "weights": [600, 700] },
+    "body": { "family": "Plus Jakarta Sans", "source": "google", "weights": [400, 500, 600] },
+    "mono": { "family": "JetBrains Mono", "source": "google", "weights": [400, 500, 600] }
+  },
+  "type": {
+    "display": 96,
+    "number": 220,
+    "wordmark": 120,
+    "body": 30,
+    "label": 26,
+    "mono": 26,
+    "min": 24,
+    "leading": 1.06,
+    "tracking": -0.025,
+    "monoTracking": 0.08,
+    "charEm": 0.56,
+    "case": "sentence",
+    "emphasis": "one word in gold",
+    "maxWords": 4,
+    "maxLines": 2
+  },
+  "layout": { "margin": 96, "safe": { "top": 230, "bottom": 330 }, "align": "left", "radius": 28, "tilt": { "x": 9, "y": -9, "perspective": 2400 } },
+  "motion": {
+    "recipes": {
+      "premium": { "kind": "ease", "curve": [0.16, 1, 0.3, 1], "duration": 0.9 },
+      "settle": { "kind": "spring", "damping": 19.2, "stiffness": 144, "mass": 1 },
+      "draw": { "kind": "ease", "curve": [0.16, 1, 0.3, 1], "duration": 1.2 },
+      "count": { "kind": "ease", "curve": [0.16, 1, 0.3, 1], "duration": 1.4 },
+      "glint": { "kind": "ease", "curve": [0.65, 0, 0.35, 1], "duration": 1.1 },
+      "push": { "kind": "ease", "curve": "linear", "duration": 3.0 }
+    },
+    "enter": "premium",
+    "exit": "premium",
+    "stagger": 0.06,
+    "hold": 0.8,
+    "rise": 26,
+    "pushScale": 1.03,
+    "bpm": 118
+  },
+  "finish": {
+    "grain": 0.015,
+    "vignette": 0.45,
+    "glow": false,
+    "bloom": 0.18,
+    "rim": 0.35,
+    "shadow": "0 40px 80px -30px rgba(2,4,12,0.9), 0 2px 0 rgba(255,255,255,0.03) inset"
+  },
+  "banned": [
+    "cyberpunk, crypto, neon or gaming looks",
+    "generic AI purple",
+    "rainbow gradients",
+    "particle spam",
+    "glassmorphism",
+    "excessive blur, or any blur on the UI",
+    "spinning 3D cards",
+    "constant zoom",
+    "more than a few animation styles in one video",
+    "bouncing UI (overshoot stays below 2%)",
+    "marketing paragraphs: 3–4 words per line",
+    "crossfades, random wipes, spin transitions, glitch, whip-pans, the SaaS slide-left, zoom-blur",
+    "gold spread over several unrelated things in a frame: it marks the one thing that matters"
+  ],
+  "sources": [
+    { "what": "a creator's product-film prompt on prompt-motion.com (rules, motion reference curve, storyboard, bans); palette re-picked", "where": "https://prompt-motion.com/daniel-haida-8691d4; research notes docs/research/styles/barty-bart-and-prompt-motion.md, section Dark Navy & Gold Precision Film", "licence": "none stated (prompt belongs to its creator): rules described in our own words, nothing copied" }
+  ]
+}

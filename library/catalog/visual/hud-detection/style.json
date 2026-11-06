@@ -1,0 +1,96 @@
+{
+  "id": "hud-detection",
+  "name": "HUD Detection",
+  "kind": "visual",
+  "version": 1,
+  "status": "built-in",
+  "summary": "\"The machine is listening\": a persistent broadcast HUD (brackets, timecode, live transcript, waveform) around very different scenes, every keyword locked in orange detection brackets.",
+  "tags": ["dark", "hud", "tech", "orange", "data", "glitch", "wide display"],
+  "suits": ["tech and AI explainers", "how it works", "tool launches", "keyword-heavy scripts", "comment-keyword CTAs"],
+  "needs": { "footage": false, "3d": false },
+  "frame": { "width": 1080, "height": 1920 },
+  "palette": [
+    { "role": "background", "hex": "#0b0a09", "use": "black: the ground of every dark scene" },
+    { "role": "text", "hex": "#eceae4", "use": "warm white: titles, captions, HUD text" },
+    { "role": "accent", "hex": "#ff5a26", "use": "orange: keywords, detection brackets, tags, hits, flash-card and CTA grounds" },
+    { "role": "accent2", "hex": "#ff3b1f", "use": "red: the playhead, errors, the thin circle around the core" },
+    { "role": "indigo", "hex": "#1b1d4a", "use": "quiet moments: the serif scene's ground" },
+    { "role": "muted", "hex": "#8a847c", "use": "HUD sub-labels, readouts, the transcript's plain words (proposed)" },
+    { "role": "faint", "hex": "#3b3631", "use": "HUD hairlines, the unplayed waveform, ticks (proposed)" },
+    { "role": "surface", "hex": "#171412", "use": "pills and panels (proposed)" },
+    { "role": "glow", "hex": "#2a140c", "use": "the warm brown radial glow behind dark scenes (measured from the guide's pages)" },
+    { "role": "chocolate", "hex": "#4a1204", "use": "type and HUD on orange cards (measured from the flash-card frame)" },
+    { "role": "ringLine", "hex": "#d9400f", "use": "the concentric rings on orange cards (measured)" },
+    { "role": "salmon", "hex": "#e8b4a0", "use": "the stacked-verbs ground (measured)" },
+    { "role": "verbInk", "hex": "#504747", "use": "the stacked verbs' fill (measured)" }
+  ],
+  "fonts": {
+    "display": { "family": "Unbounded", "source": "google", "weights": [900] },
+    "body": { "family": "Space Grotesk", "source": "google", "weights": [400, 500, 700] },
+    "mono": { "family": "JetBrains Mono", "source": "google", "weights": [400, 500, 700] },
+    "serif": { "family": "Instrument Serif", "source": "google", "weights": [400], "italic": true }
+  },
+  "type": {
+    "display": 128,
+    "flash": 300,
+    "number": 170,
+    "serif": 150,
+    "caption": 56,
+    "body": 56,
+    "label": 26,
+    "hud": 28,
+    "readout": 24,
+    "min": 24,
+    "leading": 1.0,
+    "tracking": -0.01,
+    "hudTracking": 0.3,
+    "case": "UPPERCASE titles, sentence-case captions",
+    "emphasis": "orange keyword inside orange corner detection brackets, with a mono readout",
+    "maxWords": 8,
+    "displayCharEm": 0.78
+  },
+  "layout": {
+    "margin": 80,
+    "safe": { "top": 230, "bottom": 330 },
+    "align": "center",
+    "frame": { "left": 48, "right": 1032, "top": 200, "bottom": 1612, "arm": 40 },
+    "band": { "top": 360, "bottom": 1240 },
+    "caption": 1300,
+    "timeline": 1450
+  },
+  "motion": {
+    "recipes": {
+      "lock": { "kind": "ease", "curve": "expo-out", "duration": 0.25, "distance": 0.6 },
+      "slam": { "kind": "ease", "curve": "expo-out", "duration": 0.18, "scale": 1.35 },
+      "word": { "kind": "ease", "curve": "expo-out", "duration": 0.12, "distance": 8 },
+      "stamp": { "kind": "ease", "curve": "expo-out", "duration": 0.12, "scale": 1.25 },
+      "count": { "kind": "ease", "curve": "expo-out", "duration": 0.9 },
+      "draw": { "kind": "ease", "curve": [0.65, 0, 0.35, 1], "duration": 0.5 },
+      "push": { "kind": "ease", "curve": "linear", "duration": 3, "to": 1.04 },
+      "spin": { "kind": "ease", "curve": "linear", "duration": 1, "degPerSecond": 20 },
+      "glitch": { "kind": "ease", "curve": "linear", "duration": 0.1, "slices": 6, "offset": 40 }
+    },
+    "enter": "word",
+    "exit": "cut",
+    "stagger": 0.08,
+    "hold": 0.4
+  },
+  "finish": { "grain": 0.06, "vignette": 0.45, "glow": true, "bloom": 18, "aberration": 2, "glowRadius": 0.62 },
+  "banned": [
+    "music: hits and the voice only",
+    "a scene without the HUD frame: it stays on screen the whole video",
+    "a keyword without its brackets and readout",
+    "a number in the HUD that isn't true (timecodes and counters come from the real clock and words)",
+    "more than one giant word on a flash card",
+    "colours outside the five (plus the measured orange-card and salmon support tones)",
+    "an editing app, templates or AI video for the visuals",
+    "SFX over the voice: the voice always wins"
+  ],
+  "sources": [
+    {
+      "what": "Level 5 Workflow Guide (12 slides)",
+      "where": "D:\\code_files\\resources to make content engine\\aman thakur's resources\\Level 5 Workflow Guide.pdf, slides 1, 2, 5–12; research notes docs/research/styles/local-guides.md, \"Level 5 — HUD detection\"",
+      "licence": "none stated (\"Made with Claude by\" the author, \"tag me when you post yours\"); the look is described in our own words, no code or assets copied; Unbounded, Space Grotesk, JetBrains Mono and Instrument Serif are SIL OFL"
+    }
+  ]
+}

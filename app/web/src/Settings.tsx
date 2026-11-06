@@ -1,6 +1,7 @@
-/** Settings: general paths, YouTube (setup, connection, defaults), Facebook & Instagram (defaults, Chrome check). */
+/** Settings: general paths, channels (their styles), YouTube (setup, connection, defaults), Facebook & Instagram (defaults, Chrome check). */
 import React, { useEffect, useRef, useState } from "react";
 import { api, type PublishDefaults, type SettingsView, type YouTubeStatus } from "./api";
+import { ChannelsSettings } from "./ChannelsSettings";
 import { MetaSettings } from "./MetaSettings";
 import { navigate } from "./nav";
 import { getTheme, setTheme, type Theme } from "./theme";
@@ -164,6 +165,11 @@ export const Settings: React.FC = () => {
         <Field label="Blender (blender.exe)" value={s.blender} hint={ok(s.checks.blender)} onSave={(v) => api.saveSettings({ blender: v }).then(setS)} />
         <Field label="Python" value={s.python} hint={s.checks.python ? <span className="okmark">✓ {s.checks.python}</span> : <span className="badmark">✕ didn't run</span>} onSave={(v) => api.saveSettings({ python: v }).then(setS)} />
         <p className="hint">ffmpeg: {s.checks.ffmpeg ? <span className="okmark">✓ {s.checks.ffmpeg}</span> : <span className="badmark">✕ not found on PATH</span>}</p>
+      </section>
+
+      <section>
+        <h2>Channels</h2>
+        <ChannelsSettings channels={s.channels ?? []} />
       </section>
 
       <section>

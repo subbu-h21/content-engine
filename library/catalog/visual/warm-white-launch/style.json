@@ -1,0 +1,90 @@
+{
+  "id": "warm-white-launch",
+  "name": "Warm White Launch",
+  "kind": "visual",
+  "version": 1,
+  "status": "built-in",
+  "summary": "One-take consumer-app launch look: warm white with black UI, a lime accent that ripples and floods the frame, an iridescent glow round a composer box, chat bubbles, dark result cards, a route with a running dot, and a soft serif for the name.",
+  "tags": ["playful", "light", "warm", "lime", "ui", "chat", "one take", "sans", "serif"],
+  "suits": ["explainer", "app launch", "assistant / chat story", "facts", "hook"],
+  "needs": { "footage": false, "3d": false },
+  "frame": { "width": 1080, "height": 1920 },
+  "palette": [
+    { "role": "background", "hex": "#f5f5f2", "use": "the warm-white canvas" },
+    { "role": "text", "hex": "#0e0e10", "use": "black UI: text, buttons, dark cards, the outro page, the phone bezel" },
+    { "role": "surface", "hex": "#ffffff", "use": "the composer box, reply bubbles, light cards (proposed)" },
+    { "role": "muted", "hex": "#86868a", "use": "placeholders, sub-lines, captions on light (proposed)" },
+    { "role": "faint", "hex": "#e4e4df", "use": "hairlines, outlined pills, the route's track (proposed)" },
+    { "role": "accent", "hex": "#cdf24f", "use": "lime: the ripple, the flood, sent chat bubbles, the key pill" },
+    { "role": "accent2", "hex": "#ff6a2a", "use": "orange: the secondary accent (the running dot, the mark)" },
+    { "role": "send", "hex": "#2f6bff", "use": "the blue send button only" },
+    { "role": "glowPink", "hex": "#ff5fa2", "use": "AI glow stop 1 (hex proposed; the source names pink)" },
+    { "role": "glowOrange", "hex": "#ff6a2a", "use": "AI glow stop 2" },
+    { "role": "glowLime", "hex": "#cdf24f", "use": "AI glow stop 3" },
+    { "role": "glowCyan", "hex": "#4fd8f2", "use": "AI glow stop 4 (proposed hex)" },
+    { "role": "glowViolet", "hex": "#8a6bff", "use": "AI glow stop 5, only inside the glow (proposed hex)" }
+  ],
+  "fonts": {
+    "display": { "family": "Fraunces", "source": "google", "weights": [500, 600] },
+    "body": { "family": "Geist", "source": "google", "weights": [400, 500, 600] }
+  },
+  "type": {
+    "display": 128,
+    "typed": 66,
+    "outro": 92,
+    "number": 300,
+    "body": 40,
+    "bubble": 26,
+    "label": 30,
+    "min": 24,
+    "leading": 1.12,
+    "tracking": -0.02,
+    "case": "sentence",
+    "emphasis": "the key word in a lime pill or a lime bubble",
+    "maxWords": 12,
+    "phoneScale": 1.45
+  },
+  "layout": {
+    "margin": 90,
+    "safe": { "top": 230, "bottom": 330 },
+    "align": "center",
+    "phone": { "w": 428, "h": 900, "bezel": 11, "radius": 44 },
+    "card": { "w": 330, "h": 440, "radius": 28, "scale": 2 },
+    "composer": { "w": 880, "h": 430, "radius": 44 }
+  },
+  "motion": {
+    "recipes": {
+      "pop": { "kind": "spring", "damping": 25.6, "stiffness": 256, "mass": 1 },
+      "settle": { "kind": "spring", "damping": 26.6, "stiffness": 196, "mass": 1 },
+      "camera": { "kind": "ease", "curve": [0.65, 0, 0.35, 1], "duration": 1.2 },
+      "flood": { "kind": "ease", "curve": [0.7, 0, 0.2, 1], "duration": 0.35 },
+      "ripple": { "kind": "ease", "curve": "expo-out", "duration": 0.6 },
+      "word": { "kind": "ease", "curve": [0.22, 1, 0.36, 1], "duration": 0.3 },
+      "route": { "kind": "ease", "curve": [0.65, 0, 0.35, 1], "duration": 1.6 }
+    },
+    "enter": "pop",
+    "exit": "flood",
+    "bpm": 130,
+    "beat": 0.4615,
+    "firstPush": 3,
+    "typeRate": 22,
+    "glowTurn": 0.25,
+    "stagger": 0.115,
+    "hold": 1.0
+  },
+  "finish": { "grain": 0, "vignette": 0, "glow": true, "glowOnly": "the iridescent glow round the composer (and the phone)", "glowBlur": 34, "glowSpread": 26, "motionBlur": { "subframes": 8 } },
+  "banned": [
+    "crossfades",
+    "blur-ins",
+    "3D",
+    "particles",
+    "camera moves that reverse, or zooming in and out back to back",
+    "holds longer than 1 s",
+    "any glow other than the composer's",
+    "a template feel",
+    "real food, product or brand photos in previews (draw illustrations)"
+  ],
+  "sources": [
+    { "what": "a creator's app launch-film prompt on prompt-motion.com (palette, glow, layout sizes, camera rules, beat map, handoffs)", "where": "https://prompt-motion.com/ultimaxbt-2ddf1e; research notes docs/research/styles/barty-bart-and-prompt-motion.md, section Warm-White Lime Composer Launch", "licence": "none stated (prompt belongs to its creator): rules described in our own words, nothing copied" }
+  ]
+}

@@ -1,6 +1,6 @@
 /** Home: the workspace, a "new video" form, and the list of videos. */
 import React, { useEffect, useRef, useState } from "react";
-import { api, type Doctor, type ProjectRow } from "./api";
+import { api, type Channel, type Doctor, type ProjectRow } from "./api";
 import { DeleteDialog } from "./DeleteDialog";
 import { navigate } from "./nav";
 import { TopNav } from "./TopNav";
@@ -20,6 +20,7 @@ const workingTitle = (text: string) => {
 };
 
 const fmtSize = (b: number) => (b > 1e6 ? `${(b / 1e6).toFixed(1)} MB` : `${Math.max(1, Math.round(b / 1e3))} KB`);
+const LAST_CHANNEL = "ce.lastChannel";
 
 export const Home: React.FC = () => {
   const [projects, setProjects] = useState<ProjectRow[] | null>(null);
@@ -31,12 +32,30 @@ export const Home: React.FC = () => {
   const fileInput = useRef<HTMLInputElement>(null);
   const [deleting, setDeleting] = useState<ProjectRow | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [channels, setChannels] = useState<Channel[]>([]);
+  const [channel, setChannel] = useState<string>("");
 
   const load = () => {
     api.projects().then(setProjects, (e) => setError(e.message));
     api.doctor().then(setDoctor, (e) => setError(e.message));
   };
   useEffect(load, []);
+  // the channel picker starts on the channel used last (remembered in this browser), else the first one
+  useEffect(() => {
+    api.channels().then(
+      (list) => {
+        setChannels(list);
+        let last = "";
+        try {
+          last = localStorage.getItem(LAST_CHANNEL) ?? "";
+        } catch {
+          // storage unavailable
+        }
+        setChannel(list.some((c) => c.id === last) || last === "none" ? last : (list[0]?.id ?? ""));
+      },
+      () => undefined,
+    );
+  }, []);
 
   const addFiles = (list: FileList | File[]) => {
     const add = Array.from(list);
@@ -49,7 +68,12 @@ export const Home: React.FC = () => {
     setBusy("Creating…");
     setError(null);
     try {
-      const p = await api.create(request.trim(), workingTitle(request));
+      const p = await api.create(request.trim(), workingTitle(request), channel && channel !== "none" ? channel : null);
+      try {
+        localStorage.setItem(LAST_CHANNEL, channel || "none");
+      } catch {
+        // storage unavailable
+      }
       // files go in before the Brief opens, so Claude sees them with its first reply
       for (const [i, f] of files.entries()) {
         setBusy(`Adding ${f.name} (${i + 1}/${files.length})…`);
@@ -129,6 +153,20 @@ export const Home: React.FC = () => {
           ) : null}
           <div className="create-row">
             <span className="hint">{busy ?? "Creates the next numbered folder in the workspace; Claude takes it from there on the Brief."}</span>
+            {channels.length ? (
+              <label className="channel-pick" title="The channel decides the style the video starts with (Settings → Channels)">
+                For
+                <select value={channel} onChange={(e) => setChannel(e.target.value)} disabled={!!busy}>
+                  {channels.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name}
+                      {c.locked ? " (look locked)" : ""}
+                    </option>
+                  ))}
+                  <option value="none">No channel</option>
+                </select>
+              </label>
+            ) : null}
             <button type="submit" className="primary" disabled={!!busy || !request.trim()}>
               Create
             </button>

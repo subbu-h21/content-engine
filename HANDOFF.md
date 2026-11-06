@@ -143,6 +143,53 @@ in git).
 
 ## What's left
 
+000. **The visual catalog (2026-10-31 → 11-01; not committed).**
+   - **Plans:** the vision is in `vision.md` (the user's decisions are marked "Decided"); step 1's design is in
+     `docs/visual-catalog.md`.
+   - **Research:** the notes on the resources the user collected are in `docs/research/` (styles in
+     `docs/research/styles/`).
+   - **Built:**
+     - the style format and kit, the preview renderer, the `ce catalog` commands;
+     - the `make-style` and `visual-taste` skills;
+     - about 40 built-in styles in `library/catalog/visual/`, each written by a writer agent following make-style and
+       reviewed by eye;
+     - the Catalog page (gallery → style page with the catalog's Claude → new style from uploads).
+     - See `docs/ENGINE.md` "Catalog". Test: `tests/e2e/t16_catalog.mjs` (50 checks pass); t12 was re-run after the
+       chat-route changes and passes.
+   - **Style-writing queue (2026-11-06: 55 finished; the user chose to keep going).** Run ONE fresh small writer at a
+     time, 3 styles each; never resume an old writer (reloading its history burned the usage limit about 6 times).
+     The user's rule: one writer at a time, quality first (never trade quality for tokens). Brief: read only make-style,
+     the catalog README, the kit, sample.json, and editorial-neuro's style.json and scenes/index.tsx; find the source
+     section with Grep; look at every preview still; up to 3 fix rounds; one render at a time with `CE_WORKSPACE` set to a scratch folder; change only its own folders; no commits. The main
+     session reviews each sheet. Count finished styles by `preview/sheet.jpg`, not by folders.
+     **73 styles finished by 2026-11-06, all reviewed and passing `ce catalog check`.** Still queued, if the user wants:
+     1. HyperFrames presets Code Editorial, Coral, Creative Mode, Daisy Days, Editorial Forest (`hyperframes.md`; give
+        them motion from its taste rules, marked proposed)
+     2. shotcraft: Ink Press, Lit Stage dark and light, Vibe Life, Mesh Glow (`shotcraft-vertical-remotion.md`)
+     3. the other Lemo styles and the partial prompt-motion looks; footage or data styles last
+   - **Polish list:** Studio Floor Fly-over (heavy blur, small title), Transit Map (small number frame), Calm Product
+     Demo (sparse title), Stained Glass (gold title on stone is low contrast), Capsule (pill touches the "y" tail),
+     Cartesian (very quiet at phone size), Broadside (close to Signal Slam in colour), Mid-century (end title is low
+     contrast).
+   - **Open decisions:** the first real video test in a catalog style (recommended, not done); nothing committed yet,
+     and the user's rule is no co-author line.
+   - **Step 1d: built 2026-11-04.** It's the flow the user approved.
+     - **Settings → Channels:** name, style, Look locked; stored in `settings.json` → `channels`.
+     - **Home:** "For <channel>" next to Create, defaulting to the channel used last.
+     - **A new video's style:** the channel's own when locked; otherwise the channel's last video's style, then the
+       channel's own. It's copied in by `applyStyle` / `ce catalog use <id>`: `src/style/`, `src/kit/`,
+       `src/sample.json`, `public/style/fonts/`, `brief/style-cover.jpg`, `.claude/skills/style-<id>/`, and
+       `project.json` → `style`.
+     - **The Brief's Look card:** shows the style, with Change (a picker of covers) and New look from a file (a catalog
+       draft handed to the video's Claude). Both are refused when the look is locked.
+     - **Skills:** new videos get the `visual-taste` and `make-style` skills. The make-video skill's Look and build steps
+       now use the style (template change: new videos only).
+     - **Test:** `tests/e2e/t17_channels.mjs` passes. t1 was re-run and passes, apart from its known out-of-date
+       working-title check.
+     - **Not exercised:** the real Claude building a video in a catalog style. The style's colours and fonts reach the
+       theme only through Claude, following the skill.
+   - **Not exercised yet:** a real Claude making a style from an upload on the page (the fake Claude covers the
+     hand-off).
 00. **Facebook & Instagram through Meta's API (built 2026-10-22, tested against `fake_meta.mjs`, not committed):**
    connected for real on 2026-10-22 with a token pasted from the Graph API Explorer (Meta app "Content-engine", App ID
    1726166678921606, development mode; Page **Daily Insights** + Instagram **@daily_insights21**; user token until

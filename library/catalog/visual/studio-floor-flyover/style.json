@@ -1,0 +1,103 @@
+{
+  "id": "studio-floor-flyover",
+  "name": "Studio Floor Fly-over",
+  "kind": "visual",
+  "version": 1,
+  "status": "built-in",
+  "summary": "A page lies flat on a bright studio floor; one unbroken camera glides over it with razor-thin tilt-shift focus while its cards and chips stand up toward the lens, then rises and dives into a two-line title: Geist with a grey Instrument Serif italic tail.",
+  "tags": ["calm", "light", "3d", "tilt-shift", "one take", "page", "sans", "serif"],
+  "suits": ["explainer", "website promo", "product page", "facts", "portfolio"],
+  "needs": { "footage": false, "3d": true },
+  "frame": { "width": 1080, "height": 1920 },
+  "palette": [
+    { "role": "background", "hex": "#f9fbfb", "use": "the studio floor's centre" },
+    { "role": "floorCorner", "hex": "#f2f3f6", "use": "the floor's falloff toward the corners" },
+    { "role": "shadow", "hex": "#1a2133", "use": "each lifted piece's contact shadow, at 26%" },
+    { "role": "text", "hex": "#14161c", "use": "the title's first line and the page's ink (proposed)" },
+    { "role": "muted", "hex": "#8b8b92", "use": "the grey italic tail of the title; quiet page text" },
+    { "role": "surface", "hex": "#ffffff", "use": "the page, its cards and the badge pill" },
+    { "role": "faint", "hex": "#e6e8ee", "use": "page dividers, card rims (proposed)" },
+    { "role": "accent", "hex": "#4a7fe8", "use": "the page's own accent: chips, links, the diagram (proposed; a real page brings its own)" },
+    { "role": "accent2", "hex": "#9cc3f2", "use": "the page's sky illustration, light end of its gradient (proposed)" },
+    { "role": "sun", "hex": "#f4cf6a", "use": "a logo tile and the sun in the page's illustration (proposed)" }
+  ],
+  "fonts": {
+    "display": { "family": "Geist", "source": "google", "weights": [500] },
+    "body": { "family": "Geist", "source": "google", "weights": [400, 500] },
+    "serif": { "family": "Instrument Serif", "source": "google", "weights": [400], "italic": true }
+  },
+  "type": {
+    "display": 88,
+    "tail": 98,
+    "badge": 26,
+    "body": 30,
+    "pageTitle": 76,
+    "pageHeading": 44,
+    "pageBody": 30,
+    "pageChip": 30,
+    "min": 24,
+    "leading": 1.08,
+    "tracking": -0.025,
+    "case": "sentence",
+    "emphasis": "the second line as a grey Instrument Serif italic tail",
+    "maxWords": 8
+  },
+  "layout": {
+    "margin": 90,
+    "safe": { "top": 230, "bottom": 330 },
+    "align": "center",
+    "page": { "width": 720, "radius": 24, "landedWidth": 900, "landedRadius": 38, "landedTop": 700 },
+    "badgeY": 360,
+    "titleY": 470,
+    "tiles": [140, 200]
+  },
+  "camera": {
+    "tilt": 56,
+    "focal": 3133,
+    "distance": [2267, 2833],
+    "cruise": 770,
+    "speed": [[0, 0], [0.6, 0.5], [1.25, 0.5], [1.6, 1.0], [7.3, 1.0], [8.3, 0.12]],
+    "phases": { "flight": [0, 8.2], "rise": [7.75, 9.25], "overhead": [9.25, 9.47], "dive": [9.47, 9.97], "title": [9.97, 14.5] },
+    "holdCreep": 0.02,
+    "scaleNote": "focal and distance are the source's 1880 px and 1360 → 1700 px scaled by 1920 / 1152"
+  },
+  "motion": {
+    "recipes": {
+      "word": { "kind": "ease", "curve": [0.22, 1, 0.36, 1], "duration": 0.34 },
+      "stand": { "kind": "ease", "curve": [0.65, 0, 0.35, 1], "duration": 0.9 },
+      "tile": { "kind": "spring", "damping": 26.6, "stiffness": 196, "mass": 1 },
+      "dive": { "kind": "ease", "curve": [0.455, 0.03, 0.515, 0.955], "duration": 0.5 },
+      "creep": { "kind": "ease", "curve": "linear", "duration": 3.9 }
+    },
+    "enter": "word",
+    "exit": "none",
+    "wordStep": 0.06,
+    "standLead": 650,
+    "tailStep": 0.05,
+    "wordRise": 16,
+    "wordBlur": 12,
+    "stagger": 0.06,
+    "hold": 4.5
+  },
+  "finish": {
+    "grain": 0,
+    "vignette": 0,
+    "glow": false,
+    "dof": { "front": 75, "back": 6, "cap": 120, "taps": 40 },
+    "liftShadow": { "dx": 0.1, "dy": [4, 0.36], "blur": [7, 0.5], "opacity": 0.26 },
+    "motionBlur": { "subframes": 16, "shutter": 0.7 }
+  },
+  "banned": [
+    "cuts",
+    "crossfades",
+    "stops or surges in the glide",
+    "the camera turning or swinging sideways",
+    "zooming in and back out",
+    "glows",
+    "text over the page before the end card",
+    "a dark or coloured floor"
+  ],
+  "sources": [
+    { "what": "a creator's landing-page fly-over prompt on prompt-motion.com (camera geometry, speed curve, depth of field, lifts, title card)", "where": "https://prompt-motion.com/twoclipping-d89be5 (paraphrase at /pankajstwt-49978ed); research notes docs/research/styles/barty-bart-and-prompt-motion.md, section Studio-Floor Page Fly-over", "licence": "none stated (prompt belongs to its creator): rules described in our own words, nothing copied" }
+  ]
+}

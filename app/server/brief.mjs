@@ -122,6 +122,17 @@ export async function saveUpload(name, dir, fileName, stream) {
 const TEMPLATE_VOICE = readJson(path.join(ENGINE_DIR, "template", "project.json"), {}).voice ?? {};
 const isTemplateVoice = (v) => !!v && v.voice === TEMPLATE_VOICE.voice && v.style === TEMPLATE_VOICE.style;
 
+/** The video's catalog style and channel (project.json → style, channel), with the cover the board shows. */
+function lookOf(name, dir, manifest) {
+  const channel = (loadSettings().channels ?? []).find((c) => c.id === manifest.channel) ?? null;
+  const s = manifest.style;
+  const cover = path.join(dir, "brief", "style-cover.jpg");
+  return {
+    style: s?.id ? { id: s.id, name: s.name ?? s.id, locked: !!s.locked, builtIn: !!s.builtIn, cover: fs.existsSync(cover) ? fileUrl(name, "brief/style-cover.jpg") + `&v=${Math.round(mtime(cover))}` : null } : null,
+    channel: channel ? { id: channel.id, name: channel.name, locked: !!channel.locked } : manifest.channel ? { id: manifest.channel, name: manifest.channel, locked: false } : null,
+  };
+}
+
 /** Everything the board shows. */
 export function briefData(name, dir) {
   const status = readJson(path.join(dir, "brief", "status.json"), { stage: "none" });
@@ -183,7 +194,9 @@ export function briefData(name, dir) {
     plates: (manifest.plates ?? []).map((p) => ({ id: p.id, from: p.from, to: p.to })),
     frames,
     references,
-    skills: skills.filter((s) => s !== "make-video"),
+    // the engine's own skills aren't the user's files: make-video, the catalog's skills and the video's style
+    skills: skills.filter((s) => !["make-video", "visual-taste", "make-style"].includes(s) && !s.startsWith("style-")),
+    look: lookOf(name, dir, manifest),
     jobs: jobList(name).slice(-8),
   };
 }

@@ -1,0 +1,97 @@
+{
+  "id": "art-deco",
+  "name": "Art Deco",
+  "kind": "visual",
+  "version": 1,
+  "status": "built-in",
+  "summary": "A 1930s poster that moves: gold engraved keylines on warm lacquer black, airbrushed hard-edged volumes, one sacred centre axis, and light arriving bulb by bulb.",
+  "tags": ["luxury", "dark", "gold", "symmetrical", "ornamental", "1930s"],
+  "suits": ["luxury", "launches", "countdowns", "awards", "invitations", "milestones"],
+  "needs": { "footage": false, "3d": false },
+  "frame": { "width": 1080, "height": 1920 },
+  "palette": [
+    { "role": "background", "hex": "#0d0b09", "use": "warm black ground of every frame; never neutral grey-black" },
+    { "role": "surface", "hex": "#060504", "use": "lacquer: plaques (at 88 %), door leaves, the engraved underline of every gold line" },
+    { "role": "text", "hex": "#F2E8D5", "use": "ivory: titles, plaque text, body" },
+    { "role": "muted", "hex": "#C9A24B", "use": "gold base: eyebrows, labels, dial numerals, the mid band of the metal gradient" },
+    { "role": "faint", "hex": "#6F5220", "use": "gold shadow: dark band of the metal gradient, unlit bulbs" },
+    { "role": "accent", "hex": "#8E1B2E", "use": "burgundy: the hero of the frame only, the one large saturated area" },
+    { "role": "accent2", "hex": "#1D6B57", "use": "jewel emerald: arch fills, fish scales, doors, secondary surfaces; never competes in area with the hero" },
+    { "role": "goldLight", "hex": "#F3D98B", "use": "light band of the metal gradient, sunburst wedges" },
+    { "role": "goldHot", "hex": "#FFF4D2", "use": "hot band, hairline highlight, lit bulb cores" },
+    { "role": "exception", "hex": "#3478BE", "use": "the one-colour exception: one element in its own colour, when the story needs that colour named (blue light in the samples)" },
+    { "role": "skyTop", "hex": "#0a0e16", "use": "night sky at the top of a sky ground" },
+    { "role": "horizon", "hex": "#10231f", "use": "sky near the horizon" }
+  ],
+  "fonts": {
+    "display": { "family": "Limelight", "source": "google", "weights": [400] },
+    "body": { "family": "Josefin Sans", "source": "google", "weights": [400, 600] },
+    "numeral": { "family": "Italiana", "source": "google", "weights": [400] },
+    "plaque": { "family": "Poiret One", "source": "google", "weights": [400] }
+  },
+  "type": {
+    "display": 116,
+    "title": 150,
+    "number": 300,
+    "body": 44,
+    "label": 34,
+    "eyebrow": 30,
+    "dial": 38,
+    "min": 26,
+    "leading": 1.08,
+    "tracking": 2,
+    "eyebrowTracking": 6,
+    "case": "upper",
+    "emphasis": "gold",
+    "maxWords": 10
+  },
+  "layout": { "margin": 100, "safe": { "top": 230, "bottom": 330 }, "align": "center", "plaqueY": 310 },
+  "motion": {
+    "recipes": {
+      "rise": { "kind": "ease", "curve": "cubic-out", "duration": 0.5, "distance": 26 },
+      "unfold": { "kind": "ease", "curve": [0.7, 0, 0.2, 1], "duration": 0.75 },
+      "draw": { "kind": "ease", "curve": "cubic-in-out", "duration": 1.2 },
+      "burst": { "kind": "ease", "curve": "quart-out", "duration": 1.3 },
+      "door": { "kind": "ease", "curve": [0.7, 0, 0.2, 1], "duration": 0.8 },
+      "sheen": { "kind": "ease", "curve": "sine-in-out", "duration": 1.0 },
+      "needle": { "kind": "spring", "damping": 19, "stiffness": 130, "mass": 1 },
+      "scale": { "kind": "ease", "curve": "cubic-out", "duration": 0.45 }
+    },
+    "enter": "unfold",
+    "exit": "door",
+    "stagger": 0.09,
+    "hold": 1.8
+  },
+  "finish": { "grain": 0.03, "vignette": 0.34, "glow": true },
+  "elements": {
+    "keyline": 3,
+    "underline": 1.6,
+    "frameInset": 40,
+    "frameStep": 26,
+    "plaqueAlpha": 0.88,
+    "plaqueStep": 14,
+    "plaqueGap": 11,
+    "goldPeriod": 620,
+    "sunburstRays": 72,
+    "sunburstAlpha": 0.3,
+    "sunburstSpin": 1.2,
+    "scale": 60,
+    "scaleRows": 5,
+    "bulb": { "r": 9, "spacing": 48, "flash": 1.6, "settle": 0.18, "per": 0.018, "chase": 0.125 }
+  },
+  "banned": [
+    "a gold-foil slideshow: things must move and have volume",
+    "Art Nouveau whiplash curves or flowers",
+    "a flat vector poster: volumes are airbrushed and rimmed",
+    "black cartoon outlines",
+    "a neutral grey-black ground",
+    "generic dissolves or slides",
+    "anything drifting off the centre axis",
+    "1960s spy silhouettes on flat colour",
+    "copying a real poster layout, building, character or typeface design",
+    "three-digit hex values"
+  ],
+  "sources": [
+    { "what": "palette, fonts, motifs, gline stroke, unfold grammar, bulb ignition, banned list (original name: Art Deco)", "where": "Lemo-Opuscar (lemomo-ai/lemo-opuscar) styles/art-deco, notes in docs/research/styles/five-skills.md, section Art Deco", "licence": "MIT" }
+  ]
+}

@@ -1,0 +1,100 @@
+{
+  "id": "cobalt-grid",
+  "name": "Cobalt Grid",
+  "kind": "visual",
+  "version": 1,
+  "status": "built-in",
+  "summary": "A two-colour trend report from a lab notebook: cream paper, electric cobalt as the ONLY ink, a permanent graph-paper grid, Newsreader serif, data drawn as grid cells, a stair-stepped pixel-glitch band and data patches; everything prints on in hard steps, never fades.",
+  "tags": ["light", "cream", "cobalt", "grid", "two-colour", "pixel", "report", "serif", "data"],
+  "suits": ["tech and culture trend reports", "data explainers", "research summaries", "lab-notebook brands"],
+  "needs": { "footage": false, "3d": false },
+  "frame": { "width": 1080, "height": 1920 },
+  "palette": [
+    { "role": "background", "hex": "#f0ebde", "use": "paper: the ground" },
+    { "role": "surface", "hex": "#e6e0ce", "use": "paper-2: secondary paper" },
+    { "role": "text", "hex": "#1f2be0", "use": "ink: ALL type, rules, grid, glitch, data patches, data cells" },
+    { "role": "muted", "hex": "#5560e5", "use": "ink-soft: editorial subtitles only (the italic callout)" },
+    { "role": "faint", "hex": "#cbc8de", "use": "ink at 18% on paper: faint row dividers (proposed flat hex)" },
+    { "role": "accent", "hex": "#1f2be0", "use": "the same ink: there's no second colour" },
+    { "role": "accent2", "hex": "#5560e5", "use": "ink-soft again" }
+  ],
+  "fonts": {
+    "display": { "family": "Newsreader", "source": "google", "weights": [400], "italic": true },
+    "body": { "family": "Hanken Grotesk", "source": "google", "weights": [400, 600] },
+    "mono": { "family": "DM Mono", "source": "google", "weights": [400] }
+  },
+  "type": {
+    "display": 224,
+    "closing": 180,
+    "chapter": 124,
+    "headline": 88,
+    "numeral": 390,
+    "callout": 56,
+    "row": 66,
+    "body": 36,
+    "micro": 26,
+    "microTracking": 0.16,
+    "mono": 26,
+    "monoTracking": 0.05,
+    "min": 24,
+    "leading": 0.95,
+    "tracking": -0.008,
+    "case": "sentence case Newsreader; uppercase micro labels and mono chrome",
+    "emphasis": "size, a face switch (Hanken to Newsreader), a mono delta arrow or opacity; never a hue, never bold",
+    "maxWords": 8
+  },
+  "layout": {
+    "margin": 60,
+    "cell": 30,
+    "safe": { "top": 230, "bottom": 330 },
+    "align": "left",
+    "topRule": 228,
+    "bottomRule": 1590,
+    "chromeY": 1548
+  },
+  "elements": {
+    "grid": { "alpha": 0.12, "stroke": 1.5 },
+    "rule": 2,
+    "glitch": { "bar": 3, "gap": 12, "rowH": 30 },
+    "patch": { "cells": 8, "size": 20, "outset": 4 },
+    "cellGap": 3,
+    "offAlpha": 0.1
+  },
+  "motion": {
+    "recipes": {
+      "scan": { "kind": "ease", "curve": "quart-out", "duration": 0.5, "steps": 8 },
+      "plate": { "kind": "ease", "curve": "linear", "duration": 0.25, "steps": 6 },
+      "rule": { "kind": "ease", "curve": "quart-out", "duration": 0.4, "steps": 10 },
+      "out": { "kind": "ease", "curve": "quart-in", "duration": 0.25, "steps": 6 }
+    },
+    "enter": "scan",
+    "exit": "out",
+    "stagger": 0.12,
+    "cellStep": 0.012,
+    "rowStep": 0.05,
+    "hold": 1.0,
+    "fps": 12
+  },
+  "finish": { "grain": 0, "vignette": 0, "glow": false },
+  "banned": [
+    "a second ink colour; bold Newsreader; rounded corners; circles; drop shadows",
+    "disabling the grid or the hairlines",
+    "crowding chapter, quote or closing frames; edge-to-edge headlines",
+    "fades, blurs and soft easing on anything: it prints in hard steps",
+    "gradients other than the scanline bars; halftones and translucent overprints (that's another medium)",
+    "three cards in a row",
+    "a real, scannable code: data patches are texture"
+  ],
+  "sources": [
+    {
+      "what": "HyperFrames frame preset Cobalt Grid: palette, faces, type ramp, elements, frames, banned list, caption skin",
+      "where": "github.com/heygen-com/hyperframes skills/hyperframes/assets/frame-presets/cobalt-grid; research notes docs/research/styles/hyperframes.md, \"Cobalt Grid\"",
+      "licence": "Apache-2.0. Tokens and rules re-expressed; no code copied. Newsreader, Hanken Grotesk and DM Mono are SIL OFL."
+    },
+    {
+      "what": "HyperFrames taste rules T36-T60 and the spec.md risograph line (\"printed, plate by plate\")",
+      "where": "docs/research/styles/hyperframes.md, \"Taste rules\" and \"Cobalt Grid\"",
+      "licence": "Apache-2.0"
+    }
+  ]
+}

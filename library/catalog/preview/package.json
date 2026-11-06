@@ -1,0 +1,10 @@
+{
+  "name": "catalog-preview",
+  "private": true,
+  "description": "The catalog's preview project (made by `ce catalog preview` in <workspace>/catalog/_preview). Packages come from the engine: node_modules is a junction to content-engine/runtime/node_modules; never npm install here.",
+  "scripts": {
+    "preinstall": "node -e \"console.error('\\nThis project uses the content engine packages. Do not npm install here.\\n');process.exit(1)\"",
+    "studio": "remotion studio src/index.ts",
+    "typecheck": "tsc --noEmit"
+  }
+}

@@ -1,0 +1,87 @@
+{
+  "id": "black-glass-studio",
+  "name": "Black Glass Studio",
+  "kind": "visual",
+  "version": 1,
+  "status": "built-in",
+  "summary": "Floating slabs of black glossy glass whose screens glow like a real app; a small toy hero hops across them and every press visibly builds a glowing title card, then the panels power down and fall away.",
+  "tags": ["3d", "dark", "glass", "glow", "ui", "toy", "product", "playful"],
+  "suits": ["product and tool demos", "how this app works", "launch teasers", "process explainers with UI", "hero-led shorts"],
+  "needs": { "footage": false, "3d": true },
+  "frame": { "width": 1080, "height": 1920 },
+  "palette": [
+    { "role": "background", "hex": "#06070a", "use": "the set: a near-black void the panels float in (proposed)" },
+    { "role": "surface", "hex": "#0c0e13", "use": "black glossy glass: the slabs' faces (proposed)" },
+    { "role": "text", "hex": "#eef3fb", "use": "UI labels and the title card's type (proposed)" },
+    { "role": "muted", "hex": "#7f8aa0", "use": "secondary UI labels, inactive tools (proposed)" },
+    { "role": "faint", "hex": "#1c2533", "use": "UI hairlines, track lanes, inactive bars (proposed)" },
+    { "role": "accent", "hex": "#ffb627", "use": "the hero toy and the glow of what it builds: the title card's key word, spark rays (proposed)" },
+    { "role": "accent2", "hex": "#4fc8ff", "use": "screen light: active buttons, keyframes, the playhead, wires, selections (proposed)" },
+    { "role": "screen", "hex": "#0b1420", "use": "the screen under the glass (proposed)" },
+    { "role": "glassEdge", "hex": "#1b202b", "use": "the slabs' bevelled edges (proposed)" },
+    { "role": "heroShade", "hex": "#c7780f", "use": "the hero's shadow side (proposed)" }
+  ],
+  "fonts": {
+    "display": { "family": "Sora", "source": "google", "weights": [700, 800] },
+    "body": { "family": "Geist", "source": "google", "weights": [400, 500, 600] },
+    "mono": { "family": "Geist Mono", "source": "google", "weights": [500] }
+  },
+  "type": {
+    "display": 120,
+    "title": 150,
+    "number": 260,
+    "ui": 30,
+    "body": 30,
+    "label": 26,
+    "min": 24,
+    "leading": 1.05,
+    "tracking": -0.02,
+    "case": "sentence case",
+    "emphasis": "the key word of the title card in the hero colour with a glow and spark rays",
+    "maxWords": 8
+  },
+  "layout": {
+    "margin": 90,
+    "safe": { "top": 230, "bottom": 330 },
+    "align": "center",
+    "world": { "rotateX": 10, "rotateY": -14, "perspective": 1900, "originY": 0.47 },
+    "slab": { "depth": 38, "radius": 26, "inset": 22 },
+    "floorTilt": 30
+  },
+  "motion": {
+    "recipes": {
+      "pop": { "kind": "spring", "damping": 12, "stiffness": 180, "mass": 0.8 },
+      "hop": { "kind": "ease", "curve": [0.33, 0, 0.67, 1], "duration": 0.5, "height": 150, "squash": 0.84, "stretch": 1.1 },
+      "press": { "kind": "ease", "curve": "expo-out", "duration": 0.15, "depth": 6 },
+      "stamp": { "kind": "ease", "curve": "expo-out", "duration": 0.18, "from": 1.6 },
+      "build": { "kind": "ease", "curve": "expo-out", "duration": 0.35 },
+      "ride": { "kind": "ease", "curve": "linear", "duration": 2.0 },
+      "camera": { "kind": "ease", "curve": [0.65, 0, 0.35, 1], "duration": 0.5 },
+      "powerDown": { "kind": "ease", "curve": [0.5, 0, 0.75, 0], "duration": 0.3 },
+      "fall": { "kind": "ease", "curve": [0.5, 0, 0.75, 0], "duration": 0.9, "gravity": 2400, "spin": 25 },
+      "peel": { "kind": "ease", "curve": [0.65, 0, 0.35, 1], "duration": 0.4 }
+    },
+    "enter": "pop",
+    "exit": "fall",
+    "stagger": 0.5,
+    "hold": 1.0,
+    "bpm": 120
+  },
+  "finish": { "grain": 0.02, "vignette": 0.45, "glow": true, "focusBlur": 5, "screenGlow": 0.35, "reflection": 0.1 },
+  "banned": [
+    "real logos, real app names or a real mascot: the hero is an invented toy shape and the app is generic",
+    "a press that doesn't change anything visible",
+    "white light blocks reflected on the glass: lights are hidden from glossy rays",
+    "cropping a 16:9 film for vertical: vertical is its own composition with bigger type and fewer panels",
+    "washed-out hero colour (AgX lightens colours: lower the exposure and darken the base colour, then measure)",
+    "vague fixes: every change is a number",
+    "AI video models or hand-keyed animation: every frame comes from code and one timeline file"
+  ],
+  "sources": [
+    {
+      "what": "Claude + Blender: Make 3D Motion Graphics From Code (guide, 7 pp)",
+      "where": "D:\\code_files\\resources to make content engine\\pdf guides\\Claude + Blender_ Make 3D Motion Graphics From Code.pdf; research notes docs/research/styles/local-guides.md, \"Claude + Blender — Black Glass Studio\"",
+      "licence": "none stated for the guide or the prompt it points to; the look is described in our own words; its hero (a company's mascot) and its look-alike app are not used; Sora, Geist and Geist Mono are SIL OFL"
+    }
+  ]
+}

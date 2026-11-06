@@ -1,0 +1,104 @@
+{
+  "id": "circuit-board",
+  "name": "Circuit Board",
+  "kind": "visual",
+  "version": 1,
+  "status": "built-in",
+  "summary": "The subject redrawn as a top-down printed circuit board: copper under green mask, gold pads and vias, white silkscreen plotted in a routed stroke font, and information running as amber and silver-cyan light along the traces, with macro depth of field.",
+  "tags": ["dark", "green", "technical", "pcb", "macro", "light", "routed type", "network"],
+  "suits": ["energy, power and signal paths", "supply chains", "networks and latency", "how a thing travels", "devices from country to chip"],
+  "needs": { "footage": false, "3d": false },
+  "frame": { "width": 1080, "height": 1920 },
+  "palette": [
+    { "role": "background", "hex": "#05190f", "use": "FR-4 laminate: what is absent, clearances, holes" },
+    { "role": "surface", "hex": "#1c6a44", "use": "copper pour under the mask: fills the board" },
+    { "role": "text", "hex": "#f2eee1", "use": "silkscreen: all type, outlines, symbols" },
+    { "role": "muted", "hex": "#2b8158", "use": "trace fill" },
+    { "role": "faint", "hex": "#4aa977", "use": "the bevelled rim on every copper edge" },
+    { "role": "accent", "hex": "#ffbe54", "use": "current: energy light, the only saturated colour with accent2" },
+    { "role": "accent2", "hex": "#aad6e2", "use": "second flow: here blue light" },
+    { "role": "gold", "hex": "#d9b25b", "use": "ENIG pads and vias" },
+    { "role": "gold-edge", "hex": "#a07b30", "use": "pad edge" },
+    { "role": "drill", "hex": "#06130d", "use": "drill holes" },
+    { "role": "current-head", "hex": "#ffecb4", "use": "the near-white core of current" },
+    { "role": "flow-head", "hex": "#e4f6fc", "use": "the near-white core of the second flow" },
+    { "role": "desk", "hex": "#0b0d0c", "use": "only when the whole board is the subject" },
+    { "role": "via", "hex": "#3f9e6c", "use": "stitching vias along clearances" }
+  ],
+  "fonts": {
+    "display": { "family": "Noto Sans", "source": "google", "weights": [500] },
+    "body": { "family": "Noto Sans", "source": "google", "weights": [500] }
+  },
+  "type": {
+    "display": 92,
+    "title": 118,
+    "number": 250,
+    "label": 44,
+    "note": 34,
+    "body": 42,
+    "min": 30,
+    "leading": 1.45,
+    "tracking": 0,
+    "case": "capitals on the board; sentence case on the subtitle plate",
+    "emphasis": "a pad lights, a stream changes shape, a tag prints",
+    "stroke": 0.15,
+    "advance": 5.6,
+    "maxWords": 6
+  },
+  "layout": {
+    "margin": 96,
+    "safe": { "top": 230, "bottom": 330 },
+    "align": "left",
+    "plate": { "y": 1500, "pad": 26, "alpha": 0.72 },
+    "bands": 0.115
+  },
+  "elements": {
+    "trace": 16,
+    "traceMain": 26,
+    "channel": 10,
+    "rim": 3.2,
+    "pad": 34,
+    "via": { "r": 8, "hole": 3.4, "spacing": 54 },
+    "route": 7,
+    "dash": 34
+  },
+  "motion": {
+    "recipes": {
+      "plot": { "kind": "ease", "curve": "cubic-in-out", "duration": 0.7 },
+      "flash": { "kind": "ease", "curve": "expo-out", "duration": 0.5 },
+      "ride": { "kind": "ease", "curve": "sine-in-out", "duration": 2.0 },
+      "whip": { "kind": "ease", "curve": "cubic-in-out", "duration": 0.5 }
+    },
+    "flow": 460,
+    "acHz": 0.55,
+    "enter": "plot",
+    "exit": "whip",
+    "stagger": 0.12,
+    "hold": 1.8
+  },
+  "finish": {
+    "grain": 0.02,
+    "vignette": 0.58,
+    "glow": true,
+    "blur": [24, 5],
+    "dof": { "blur": 7 },
+    "key": 0.1,
+    "motes": 26
+  },
+  "banned": [
+    "Engineering-board photos or handwriting; white-on-blue blueprint paper",
+    "a sci-fi HUD: glass, floating panels, glowing UI chrome; a 3D circuit city, rising buildings, any perspective",
+    "decorative traces; two traces crossing on one layer; a flat empty pour",
+    "recolouring the mask per scene; red except for one fault; overexposed bloom bars",
+    "text in the depth-of-field bands or cut at the frame edge; whole sentences on the board; system fonts for subtitles",
+    "fades, wipes or page turns; hole plunges under 0.6 s; an accidental board edge in close shots",
+    "copying a real board layout, logo or part marking"
+  ],
+  "sources": [
+    {
+      "what": "Lemo-Opuscar style No. 76 \"Circuit Board\" (STYLE.md, DEMO.md, style.json, demo/src/palette.js, demo/src/post.js), via research notes",
+      "where": "github.com/lemomo-ai/lemo-opuscar styles/circuit-board; docs/research/styles/five-skills.md, section \"Circuit Board\"",
+      "licence": "MIT (code and docs); demo film and stills CC BY 4.0 (LemoLab). No code copied. Noto Sans: SIL OFL"
+    }
+  ]
+}

@@ -1,0 +1,77 @@
+{
+  "id": "ink-wash",
+  "name": "Ink Wash",
+  "kind": "visual",
+  "version": 1,
+  "status": "built-in",
+  "summary": "Xieyi ink painting on rice paper, animated: mostly empty paper, ink only in five tones, loaded brushstrokes that break into flying white, mountains dissolving into mist, titles in vertical columns and one small vermilion seal.",
+  "tags": ["ink", "monochrome", "brush", "east asian", "contemplative", "paper", "empty space", "calligraphic"],
+  "suits": ["contemplative stories", "origin and journey stories", "history as a handscroll", "one decisive moment", "a film built on one line", "East Asian topics"],
+  "needs": { "footage": false, "3d": false },
+  "frame": { "width": 1080, "height": 1920 },
+  "palette": [
+    { "role": "background", "hex": "#f2ecde", "use": "rice paper: the empty space that is most of every frame; also water, mist and sky" },
+    { "role": "text", "hex": "#13110f", "use": "ink at full density (warm black): every stroke and every word, at one of five tones" },
+    { "role": "muted", "hex": "#858c94", "use": "ink at its lowest density (cool grey): the far end of the ink ramp, never a separate paint" },
+    { "role": "faint", "hex": "#e2d9c6", "use": "paper fibres and pulp flecks (proposed)" },
+    { "role": "accent", "hex": "#b02e22", "use": "vermilion: the seal, and at most one tiny story accent; never a wash, never type" }
+  ],
+  "fonts": {
+    "display": { "family": "Cormorant SC", "source": "google", "weights": [600] },
+    "body": { "family": "Cormorant Garamond", "source": "google", "weights": [500], "italic": true }
+  },
+  "type": {
+    "display": 84,
+    "title": 84,
+    "inscription": 58,
+    "body": 58,
+    "label": 50,
+    "endCard": 52,
+    "min": 32,
+    "leading": 1.25,
+    "tracking": 1,
+    "titleTracking": 0.16,
+    "endTracking": 14,
+    "case": "small caps for titles in vertical columns; sentence-case italic inscriptions",
+    "emphasis": "placement in empty paper, and the seal",
+    "maxWords": 8
+  },
+  "layout": { "margin": 96, "safe": { "top": 230, "bottom": 330 }, "align": "left", "empty": [0.6, 0.8], "textRight": 960 },
+  "motion": {
+    "recipes": {
+      "paint": { "kind": "ease", "curve": "cubic-in-out", "duration": 0.6 },
+      "decisive": { "kind": "ease", "curve": "quart-in", "duration": 0.14 },
+      "inscribe": { "kind": "ease", "curve": "cubic-out", "duration": 0.35 },
+      "mass": { "kind": "ease", "curve": "sine-in-out", "duration": 1.2 },
+      "seal": { "kind": "ease", "curve": "quart-out", "duration": 0.18 },
+      "bloom": { "kind": "ease", "curve": "cubic-out", "duration": 1.2 }
+    },
+    "enter": "painted in stroke order",
+    "exit": "dissolves into mist, or an ink bloom",
+    "twos": 2,
+    "boilCycle": 5,
+    "hold": 1.2
+  },
+  "elements": {
+    "tones": { "burnt": 0.96, "thick": 0.82, "heavy": 0.6, "light": 0.34, "clear": 0.16 },
+    "brush": { "widthNoise": 0.12, "bristles": [6, 60], "gapLen": 170, "boil": 0.04 },
+    "wet": { "bleed": 2.2, "edge": 7, "displace": 10 },
+    "paper": { "mottle": 0.07, "fibre": 0.018, "flecks": 0.5 },
+    "seal": { "size": 76, "line": 9 },
+    "ring": { "arc": 1.86, "life": 2.4 }
+  },
+  "finish": { "grain": 0, "vignette": 0.22, "glow": false },
+  "banned": [
+    "watercolour: no colour washes, no hue but ink and one vermilion",
+    "vector art with a brush texture: no flat fills, no closed outlines, no Western contour lines",
+    "a red wash or red type: vermilion is the seal and at most one tiny accent",
+    "generic dissolves or wipes: things are painted, bloom, or dissolve into mist",
+    "parallel semi-transparent strokes for bodies (organ pipes) or uniform hatching (wire mesh)",
+    "dry brush that looks like dashed lines",
+    "a busy frame: if it's busy, remove ink rather than add tone",
+    "copying a specific painting, film composition or calligraphy"
+  ],
+  "sources": [
+    { "what": "Lemo-Opuscar style 03 \"Chinese Ink Wash (Xieyi)\" (styles/ink-wash: STYLE.md, DEMO.md)", "where": "docs/research/styles/five-skills.md, \"Chinese Ink Wash (Xieyi)\"", "licence": "MIT (lemomo-ai/lemo-opuscar); demo films and stills CC BY 4.0, not used" }
+  ]
+}

@@ -1,0 +1,106 @@
+{
+  "id": "math-explainer",
+  "name": "Math Explainer",
+  "kind": "visual",
+  "version": 1,
+  "status": "built-in",
+  "summary": "Crisp vector maths on pure black: every variable keeps one saturated colour, equations write themselves in a LaTeX-like serif, new things transform out of what is on screen instead of cutting, and whatever isn't in focus dims.",
+  "tags": ["maths", "dark", "serif", "vector", "colour-coded", "equations", "explainer", "calm"],
+  "suits": ["maths", "physics", "computer science and ML", "step-by-step derivations", "build the idea explainers"],
+  "needs": { "footage": false, "3d": false },
+  "frame": { "width": 1080, "height": 1920 },
+  "palette": [
+    { "role": "background", "hex": "#000000", "use": "every frame: pure black, unlit" },
+    { "role": "text", "hex": "#ffffff", "use": "equations, labels, axes, neutral strokes" },
+    { "role": "muted", "hex": "#bbbbbb", "use": "secondary labels and captions (grey B)" },
+    { "role": "faint", "hex": "#888888", "use": "dimmed items, ghost copies (grey)" },
+    { "role": "plate", "hex": "#222222", "use": "the backing plate behind an inserted screen (grey E)" },
+    { "role": "accent", "hex": "#ffff00", "use": "yellow: the key variable, emphasis boxes, moving dots" },
+    { "role": "accent2", "hex": "#58c4dd", "use": "blue: the second variable; number-plane grid lines" },
+    { "role": "teal", "hex": "#5cd0b3", "use": "graphs, a third variable" },
+    { "role": "green", "hex": "#83c167", "use": "a variable; correct or positive" },
+    { "role": "red", "hex": "#fc6255", "use": "a variable; wrong or negative" },
+    { "role": "pink", "hex": "#d147bd", "use": "frequencies, accents" },
+    { "role": "gold", "hex": "#f0ac5f", "use": "accents (less used)" },
+    { "role": "purple", "hex": "#9a72ac", "use": "accents (less used)" },
+    { "role": "blueDark", "hex": "#29abca", "use": "the number plane's background lines (blue D)" }
+  ],
+  "fonts": {
+    "display": { "family": "Old Standard TT", "source": "google", "weights": [400, 700], "italic": true, "prefer": "CMU Serif" },
+    "body": { "family": "Old Standard TT", "source": "google", "weights": [400], "italic": true, "prefer": "CMU Serif" }
+  },
+  "type": {
+    "display": 110,
+    "equation": 120,
+    "number": 300,
+    "text": 64,
+    "label": 50,
+    "small": 40,
+    "axis": 33,
+    "body": 50,
+    "min": 24,
+    "leading": 1.12,
+    "tracking": 0,
+    "charEm": 0.5,
+    "sup": 0.62,
+    "supRaise": 0.62,
+    "case": "sentence",
+    "emphasis": "colour, a yellow box, or dimming the rest",
+    "variables": "italic",
+    "maxWords": 10
+  },
+  "layout": {
+    "margin": 120,
+    "safe": { "top": 230, "bottom": 330 },
+    "align": "center",
+    "unit": 240,
+    "buff": { "small": 24, "medSmall": 60, "medLarge": 120, "large": 240 },
+    "titleY": 300
+  },
+  "motion": {
+    "recipes": {
+      "smooth": { "kind": "ease", "curve": [0.5, 0, 0.5, 1], "duration": 1.0 },
+      "write": { "kind": "ease", "curve": [0.5, 0, 0.5, 1], "duration": 2.0 },
+      "fade": { "kind": "ease", "curve": [0.5, 0, 0.5, 1], "duration": 1.0, "distance": 24 },
+      "create": { "kind": "ease", "curve": [0.5, 0, 0.5, 1], "duration": 2.0 },
+      "grow": { "kind": "ease", "curve": [0.5, 0, 0.5, 1], "duration": 1.0 },
+      "transform": { "kind": "ease", "curve": [0.5, 0, 0.5, 1], "duration": 1.5 },
+      "dim": { "kind": "ease", "curve": [0.5, 0, 0.5, 1], "duration": 1.0 },
+      "count": { "kind": "ease", "curve": [0.5, 0, 0.5, 1], "duration": 2.0 },
+      "box": { "kind": "ease", "curve": [0.5, 0, 0.5, 1], "duration": 1.0 },
+      "quick": { "kind": "ease", "curve": [0.5, 0, 0.5, 1], "duration": 0.3 }
+    },
+    "enter": "write",
+    "exit": "fade",
+    "lagRatio": 0.1,
+    "hold": 1.0
+  },
+  "elements": {
+    "stroke": { "line": 6, "graph": 5.4, "grid": 1.8, "axis": 3, "box": 3.6, "brace": 4 },
+    "grid": { "opacity": 0.45, "halfOpacity": 0.16 },
+    "ghost": 0.5,
+    "dim": 0.2,
+    "dimText": 0.35,
+    "backstroke": 9,
+    "dot": { "r": 11, "glow": 44, "glowOpacity": 0.35 },
+    "arrow": { "width": 8, "tip": 60, "tipRatio": 0.25 },
+    "box": { "buff": 24, "radius": 0 },
+    "saturation": 1.5
+  },
+  "finish": { "grain": 0, "vignette": 0, "glow": false, "saturation": 1.5, "glowOnDotsOnly": true },
+  "banned": [
+    "a variable changing colour, or two concepts sharing one colour, within a video",
+    "cuts inside an explanation: new things transform out of what is on screen",
+    "bold for emphasis: emphasis is colour, a yellow box, or dimming everything else to 20–35%",
+    "upright variables or italic numbers in equations",
+    "grain, texture, vignette, gradients or glow (only moving dots glow)",
+    "any background but pure black (an inserted screen sits on a #222222 plate)",
+    "sentences on screen: an equation, a short label, or a one-line title",
+    "bouncy, linear or snappy easing: everything moves on the smooth curve",
+    "characters, mascots, logos, channel branding or anything copied from the source scenes"
+  ],
+  "sources": [
+    { "what": "the visual grammar of 3Blue1Brown's scenes (rules only: run times, holds, lag ratios, dim values, move vocabulary, layout habits)", "where": "docs/research/styles/ecc-nullmotion-3b1b-web.md, \"Math Explainer (generic grammar distilled from 3b1b scenes)\"", "licence": "CC BY-NC-SA 4.0: described in our own words, no code, characters or brand used" },
+    { "what": "Manim's default colour constants, stroke and spacing defaults, and the smooth rate function", "where": "3b1b/manim manimlib/default_config.yml, constants.py, utils/rate_functions.py (via the same research file)", "licence": "MIT" }
+  ]
+}

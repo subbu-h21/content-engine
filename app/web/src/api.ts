@@ -55,6 +55,8 @@ export type Brief = {
   references: Reference[];
   skills: string[];
   jobs: Job[];
+  /** The video's catalog style and channel (optional: an older engine doesn't send it). */
+  look?: { style: { id: string; name: string; locked: boolean; builtIn: boolean; cover: string | null } | null; channel: { id: string; name: string; locked: boolean } | null };
 };
 
 
@@ -173,7 +175,11 @@ export type SettingsView = {
   python: string;
   checks: { workspace: boolean; blender: boolean; python: string | null; ffmpeg: string | null };
   publish: PublishDefaults;
+  /** Optional: an older engine doesn't send it. */
+  channels?: Channel[];
 };
+/** A channel (Settings → Channels): new videos in it start with its style; a locked look can't change per video. */
+export type Channel = { id: string; name: string; style: string | null; locked: boolean };
 export type PublishedRow = { id: string; project: string; number: number; title: string | null; platform: "youtube" | "facebook" | "instagram"; file: string; status: string; url: string | null; studio: string | null; privacy: string | null; format: string | null; at: string | null; error: string | null };
 export type PublishListRow = { project: string; number: number; title: string | null; stage: string | null; videos: VideoFile[]; selected: string | null; publish: Partial<Record<"youtube" | "facebook" | "instagram", string>> | null; uploading: boolean };
 export type PublishList = { ready: PublishListRow[]; notYet: { project: string; number: number; title: string | null; stage: string | null }[] };
@@ -202,7 +208,11 @@ export const api = {
   doctor: () => call<Doctor>("/api/doctor"),
   projects: () => call<ProjectRow[]>("/api/projects"),
   /** request = the user's answer to "what do you want to create?"; title = a short working title (Claude renames it) */
-  create: (request: string, title: string) => call<{ name: string; dir: string }>("/api/projects", { method: "POST", body: JSON.stringify({ request, title }) }),
+  create: (request: string, title: string, channel?: string | null) => call<{ name: string; dir: string }>("/api/projects", { method: "POST", body: JSON.stringify({ request, title, channel: channel || undefined }) }),
+  channels: () => call<Channel[]>("/api/channels"),
+  saveChannels: (channels: Channel[]) => call<SettingsView>("/api/settings", { method: "PUT", body: JSON.stringify({ channels }) }),
+  projectStyle: (name: string, id: string) => call<{ style: { id: string; name: string }; told: boolean; reason?: string }>(`/api/projects/${encodeURIComponent(name)}/style`, { method: "POST", body: JSON.stringify({ id }) }),
+  projectStyleFromDraft: (name: string, draft: string, note?: string) => call<{ told: boolean; reason?: string }>(`/api/projects/${encodeURIComponent(name)}/style/from-draft`, { method: "POST", body: JSON.stringify({ draft, note }) }),
   project: (name: string) => call<ProjectInfo>(`/api/projects/${encodeURIComponent(name)}`),
   open: (name: string) => call<StudioInfo>(`/api/projects/${encodeURIComponent(name)}/open`, { method: "POST" }),
   studio: (name: string) => call<StudioInfo>(`/api/projects/${encodeURIComponent(name)}/studio`),
@@ -259,4 +269,46 @@ export const api = {
     if (!r.ok) throw new Error((body as { error?: string }).error ?? `${r.status}`);
     return body as { kind: "skill" | "reference"; name: string; path: string };
   },
+  catalog: () => call<{ styles: CatalogStyle[] }>("/api/catalog"),
+  catalogStyle: (id: string) => call<StyleDetail>(`/api/catalog/styles/${encodeURIComponent(id)}`),
+  catalogDuplicate: (id: string) => call<{ id: string }>(`/api/catalog/styles/${encodeURIComponent(id)}/duplicate`, { method: "POST" }),
+  catalogApprove: (id: string) => call<object>(`/api/catalog/styles/${encodeURIComponent(id)}/approve`, { method: "POST" }),
+  catalogDelete: (id: string, confirm: string) => call<{ deleted: string; builtInRemains: boolean }>(`/api/catalog/styles/${encodeURIComponent(id)}`, { method: "DELETE", body: JSON.stringify({ confirm }) }),
+  catalogFont: (id: string, file: File) => putFile<{ font: string }>(`/api/catalog/styles/${encodeURIComponent(id)}/font?name=${encodeURIComponent(file.name)}`, file),
+  catalogNewDraft: () => call<{ id: string }>("/api/catalog/drafts", { method: "POST" }),
+  catalogDraft: (draft: string) => call<CatalogDraft>(`/api/catalog/drafts/${encodeURIComponent(draft)}`),
+  catalogDraftUpload: (draft: string, file: File) => putFile<{ file: string }>(`/api/catalog/drafts/${encodeURIComponent(draft)}/upload?name=${encodeURIComponent(file.name)}`, file),
+  catalogDraftLink: (draft: string, url: string) => call<CatalogDraft>(`/api/catalog/drafts/${encodeURIComponent(draft)}/link`, { method: "POST", body: JSON.stringify({ url }) }),
+  catalogDraftStart: (draft: string, note: string) => call<{ sent: boolean; reason?: string }>(`/api/catalog/drafts/${encodeURIComponent(draft)}/start`, { method: "POST", body: JSON.stringify({ note }) }),
+  catalogSay: (text: string) => call<{ sent: boolean; reason?: string }>("/api/catalog/say", { method: "POST", body: JSON.stringify({ text }) }),
+  catalogView: (page: "gallery" | "style" | "draft", id?: string) => call<{ ok: boolean }>("/api/catalog/view", { method: "POST", body: JSON.stringify({ page, id }) }),
 };
+
+/** A file uploaded as the raw request body (the server streams it to disk). */
+async function putFile<T>(url: string, file: File): Promise<T> {
+  const r = await fetch(url, { method: "PUT", headers: { "content-type": "application/octet-stream" }, body: file });
+  const body = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error((body as { error?: string }).error ?? `${r.status}`);
+  return body as T;
+}
+
+/** The catalog (server: app/server/catalog.mjs, format: library/catalog/README.md). */
+export const CATALOG_CHAT = "_catalog";
+export type CatalogStyle = { id: string; name: string; status: "built-in" | "approved" | "experimental" | null; summary: string; tags: string[]; builtIn: boolean; editedBuiltIn: boolean; stills: string[]; cover: boolean; stamp: number };
+export type StyleJson = {
+  name?: string;
+  status?: string;
+  summary?: string;
+  tags?: string[];
+  suits?: string[];
+  needs?: { footage?: boolean; "3d"?: boolean };
+  palette?: { role: string; hex: string; use?: string }[];
+  fonts?: Record<string, { family: string; source: string; weights?: number[]; italic?: boolean; file?: string } | null>;
+  motion?: { recipes?: Record<string, Record<string, unknown>> };
+  banned?: string[];
+  sources?: { what?: string; where?: string; licence?: string }[];
+};
+export type StyleDetail = { id: string; dir: string; builtIn: boolean; editedBuiltIn: boolean; style: StyleJson; md: string; stills: string[]; stamp: number; sources: string[]; fonts: string[]; check: { ok: boolean; problems: string[] } };
+export type CatalogDraft = { id: string; files: string[]; links: string[]; note: string; started: string | null; result: string | null };
+/** A style's preview image; `v` changes when the style changes so a re-render shows. */
+export const previewUrl = (id: string, file: string, v?: string | number) => `/api/catalog/styles/${encodeURIComponent(id)}/preview/${file}${v ? `?v=${encodeURIComponent(String(v))}` : ""}`;

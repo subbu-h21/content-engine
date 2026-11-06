@@ -1,0 +1,108 @@
+{
+  "id": "dataviz",
+  "name": "Data Story",
+  "kind": "visual",
+  "version": 1,
+  "status": "built-in",
+  "summary": "One real chart drawn mark by mark on cream dot-grid paper by a red-blue pencil, one number at a time: a Newsreader headline, handwritten notes pinned to the data, a colour ramp that encodes the value only, and a figure caption under a hairline rule.",
+  "tags": ["light", "paper", "chart", "data", "pencil", "serif", "handwriting", "journalism"],
+  "suits": ["data journalism", "reports", "climate and science", "any series or ranking with a human angle", "one true number explained"],
+  "needs": { "footage": false, "3d": false },
+  "frame": { "width": 1080, "height": 1920 },
+  "palette": [
+    { "role": "background", "hex": "#f6f3ec", "use": "the paper, with fixed-seed fibre noise" },
+    { "role": "text", "hex": "#2b2723", "use": "ink: axes, series line, headline, caption, dot rings" },
+    { "role": "muted", "hex": "#6e665c", "use": "tick numbers and kickers" },
+    { "role": "faint", "hex": "#ddd6c9", "use": "gridlines" },
+    { "role": "accent", "hex": "#a8283a", "use": "red pencil lead: records, the one number, the turn" },
+    { "role": "accent2", "hex": "#2f5d8a", "use": "blue pencil lead: human notes" },
+    { "role": "dots", "hex": "#e4ddcf", "use": "the 24 px dot grid" },
+    { "role": "zero", "hex": "#bdb4a5", "use": "the zero line" },
+    { "role": "wood", "hex": "#e3c79c", "use": "the pencil's sharpened wood cone" },
+    { "role": "ramp-1", "hex": "#2166ac", "use": "diverging ramp, cold end: data values only" },
+    { "role": "ramp-2", "hex": "#4393c3", "use": "diverging ramp" },
+    { "role": "ramp-3", "hex": "#92c5de", "use": "diverging ramp" },
+    { "role": "ramp-4", "hex": "#d1e5f0", "use": "diverging ramp" },
+    { "role": "ramp-5", "hex": "#f2eee8", "use": "diverging ramp, the centre" },
+    { "role": "ramp-6", "hex": "#fddbc7", "use": "diverging ramp" },
+    { "role": "ramp-7", "hex": "#f4a582", "use": "diverging ramp" },
+    { "role": "ramp-8", "hex": "#d6604d", "use": "diverging ramp" },
+    { "role": "ramp-9", "hex": "#b2182b", "use": "diverging ramp, hot end" }
+  ],
+  "fonts": {
+    "display": { "family": "Newsreader", "source": "google", "weights": [400, 500] },
+    "body": { "family": "Newsreader", "source": "google", "weights": [400] },
+    "hand": { "family": "Caveat", "source": "google", "weights": [500, 600] },
+    "mono": { "family": "IBM Plex Mono", "source": "google", "weights": [400, 500] }
+  },
+  "type": {
+    "display": 84,
+    "title": 138,
+    "number": 300,
+    "body": 44,
+    "hand": 58,
+    "tick": 28,
+    "kicker": 30,
+    "min": 28,
+    "leading": 1.08,
+    "tracking": 0,
+    "case": "sentence",
+    "emphasis": "pencil lead colour (blue notes, red records), an un-closed ring round the mark, a position pinned in data space",
+    "glyphRotate": 1.7,
+    "glyphJitter": 0.025,
+    "maxWords": 12
+  },
+  "layout": {
+    "margin": 96,
+    "safe": { "top": 230, "bottom": 330 },
+    "align": "left",
+    "plot": { "left": 170, "right": 984, "top": 640, "bottom": 1260 },
+    "caption": { "rule": 1380, "kicker": 1424, "text": 1480 },
+    "dotGrid": 24
+  },
+  "elements": {
+    "axis": 3,
+    "series": 4.4,
+    "grid": 1.4,
+    "dot": 12,
+    "dotRing": 2.6,
+    "pencilStroke": 4,
+    "wobble": 2.4,
+    "pencil": { "width": 62, "cone": 118, "angle": 48 },
+    "hatch": 15
+  },
+  "motion": {
+    "recipes": {
+      "tap": { "kind": "ease", "curve": "cubic-out", "duration": 0.25, "pop": 1.55 },
+      "draw": { "kind": "ease", "curve": "cubic-in-out", "duration": 0.8 },
+      "write": { "kind": "ease", "curve": "linear", "duration": 0.7 },
+      "caption": { "kind": "ease", "curve": "cubic-out", "duration": 0.12, "rise": 8 },
+      "ring": { "kind": "ease", "curve": "cubic-out", "duration": 0.45 },
+      "rescale": { "kind": "ease", "curve": "cubic-out", "duration": 0.09 },
+      "morph": { "kind": "ease", "curve": "cubic-out", "duration": 0.55 }
+    },
+    "enter": "draw",
+    "exit": "rescale",
+    "stagger": 0.1,
+    "hold": 1.8,
+    "dataEvery": 0.1
+  },
+  "finish": { "grain": 0, "vignette": 0, "glow": false, "fibre": 0.02, "graphite": 0.16 },
+  "banned": [
+    "a dashboard: one idea at a time",
+    "a keynote with chart slides, or a chart as decoration",
+    "changing a number, extrapolating, or a value without a source or formula",
+    "stretching a colour ramp for drama: pale values stay pale",
+    "colour that means anything but the value (notes keep their lead colours)",
+    "fades to blank or dissolves: transitions are chart operations",
+    "captions over a chart operation or a silence",
+    "copying any data storyteller's or newspaper's charts, layouts or typefaces, or naming them"
+  ],
+  "sources": [
+    {
+      "what": "Lemo-Opuscar style No. 23 \"Data Storytelling\" (STYLE.md, DEMO.md, style.json), via research notes",
+      "where": "github.com/lemomo-ai/lemo-opuscar styles/dataviz; docs/research/styles/five-skills.md, section \"Data Storytelling (pencil chart on cream paper)\"",
+      "licence": "MIT (code and docs); demo film and stills CC BY 4.0 (LemoLab). No code copied. Newsreader, Caveat, IBM Plex Mono: SIL OFL. ColorBrewer RdBu ramp: Apache-style licence, credited"
+    }
+  ]
+}

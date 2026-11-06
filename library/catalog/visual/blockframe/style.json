@@ -1,0 +1,98 @@
+{
+  "id": "blockframe",
+  "name": "BlockFrame",
+  "kind": "visual",
+  "version": 1,
+  "status": "built-in",
+  "summary": "Maximal neobrutalism, like a zine or a 1990s sticker book: thick black borders, hard offset shadows with no blur, one candy pastel ground per frame, huge uppercase Inter Black, and tilted stickers that slap down with a spring.",
+  "tags": ["light", "neobrutalist", "pastel", "loud", "playful", "stickers", "sans", "uppercase"],
+  "suits": ["playful product promos", "feature lists", "kids' and creator brands", "energetic socials"],
+  "needs": { "footage": false, "3d": false },
+  "frame": { "width": 1080, "height": 1920 },
+  "palette": [
+    { "role": "background", "hex": "#fffdf5", "use": "offwhite: the default ground" },
+    { "role": "surface", "hex": "#ffffff", "use": "card fills; the end frame's border" },
+    { "role": "text", "hex": "#000000", "use": "every border, every hard shadow, structural text, the end frame's ground" },
+    { "role": "muted", "hex": "#000000", "use": "there's no grey: body copy is black too" },
+    { "role": "faint", "hex": "#000000", "use": "the dot grid: black dots at 22%" },
+    { "role": "accent", "hex": "#f7cb46", "use": "yellow: the CTA, the end frame's shadow, the stamp behind the key word, a cycled ground" },
+    { "role": "accent2", "hex": "#fe90e8", "use": "pink: a cycled ground, decorations" },
+    { "role": "blue", "hex": "#c0f7fe", "use": "blue: a cycled ground, decorations" },
+    { "role": "green", "hex": "#99e885", "use": "green: a cycled ground, decorations" },
+    { "role": "cream", "hex": "#ffdc8b", "use": "cream: a cycled ground (cover)" }
+  ],
+  "fonts": {
+    "display": { "family": "Inter", "source": "google", "weights": [500, 700, 800, 900] },
+    "body": { "family": "Inter", "source": "google", "weights": [500, 700] },
+    "label": { "family": "Space Grotesk", "source": "google", "weights": [600, 700] }
+  },
+  "type": {
+    "display": 184,
+    "headingLg": 124,
+    "headingMd": 84,
+    "stat": 330,
+    "step": 64,
+    "close": 158,
+    "body": 40,
+    "label": 30,
+    "labelTracking": 0.08,
+    "min": 24,
+    "leading": 0.95,
+    "tracking": -0.03,
+    "case": "UPPERCASE display with negative tracking; sentence-case body",
+    "emphasis": "a hard yellow stamp behind the key word, or the key word on its own tilted sticker",
+    "maxWords": 8
+  },
+  "layout": { "margin": 60, "safe": { "top": 230, "bottom": 330 }, "align": "left", "headlineWidth": 842 },
+  "elements": {
+    "card": { "border": 6, "shadow": 12 },
+    "small": { "border": 4, "shadow": 6 },
+    "close": { "border": 6, "shadow": 18 },
+    "dots": { "size": 2.4, "gap": 32, "alpha": 0.22 },
+    "stripe": 22,
+    "star": { "points": 10, "inner": 0.68 },
+    "dot": 22
+  },
+  "motion": {
+    "recipes": {
+      "slap": { "kind": "spring", "damping": 18, "stiffness": 360, "mass": 1 },
+      "press": { "kind": "spring", "damping": 26, "stiffness": 420, "mass": 1 },
+      "grow": { "kind": "spring", "damping": 20, "stiffness": 260, "mass": 1 },
+      "drop": { "kind": "ease", "curve": "quart-out", "duration": 0.2, "distance": 70 },
+      "pop": { "kind": "ease", "curve": [0.3, 2.2, 0.55, 1], "duration": 0.2, "from": 0.86 },
+      "wipe": { "kind": "ease", "curve": "cubic-in-out", "duration": 0.3 },
+      "out": { "kind": "ease", "curve": "cubic-in", "duration": 0.2 },
+      "count": { "kind": "ease", "curve": "quart-out", "duration": 0.6 }
+    },
+    "enter": "slap",
+    "exit": "out",
+    "stagger": 0.1,
+    "hold": 0.9,
+    "slapScale": 1.4,
+    "slapTwist": 7
+  },
+  "finish": { "grain": 0, "vignette": 0, "glow": false },
+  "banned": [
+    "rounded corners (except the label pill and the 22 px dot); blurred shadows",
+    "coloured borders (white only on the black end frame); a sixth pastel",
+    "sentence-case display; untracked display; labels as plain text",
+    "perfect alignment; empty corners; edge-to-edge headlines",
+    "gradients, grain, glow",
+    "three cards in a row: cards stack and stagger",
+    "fades: everything is there or isn't; opacity is binary",
+    "grey type",
+    "landed things that keep wobbling: a spring settles and stays"
+  ],
+  "sources": [
+    {
+      "what": "HyperFrames frame preset BlockFrame: palette, faces, type ramp, elements, frames, banned list, caption skin",
+      "where": "github.com/heygen-com/hyperframes skills/hyperframes/assets/frame-presets/blockframe; research notes docs/research/styles/hyperframes.md, \"BlockFrame\"",
+      "licence": "Apache-2.0. Tokens and rules re-expressed; no code copied. Inter and Space Grotesk are SIL OFL."
+    },
+    {
+      "what": "HyperFrames taste rules T36-T60 (motion)",
+      "where": "docs/research/styles/hyperframes.md, \"Taste rules\"",
+      "licence": "Apache-2.0"
+    }
+  ]
+}

@@ -1,0 +1,104 @@
+{
+  "id": "halftone-dossier",
+  "name": "Halftone Dossier",
+  "kind": "visual",
+  "version": 1,
+  "status": "built-in",
+  "summary": "A retro printed case file on cream archive paper: overprinted halftone dots in five flat inks, black slab headlines with a pink misregistered shadow, a navy caption pill, slamming rubber stamps and a thick-outlined kawaii suspect, read one exhibit at a time.",
+  "tags": ["light", "print", "halftone", "retro", "humour", "pop", "slab", "case file", "stamps"],
+  "suits": ["myth-busting and verdicts", "\"the case against X\" explainers", "lists of counts or causes", "humour and pet content", "social shorts that work without sound"],
+  "needs": { "footage": false, "3d": false },
+  "frame": { "width": 1080, "height": 1920 },
+  "palette": [
+    { "role": "background", "hex": "#f4ecdd", "use": "cream archive paper: the light-scene ground" },
+    { "role": "text", "hex": "#1d2340", "use": "navy, the one dark ink: outlines, headlines, caption pill, HUD, fade-out" },
+    { "role": "muted", "hex": "#2a3568", "use": "night 2: the lighter dot layer on night scenes; quiet HUD lines" },
+    { "role": "faint", "hex": "#e2d6c0", "use": "the paper's fold line and ruled lines (proposed)" },
+    { "role": "accent", "hex": "#ff5a87", "use": "pink: the misregistration and caption offset shadow, cheeks, the halftone over yellow" },
+    { "role": "accent2", "hex": "#ffc628", "use": "yellow: keywords, numerals, starbursts, the folder" },
+    { "role": "blue", "hex": "#2e55d6", "use": "the title card ground, halo dots, the suspect's body, one ink layer" },
+    { "role": "red", "hex": "#e8384f", "use": "stamps, alarms and the REC dot only" },
+    { "role": "cream", "hex": "#fff4e2", "use": "text on dark, bellies, eye highlights, specks" },
+    { "role": "night", "hex": "#18203f", "use": "the night scene's ground" },
+    { "role": "pinkPale", "hex": "#ffd3df", "use": "a pale flat fill under a halftone" }
+  ],
+  "fonts": {
+    "display": { "family": "Alfa Slab One", "source": "google", "weights": [400] },
+    "body": { "family": "Noto Sans", "source": "google", "weights": [800, 900] },
+    "mono": { "family": "JetBrains Mono", "source": "google", "weights": [800] },
+    "numerals": { "family": "Bagel Fat One", "source": "google", "weights": [400] }
+  },
+  "type": {
+    "display": 104,
+    "title": 104,
+    "titleWord": 300,
+    "number": 660,
+    "caption": 40,
+    "body": 40,
+    "stamp": 120,
+    "step": 60,
+    "label": 26,
+    "min": 24,
+    "leading": 1.08,
+    "charEm": 0.62,
+    "misregister": 8,
+    "case": "sentence case headlines; uppercase stamps, HUD and title word",
+    "emphasis": "the keyword in yellow in the caption pill; giant halftone numerals; a stamp",
+    "maxWords": 8
+  },
+  "layout": {
+    "margin": 80,
+    "safe": { "top": 230, "bottom": 330 },
+    "align": "left",
+    "hudY": 250,
+    "captionY": 1470,
+    "fold": 960
+  },
+  "elements": {
+    "dots": { "step": 22, "minStep": 14, "maxK": 0.66, "angles": [15, 20, 25, 30, 45, 60, 70] },
+    "paper": { "vignette": 0.35, "noise": 13 },
+    "specks": { "cream": 520, "navy": 90, "every": 2 },
+    "boil": { "frequency": 0.022, "scale": 5, "every": 0.1, "cycle": 40, "grain": 0.75 },
+    "outline": 7,
+    "bubble": 6,
+    "caption": { "radius": 14, "shadow": 8, "tilt": -1.2 },
+    "stamp": { "border": 12, "inner": 0.35, "opacity": 0.93, "ink": 7 },
+    "rays": { "wedges": 28, "speed": 12 }
+  },
+  "motion": {
+    "recipes": {
+      "pop": { "kind": "ease", "curve": [0.3, 1.75, 0.6, 1], "duration": 0.38 },
+      "char": { "kind": "ease", "curve": [0.3, 1.75, 0.6, 1], "duration": 0.32, "drop": 70, "stagger": 0.025 },
+      "fall": { "kind": "ease", "curve": [0.55, 0, 1, 0.45], "duration": 0.2, "distance": 700, "gap": 0.25 },
+      "stamp": { "kind": "ease", "curve": [0.55, 0, 1, 0.45], "duration": 0.09, "from": 2.6, "bounce": 0.05 },
+      "caption": { "kind": "ease", "curve": [0.3, 1.75, 0.6, 1], "duration": 0.4 },
+      "shake": { "kind": "ease", "curve": "linear", "duration": 0.45, "small": 6, "first": 16, "verdict": 26 },
+      "flash": { "kind": "ease", "curve": "linear", "duration": 0.3, "from": 0.5 },
+      "wipe": { "kind": "ease", "curve": [0.65, 0, 0.35, 1], "duration": 0.44, "cell": 80, "cover": 62 },
+      "push": { "kind": "ease", "curve": "linear", "duration": 4, "to": 1.05 }
+    },
+    "enter": "pop",
+    "exit": "wipe",
+    "stagger": 0.025,
+    "hold": 1.0
+  },
+  "finish": { "grain": 0, "vignette": 0, "glow": false, "paperMultiply": true },
+  "banned": [
+    "gradients or transparency ramps: tone is dot size and overprint",
+    "fading text in: everything pops in with overshoot",
+    "line boil on text, dots, HUD or captions (characters and drawn props only)",
+    "more than five inks plus paper; a dot step under 14 px",
+    "a frame without dots, paper and (outside the title card) the HUD",
+    "dissolves; a 100% white flash",
+    "risograph zine collage, Swiss grid type on white, candy game-show sets",
+    "glowing dark scenes: night is still printed (multiplied by paper)",
+    "copying a specific pop-art or comic reference"
+  ],
+  "sources": [
+    {
+      "what": "Lemo-Opuscar style No. 13 \"Halftone Dossier\" (retro print case file): STYLE.md, DEMO.md, style.json",
+      "where": "github.com/lemomo-ai/lemo-opuscar styles/halftone-dossier; research notes docs/research/styles/five-skills.md, \"Halftone Dossier (retro print case file)\"",
+      "licence": "MIT (code and docs); demo films and stills CC BY 4.0. No code copied; the look is rebuilt in SVG. Alfa Slab One, Noto Sans, JetBrains Mono and Bagel Fat One are SIL OFL."
+    }
+  ]
+}

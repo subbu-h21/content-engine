@@ -1,0 +1,80 @@
+{
+  "id": "beat-locked-hype",
+  "name": "Beat-Locked Hype",
+  "kind": "visual",
+  "version": 1,
+  "status": "built-in",
+  "summary": "Showreel-energy sting on a 128 BPM grid: heavy caps slams that change treatment per word across hard-swapped cream, ink and electric-blue cards, an italic serif human line, an orange spark that carries every transition, and a rippling cube field.",
+  "tags": ["energetic", "dark", "bold", "caps", "beat", "kinetic", "promo"],
+  "suits": ["hook", "teaser", "promo", "facts", "launch sting"],
+  "needs": { "footage": false, "3d": false },
+  "frame": { "width": 1080, "height": 1920 },
+  "palette": [
+    { "role": "background", "hex": "#0b0b10", "use": "the ink canvas: spark open, data scenes, end card, the 'accent on black' triplet card" },
+    { "role": "text", "hex": "#ffffff", "use": "slams on ink and on blue, the serif human line, highlights" },
+    { "role": "surface", "hex": "#edebe4", "use": "the cream triplet card ('dark on cream'); high cubes in the field" },
+    { "role": "muted", "hex": "#85858c", "use": "mono HUD labels and captions (white at about 50% on ink) (proposed)" },
+    { "role": "faint", "hex": "#1c1c26", "use": "the faint grid on the spark open and data scenes (proposed)" },
+    { "role": "accent", "hex": "#ff4f1a", "use": "the spark, the line, the full-screen flood, the wipe bar, the end-card dot (the brand's main colour)" },
+    { "role": "accent2", "hex": "#2f47ff", "use": "the electric-blue triplet card ('white on blue'), the one accent bar in data (the brand's second colour)" }
+  ],
+  "fonts": {
+    "display": { "family": "Inter Tight", "source": "google", "weights": [900] },
+    "body": { "family": "Inter Tight", "source": "google", "weights": [600] },
+    "serif": { "family": "Instrument Serif", "source": "google", "weights": [400], "italic": true },
+    "mono": { "family": "Geist Mono", "source": "google", "weights": [400, 500] }
+  },
+  "type": {
+    "display": 220,
+    "slamMax": 300,
+    "number": 380,
+    "serif": 96,
+    "body": 40,
+    "label": 26,
+    "mono": 26,
+    "min": 24,
+    "leading": 0.9,
+    "tracking": -0.035,
+    "monoTracking": 0.14,
+    "charEm": 0.64,
+    "case": "upper",
+    "emphasis": "a change of treatment per word: colour card, outline repetition, serif italic",
+    "maxWords": 3
+  },
+  "layout": { "margin": 80, "safe": { "top": 230, "bottom": 330 }, "align": "center", "grid": 120, "hudTop": 262, "hudBottom": 1572 },
+  "motion": {
+    "recipes": {
+      "impact": { "kind": "spring", "damping": 18.2, "stiffness": 196, "mass": 1 },
+      "spring": { "kind": "spring", "damping": 22.96, "stiffness": 196, "mass": 1 },
+      "slam": { "kind": "ease", "curve": "expo-out", "duration": 0.234, "distance": 160 },
+      "mask": { "kind": "ease", "curve": "expo-out", "duration": 0.117 },
+      "flood": { "kind": "ease", "curve": [0.7, 0, 0.2, 1], "duration": 0.3 },
+      "count": { "kind": "ease", "curve": "expo-out", "duration": 0.938 },
+      "rule": { "kind": "ease", "curve": "expo-out", "duration": 0.469 }
+    },
+    "enter": "slam",
+    "exit": "flood",
+    "bpm": 128,
+    "beat": 0.469,
+    "eighth": 0.234,
+    "sixteenth": 0.117,
+    "stagger": 0.117,
+    "hold": 0.938,
+    "slamBlur": 24
+  },
+  "finish": { "grain": 0.03, "vignette": 0.35, "glow": false, "motionBlur": { "subframes": 8, "shutter": 180 } },
+  "banned": [
+    "stock-template looks",
+    "glow on everything",
+    "emoji",
+    "more than 3 colours in one scene, not counting black and white",
+    "text too small to read at a glance",
+    "any scene without motion",
+    "hard cuts between scenes, except at most 2 on downbeats",
+    "an orange field with black words (orange is the spark, the line, the flood and the wipe, never a type card)",
+    "an always-on bracket frame or timecode: brackets only on the blue card"
+  ],
+  "sources": [
+    { "what": "skill explainer-high-energy (palette, type, beat grid, triplet, signature cube field, transitions as objects, end card)", "where": "github.com/Barty-Bart/motion-graphics skills/explainer-high-energy/SKILL.md; research notes docs/research/styles/barty-bart-and-prompt-motion.md, section Beat-Locked Hype Promo", "licence": "MIT (c) 2026 Bart" }
+  ]
+}

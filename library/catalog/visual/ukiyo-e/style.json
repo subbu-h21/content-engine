@@ -1,0 +1,93 @@
+{
+  "id": "ukiyo-e",
+  "name": "Ukiyo-e Print",
+  "kind": "visual",
+  "version": 1,
+  "status": "built-in",
+  "summary": "A woodblock print come to life on a tall pillar sheet: flat colour blocks printed slightly out of register under a sumi key line, woodgrain and baren streaks in every block, wandering bokashi skies, mist bands, a double ink border, cream cartouches and a red seal.",
+  "tags": ["woodblock", "print", "east asian", "flat colour", "prussian blue", "paper", "travel", "calm"],
+  "suits": ["travel and journeys", "Japanese culture and poetry", "one subject in many places or seasons", "steps or stations of a process", "calm explainers about nature and the sky"],
+  "needs": { "footage": false, "3d": false },
+  "frame": { "width": 1080, "height": 1920 },
+  "palette": [
+    { "role": "background", "hex": "#eee2c6", "use": "washi: the only white (foam, snow, mist, blank sky)" },
+    { "role": "text", "hex": "#231f1c", "use": "sumi: every key line and every word" },
+    { "role": "muted", "hex": "#c7b893", "use": "dark paper fibres; distant grey key lines" },
+    { "role": "faint", "hex": "#fbf6e9", "use": "light paper fibres" },
+    { "role": "accent", "hex": "#b8412f", "use": "beni red: the sun, seals, a garment, the cartouche tab (rare)" },
+    { "role": "accent2", "hex": "#1d3a66", "use": "Prussian blue: sky, water, mountain (the dominant family)" },
+    { "role": "prussianDark", "hex": "#13284a", "use": "the top of a bokashi sky, deep water" },
+    { "role": "prussianLight", "hex": "#4d6f98", "use": "middle blues" },
+    { "role": "trough", "hex": "#0f2344", "use": "the inside of a wave" },
+    { "role": "paleBlue", "hex": "#8db0c6", "use": "water reflections, lower sky" },
+    { "role": "paleBlue2", "hex": "#bcd0d6", "use": "the palest sky" },
+    { "role": "beniPale", "hex": "#e3a08a", "use": "dawn bokashi" },
+    { "role": "peach", "hex": "#efc4a8", "use": "dawn, mist bands" },
+    { "role": "ochre", "hex": "#cf9f4a", "use": "hats, roads, obi, sunlight" },
+    { "role": "straw", "hex": "#c9a45c", "use": "straw, fields" },
+    { "role": "green", "hex": "#8aa152", "use": "fields" },
+    { "role": "greenDark", "hex": "#50703c", "use": "trees" },
+    { "role": "pine", "hex": "#3e5a3a", "use": "pine needle pads" },
+    { "role": "indigoCloth", "hex": "#2c4a70", "use": "clothing" },
+    { "role": "gaiters", "hex": "#1d2c44", "use": "gaiters, dark cloth" },
+    { "role": "mount", "hex": "#c9b690", "use": "the mounting scroll between sheets" },
+    { "role": "cartouche", "hex": "#f3e7c6", "use": "cream cartouche slips" },
+    { "role": "endGround", "hex": "#161a22", "use": "the dark indigo behind the whole scroll" }
+  ],
+  "fonts": {
+    "display": { "family": "Yuji Syuku", "source": "google", "weights": [400] },
+    "body": { "family": "Shippori Mincho", "source": "google", "weights": [500] }
+  },
+  "type": {
+    "display": 64,
+    "title": 64,
+    "number": 230,
+    "body": 46,
+    "label": 40,
+    "tab": 30,
+    "min": 30,
+    "leading": 1.25,
+    "tracking": 0.02,
+    "case": "sentence",
+    "emphasis": "the red seal stamp",
+    "maxWords": 8
+  },
+  "layout": { "margin": 96, "safe": { "top": 230, "bottom": 330 }, "align": "left", "border": { "x": 44, "y": 40, "line": 3.4, "outer": 9 }, "textRight": 960 },
+  "motion": {
+    "recipes": {
+      "print": { "kind": "ease", "curve": "cubic-out", "duration": 0.34 },
+      "seal": { "kind": "ease", "curve": "expo-out", "duration": 0.2 },
+      "cartouche": { "kind": "ease", "curve": "cubic-out", "duration": 0.3, "distance": 14 },
+      "subtitle": { "kind": "ease", "curve": "cubic-out", "duration": 0.22 },
+      "scroll": { "kind": "ease", "curve": "sine-in-out", "duration": 1.0 },
+      "push": { "kind": "ease", "curve": "sine-in-out", "duration": 6.0 }
+    },
+    "enter": "printed block by block",
+    "exit": "a scroll slide to the next sheet, or a cut to a blank sheet",
+    "figureFps": 8,
+    "rainFps": 12,
+    "slide": 6,
+    "hold": 1.0
+  },
+  "elements": {
+    "registration": { "g1": [2.2, -1.3], "g2": [-1.8, 1.9], "g3": [1.5, 2.2] },
+    "texture": { "wood": 0.14, "baren": 0.3, "specks": 0.3, "keySpecks": 0.12, "fibres": 0.09 },
+    "keyLine": { "width": 2.7, "jitter": 0.28 },
+    "bokashi": { "wander": 26 },
+    "seal": { "w": 46, "h": 70 }
+  },
+  "finish": { "grain": 0, "vignette": 0, "glow": false },
+  "banned": [
+    "flat vector shapes with a paper overlay: blocks need woodgrain and misregistration",
+    "bleeding washes (that's ink wash); light and shade modelled on forms",
+    "perspective grids: depth by stacked layers, mist and cropping",
+    "gradients other than bokashi; white pigment (the paper is the white)",
+    "cross-dissolves or 3D flips",
+    "reproducing a famous print or copying its composition or characters",
+    "too much speckle or fibre (a sandpaper look)",
+    "a stepped camera"
+  ],
+  "sources": [
+    { "what": "Lemo-Opuscar style 08 \"Ukiyo-e\" (styles/ukiyoe: STYLE.md, DEMO.md)", "where": "docs/research/styles/five-skills.md, \"Ukiyo-e\"", "licence": "MIT (lemomo-ai/lemo-opuscar); demo films and stills CC BY 4.0, not used" }
+  ]
+}

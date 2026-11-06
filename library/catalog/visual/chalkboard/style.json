@@ -1,0 +1,88 @@
+{
+  "id": "chalkboard",
+  "name": "Chalkboard",
+  "kind": "visual",
+  "version": 1,
+  "status": "built-in",
+  "summary": "A clean classroom blackboard on which chalk writes itself in true stroke order, no hand or eraser in sight: deep green slate, grainy white chalk, one accent chalk for the one thing the lesson tracks, a pale second hand for what people think, wiped in one damp pass and rewritten in the same place.",
+  "tags": ["chalkboard", "chalk", "classroom", "handwriting", "dark", "green", "lesson", "myth-busting"],
+  "suits": ["one-idea lessons", "word and character origins", "myth-busting", "a worked problem", "science facts"],
+  "needs": { "footage": false, "3d": false },
+  "frame": { "width": 1080, "height": 1920 },
+  "palette": [
+    { "role": "background", "hex": "#0f1c15", "use": "the deep ink-green slate" },
+    { "role": "backBoard", "hex": "#0b130f", "use": "the darker back panel and the slate's shadowed edges" },
+    { "role": "text", "hex": "#f2f0e6", "use": "white chalk: all structure (words, lines, labels, arrows)" },
+    { "role": "accent", "hex": "#8fc3e8", "use": "the accent chalk for the one component the lesson tracks; this film tracks blue light, so it is a pale blue (proposed)" },
+    { "role": "accentDefault", "hex": "#ff8f42", "use": "the source's accent chalk (orange), for a tracked component with no colour of its own" },
+    { "role": "accent2", "hex": "#fae694", "use": "second-hand chalk (pale yellow): another person's handwriting, what people think" },
+    { "role": "muted", "hex": "#d9d4c6", "use": "subtitle text on the plate" },
+    { "role": "faint", "hex": "#c4b070", "use": "painted rule lines on the slate, at 24–36%" },
+    { "role": "plate", "hex": "#0a0f0c", "use": "the subtitle plate, at 62%" },
+    { "role": "frame", "hex": "#6a4a2e", "use": "the wooden frame" },
+    { "role": "tray", "hex": "#7a5838", "use": "the chalk tray (its shadow side #5d4128)" },
+    { "role": "trayShadow", "hex": "#5d4128", "use": "the tray's shadow side" },
+    { "role": "wall", "hex": "#bdb8a8", "use": "the warm white wall in wide shots" },
+    { "role": "dado", "hex": "#56705f", "use": "the green dado below the wall" },
+    { "role": "clock", "hex": "#f6f3ea", "use": "the wall clock's face (hands #222222)" },
+    { "role": "wet", "hex": "#000c07", "use": "the damp cloth's wet streak, at 36%, drying back" }
+  ],
+  "fonts": {
+    "display": { "family": "Alegreya", "source": "google", "weights": [400], "italic": true, "note": "board writing is drawn by the style's own single-stroke chalk hand, not a font; Alegreya italic is the subtitle plate's face" },
+    "body": { "family": "Alegreya", "source": "google", "weights": [400], "italic": true }
+  },
+  "type": {
+    "display": 120,
+    "title": 120,
+    "hero": 250,
+    "number": 300,
+    "headline": 92,
+    "label": 62,
+    "small": 50,
+    "body": 40,
+    "min": 32,
+    "leading": 1.25,
+    "tracking": 12,
+    "case": "sentence",
+    "emphasis": "the accent chalk on the one tracked component, an underline, or a circle",
+    "maxWords": 8
+  },
+  "layout": { "margin": 96, "safe": { "top": 230, "bottom": 330 }, "align": "left", "textRight": 960, "plateY": 1478 },
+  "motion": {
+    "recipes": {
+      "stroke": { "kind": "ease", "curve": "sine-in-out", "duration": 0.08 },
+      "wipe": { "kind": "ease", "curve": "cubic-in-out", "duration": 0.55 },
+      "dry": { "kind": "ease", "curve": "quart-out", "duration": 2.6 },
+      "plate": { "kind": "ease", "curve": "linear", "duration": 0.12 },
+      "camera": { "kind": "ease", "curve": "cubic-in-out", "duration": 1.2 }
+    },
+    "enter": "written stroke by stroke",
+    "exit": "wiped in one pass",
+    "perStroke": { "big": 0.1, "title": 0.06, "label": 0.04 },
+    "draw": 0.8,
+    "hold": 1.5
+  },
+  "elements": {
+    "chalk": { "width": 0.075, "minWidth": 4, "grain": 0.85, "rough": 3.5, "dust": 0.18, "bow": 0.015, "rise": 0.035, "tilt": 1.5, "baseline": 0.015, "looseGrains": 3 },
+    "wipe": { "width": 170, "haze": 0.08, "wet": 0.36 },
+    "slate": { "grain": 0.05, "mottle": 0.03 },
+    "plate": { "radius": 10, "opacity": 0.62, "padX": 28, "padY": 16 }
+  },
+  "finish": { "grain": 0.015, "vignette": 0.42, "glow": false, "window": 0.16 },
+  "banned": [
+    "a dirty board: old swirls, ghost lessons, floating dust or bokeh",
+    "a hand, a chalk stick or an eraser on screen while writing",
+    "anything typeset or faded in on the board (it isn't a slide): things are written, wiped, slid in or dry",
+    "glow under the chalk",
+    "equal-width plotter lines",
+    "the accent chalk on arrows or decoration that isn't the tracked component",
+    "rainbow or gradient chalk, or more than three chalks",
+    "a perspective tilt: the camera faces the board flat on",
+    "dissolves or page flips",
+    "a hard-edged wet streak",
+    "a glossy white board, markers or magnets (that's Whiteboard)"
+  ],
+  "sources": [
+    { "what": "Lemo-Opuscar style 73 \"Chalkboard\" (styles/chalkboard: STYLE.md, DEMO.md; demo/js chalk.js, stage.js, app.js, post.js)", "where": "docs/research/styles/five-skills.md, \"Chalkboard\"", "licence": "MIT (lemomo-ai/lemo-opuscar); demo films and stills CC BY 4.0, not used" }
+  ]
+}

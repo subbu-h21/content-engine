@@ -25,9 +25,11 @@ import { deleteInfo, recycle } from "./remove.mjs";
 import { accountFor, activity, apiProblems, API_ACTIVE, getDraft, draftProblems, getState as publishState, handoffMessage, listVideos, metaBusy, metaLive, publishSummary, recoverUploads, report as publishReport, saveDraft, selectedVideo, selectVideo, startMeta, startYouTube, stopYouTube, videoInfo, youtubeLive } from "./publish.mjs";
 import { authUrl as metaAuthUrl, connectWithToken as metaConnectWithToken, disconnect as metaDisconnect, finishAuth as metaFinishAuth, isOAuthCallback as isMetaCallback, saveApp as saveMetaApp, status as metaStatus, testConnection as metaTest } from "./meta.mjs";
 import { authUrl, disconnect as youtubeDisconnect, finishAuth, isOAuthCallback, saveClient as saveYouTubeClient, saveClientFields, status as youtubeStatus, testConnection } from "./youtube.mjs";
-import { publishDefaults, settingsView, updateSettings } from "./settings.mjs";
+import { publishDefaults, settingsView, updateChannels, updateSettings } from "./settings.mjs";
+import { applyStyle, findStyle, styleForChannel } from "../../cli/catalog.mjs";
 import { computePlan, failureMessage, getJob, liveInfo, noteClaude, recoverJobs, renderSummary, resumeJob, setRenderHooks, shutdownRenders, startJob, stopJob } from "./render.mjs";
 import { answer as answerClaude, attachChat, chatState, interrupt as interruptClaude, killAllClaude, killClaude, newConversation, openInTerminal, sendMessage, setMode as setClaudeMode } from "./claude.mjs";
+import { addDraftLink, approveStyle, CATALOG_CHAT, catalogList, contextText as catalogContext, createDraft, deleteStyle, draftView, duplicateStyle, ensureCatalogFolder, previewFile, saveDraftUpload, saveFont, setView as setCatalogView, startDraft, styleDetail } from "./catalog.mjs";
 
 const APP_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 // an `nproc` for Remotion (see server/bin/nproc.cmd): Studios, renders, frame previews and Claude panels inherit it
@@ -111,8 +113,13 @@ app.all("/mcp/:name", (req, res) => res.status(405).set("allow", "POST").json({ 
 app.use("/api", express.json({ limit: "1mb" }));
 
 app.get("/api/settings", wrap(async (req, res) => res.json(await settingsView())));
+/** Just the channels (the new-video form): /api/settings also checks the tools, which takes seconds. */
+app.get("/api/channels", (req, res) => res.json(loadSettings().channels ?? []));
 app.put("/api/settings", wrap(async (req, res) => {
-  updateSettings(req.body ?? {});
+  const { channels, ...rest } = req.body ?? {};
+  // channels are checked against the catalog first, so a bad list saves nothing
+  if (channels !== undefined) updateChannels(channels, (id) => /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(id) && !!findStyle(workspace(), id));
+  updateSettings(rest);
   res.json(await settingsView());
 }));
 
@@ -152,10 +159,49 @@ app.post("/api/projects", wrap((req, res) => {
   const title = String(req.body.title ?? "").trim() || (request ? workingTitle(request) : "");
   if (!title) return res.status(400).json({ error: "say what you want to create" });
   const slug = req.body.slug || title.replace(/…$/, "").split(/\s+/).slice(0, 6).join(" ");
+  const channel = req.body.channel ? (loadSettings().channels ?? []).find((c) => c.id === req.body.channel) : null;
+  if (req.body.channel && !channel) return res.status(400).json({ error: "That channel doesn't exist any more (Settings → Channels)." });
+  // the style is worked out before the new folder exists, so it isn't counted as the channel's "last video"
+  const styleId = channel ? styleForChannel(workspace(), channel, listProjects(workspace())) : null;
   const dir = createProject({ workspace: workspace(), slug, title });
   // the user's answer to "what do you want to create?": Claude starts from it (make-video skill)
   if (request) fs.writeFileSync(path.join(dir, "brief", "request.md"), `# What the user wants to create\n\n${request}\n`);
+  if (channel) {
+    const mf = path.join(dir, "project.json");
+    fs.writeFileSync(mf, JSON.stringify({ ...JSON.parse(fs.readFileSync(mf, "utf8")), channel: channel.id }, null, 2) + "\n");
+    if (styleId) applyStyle(dir, workspace(), styleId, { locked: channel.locked });
+  }
   res.json({ name: path.basename(dir), dir });
+}));
+
+// ---- a video's catalog style (the Brief's Look card): pick another one, or make a new one from the user's files
+app.post("/api/projects/:name/style", wrap(async (req, res) => {
+  const dir = project(req, res);
+  if (!dir) return;
+  const cur = JSON.parse(fs.readFileSync(path.join(dir, "project.json"), "utf8")).style;
+  if (cur?.locked) return res.status(409).json({ error: "This video's channel has its look locked: change that in Settings → Channels." });
+  const s = applyStyle(dir, workspace(), String(req.body.id ?? ""), { locked: false });
+  const r = await deliverToClaude(
+    req.params.name,
+    dir,
+    `[content engine] I picked the catalog style "${s.name}" (${s.id}) for this video; it's copied into src/style/ (STYLE.md, style.json, scenes). Follow the make-video skill's Look step with it: update style.md, the theme and anything already built, then tell me in two or three lines what changes.`,
+  );
+  res.json({ style: s, told: r.ok, reason: r.reason });
+}));
+app.post("/api/projects/:name/style/from-draft", wrap(async (req, res) => {
+  const dir = project(req, res);
+  if (!dir) return;
+  const cur = JSON.parse(fs.readFileSync(path.join(dir, "project.json"), "utf8")).style;
+  if (cur?.locked) return res.status(409).json({ error: "This video's channel has its look locked: change that in Settings → Channels." });
+  const v = draftView(workspace(), String(req.body.draft ?? ""));
+  if (!v.files.length) return res.status(400).json({ error: "Add a file first." });
+  const draftDir = path.join(workspace(), "catalog", "drafts", v.id);
+  const r = await deliverToClaude(
+    req.params.name,
+    dir,
+    `[content engine] I want a new look for this video from my files: ${v.files.join(", ")} (in ${path.join(draftDir, "sources")}).${req.body.note ? ` ${String(req.body.note).trim()}` : ""} Make it a catalog style with the make-style skill (save it in ${path.join(workspace(), "catalog", "visual")}\\<id> with status "experimental", copying my files into its sources/), write ${path.join(draftDir, "result.json")} as {"id": "<id>"}, then use it here with \`ce catalog use <id>\` and follow the make-video skill's Look step.`,
+  );
+  res.json({ told: r.ok, reason: r.reason });
 }));
 
 app.get("/api/projects/:name", wrap((req, res) => {
@@ -563,37 +609,105 @@ app.post("/api/projects/:name/say", wrap(async (req, res) => {
   res.json({ sent: r.ok, reason: r.reason });
 }));
 
-// ---- the Claude chat (live updates over /ws/chat/<project>)
+// ---- the Catalog page (styles: library/catalog/visual and <workspace>/catalog/visual; its own Claude chat)
+app.get("/api/catalog", wrap((req, res) => res.json({ styles: catalogList(workspace()) })));
+app.get("/api/catalog/styles/:id", wrap((req, res) => {
+  const d = styleDetail(workspace(), req.params.id);
+  if (!d) return res.status(404).json({ error: `There's no style "${req.params.id}".` });
+  res.json(d);
+}));
+app.get("/api/catalog/styles/:id/preview/:file", (req, res) => {
+  const full = previewFile(workspace(), req.params.id, req.params.file);
+  if (!full) return res.sendStatus(404);
+  res.set("cache-control", "no-cache"); // previews are re-rendered in place: always revalidate
+  res.sendFile(full);
+});
+app.post("/api/catalog/styles/:id/duplicate", wrap((req, res) => res.json({ id: duplicateStyle(workspace(), req.params.id) })));
+app.post("/api/catalog/styles/:id/approve", wrap((req, res) => res.json(approveStyle(workspace(), req.params.id))));
+app.delete("/api/catalog/styles/:id", wrap(async (req, res) => {
+  // the page sends the style's id back as confirmation, like the video number on Delete
+  if (req.body?.confirm !== req.params.id) return res.status(400).json({ error: "Type the style's id to confirm." });
+  const ws = workspace();
+  if (chatState(CATALOG_CHAT) === "working") return res.status(409).json({ error: "Claude is working in the catalog right now; try again when it's done." });
+  res.json(await deleteStyle(ws, req.params.id));
+}));
+app.put("/api/catalog/styles/:id/font", wrap(async (req, res) => {
+  if (!req.query.name) return res.status(400).json({ error: "missing ?name=" });
+  res.json(await saveFont(workspace(), req.params.id, String(req.query.name), req));
+}));
+app.post("/api/catalog/drafts", wrap((req, res) => res.json({ id: createDraft(workspace()) })));
+app.get("/api/catalog/drafts/:draft", wrap((req, res) => res.json(draftView(workspace(), req.params.draft))));
+app.put("/api/catalog/drafts/:draft/upload", wrap(async (req, res) => {
+  if (!req.query.name) return res.status(400).json({ error: "missing ?name=" });
+  res.json(await saveDraftUpload(workspace(), req.params.draft, String(req.query.name), req));
+}));
+app.post("/api/catalog/drafts/:draft/link", wrap((req, res) => res.json(addDraftLink(workspace(), req.params.draft, String(req.body.url ?? "").trim()))));
+app.post("/api/catalog/drafts/:draft/start", wrap(async (req, res) => {
+  const ws = workspace();
+  const text = startDraft(ws, req.params.draft, req.body.note);
+  const r = await sendMessage(CATALOG_CHAT, ensureCatalogFolder(ws), claudeEnv(CATALOG_CHAT), text, { from: "engine" });
+  res.json({ sent: r.ok, reason: r.reason });
+}));
+/** A page button's message to the catalog's Claude ("Render the previews again", "Make my own copy"…). */
+app.post("/api/catalog/say", wrap(async (req, res) => {
+  const text = String(req.body.text ?? "").trim();
+  if (!text) return res.status(400).json({ error: "nothing to say" });
+  const ws = workspace();
+  const r = await sendMessage(CATALOG_CHAT, ensureCatalogFolder(ws), claudeEnv(CATALOG_CHAT), text, { from: "engine" });
+  res.json({ sent: r.ok, reason: r.reason });
+}));
+/** What the Catalog page shows (gallery, a style, a draft): the prompt hook passes it on to Claude. */
+app.post("/api/catalog/view", (req, res) => {
+  setCatalogView(req.body ?? {});
+  res.json({ ok: true });
+});
+app.get("/api/catalog/context", (req, res) => res.json({ text: catalogContext(workspace()) }));
+
+// ---- the Claude chat (live updates over /ws/chat/<project>); "_catalog" is the Catalog page's chat
+/** The chat's folder: a video project, or the catalog folder (made ready for its Claude). Answers 404/400 itself. */
+const chatDir = (req, res) => {
+  if (req.params.name !== CATALOG_CHAT) return project(req, res);
+  try {
+    return ensureCatalogFolder(workspace());
+  } catch (e) {
+    res.status(400).json({ error: e.message });
+    return null;
+  }
+};
+/** Connection files before Claude starts: a video gets the engine's tools and hook; the catalog got its own above. */
+const connectChat = (name, dir) => {
+  if (name !== CATALOG_CHAT) ensureIntegration(dir, name, ENGINE_URL);
+};
 app.post("/api/projects/:name/chat/send", wrap(async (req, res) => {
-  const dir = project(req, res);
+  const dir = chatDir(req, res);
   if (!dir) return;
   const text = String(req.body.text ?? "").trim();
   if (!text) return res.status(400).json({ error: "nothing to send" });
   if (text.length > 100_000) return res.status(400).json({ error: "That message is too long." });
-  if (chatState(req.params.name) === "stopped") ensureIntegration(dir, req.params.name, ENGINE_URL);
+  if (chatState(req.params.name) === "stopped") connectChat(req.params.name, dir);
   res.json(await sendMessage(req.params.name, dir, claudeEnv(req.params.name), text));
 }));
 app.post("/api/projects/:name/chat/answer", wrap((req, res) => {
-  if (project(req, res)) res.json(answerClaude(req.params.name, String(req.body.id ?? ""), req.body));
+  if (chatDir(req, res)) res.json(answerClaude(req.params.name, String(req.body.id ?? ""), req.body));
 }));
 app.post("/api/projects/:name/chat/stop", wrap(async (req, res) => {
-  if (project(req, res)) res.json(await interruptClaude(req.params.name));
+  if (chatDir(req, res)) res.json(await interruptClaude(req.params.name));
 }));
 app.post("/api/projects/:name/chat/mode", wrap(async (req, res) => {
-  const dir = project(req, res);
+  const dir = chatDir(req, res);
   if (dir) res.json(await setClaudeMode(req.params.name, dir, claudeEnv(req.params.name), String(req.body.mode ?? "")));
 }));
 app.post("/api/projects/:name/chat/new", wrap(async (req, res) => {
-  const dir = project(req, res);
+  const dir = chatDir(req, res);
   if (dir) res.json(await newConversation(req.params.name, dir, claudeEnv(req.params.name)));
 }));
 app.post("/api/projects/:name/chat/terminal", wrap(async (req, res) => {
-  const dir = project(req, res);
+  const dir = chatDir(req, res);
   if (!dir) return;
-  ensureIntegration(dir, req.params.name, ENGINE_URL);
-  let title = null;
+  connectChat(req.params.name, dir);
+  let title = req.params.name === CATALOG_CHAT ? "Catalog" : null;
   try {
-    title = JSON.parse(fs.readFileSync(path.join(dir, "project.json"), "utf8")).title;
+    title = title ?? JSON.parse(fs.readFileSync(path.join(dir, "project.json"), "utf8")).title;
   } catch {
     // the folder name will do
   }
@@ -614,19 +728,27 @@ const wss = new WebSocketServer({ noServer: true });
 server.on("upgrade", (req, socket, head) => {
   const m = /^\/ws\/chat\/([^/?]+)/.exec(req.url ?? "");
   const name = m ? decodeURIComponent(m[1]) : null;
-  const dir = name ? findProject(workspace(), name) : null;
-  if (!dir || !OWN_HOSTS.has(req.headers.host ?? "") || !OWN_ORIGINS.has(req.headers.origin ?? "")) {
+  const own = OWN_HOSTS.has(req.headers.host ?? "") && OWN_ORIGINS.has(req.headers.origin ?? "");
+  let dir = null;
+  if (own && name === CATALOG_CHAT) {
+    try {
+      dir = ensureCatalogFolder(workspace());
+    } catch {
+      // no workspace yet: refused below
+    }
+  } else if (own && name) dir = findProject(workspace(), name);
+  if (!dir) {
     socket.write("HTTP/1.1 403 Forbidden\r\n\r\n");
     return socket.destroy();
   }
   // the chat can be opened without the editor (Publish page): make sure Claude gets this engine's tools and hook
   try {
-    ensureIntegration(dir, name, ENGINE_URL);
+    connectChat(name, dir);
   } catch (e) {
     console.error(`${name}: ${e.message}`);
   }
-  // a new video: Claude starts the guided /make-video conversation when its page first opens
-  wss.handleUpgrade(req, socket, head, (ws) => attachChat(ws, name, dir, claudeEnv(name), { onFirstOpen: () => stageOf(dir) === "new" }));
+  // a new video: Claude starts the guided /make-video conversation when its page first opens (never the catalog)
+  wss.handleUpgrade(req, socket, head, (ws) => attachChat(ws, name, dir, claudeEnv(name), { onFirstOpen: () => name !== CATALOG_CHAT && stageOf(dir) === "new" }));
 });
 
 const shutdown = () => {

@@ -1,0 +1,88 @@
+{
+  "id": "divine-void",
+  "name": "Divine Void",
+  "kind": "visual",
+  "version": 1,
+  "status": "built-in",
+  "summary": "A deliberate void: near-black space pierced by one warm gold light, rising dust and embers, weightless drift, Roman-capital captions with one or two words in gold; bright bone-white frames carry crystalline bokeh instead; hard cuts on the beat and one divine flash on a hit.",
+  "tags": ["dark", "void", "gold", "ethereal", "angelcore", "cloud-trance", "glow", "music", "caps", "serif"],
+  "suits": ["music and lyric videos", "visualisers", "mood reels", "awe-and-wonder facts", "fancams", "intros and outros"],
+  "needs": { "footage": false, "3d": false },
+  "frame": { "width": 1080, "height": 1920 },
+  "palette": [
+    { "role": "background", "hex": "#05060a", "use": "the void: the ground of every dark frame; type colour in bright frames" },
+    { "role": "text", "hex": "#f4f1ea", "use": "bone white: captions in dark frames; the ground of bright frames" },
+    { "role": "muted", "hex": "#a39e94", "use": "small captions and labels (proposed)" },
+    { "role": "faint", "hex": "#2b2a2e", "use": "dim strokes, idle lines (proposed)" },
+    { "role": "accent", "hex": "#ffb24d", "use": "molten gold: the one warm light of a dark frame; one or two caption words; the bloom's outer colour" },
+    { "role": "accent2", "hex": "#ff7a18", "use": "ember orange: where gold ramps to at the edge of a light, rising embers" },
+    { "role": "bloomCore", "hex": "#ffffff", "use": "the centre of the divine flash and of a bloom" },
+    { "role": "violet", "hex": "#8a6bff", "use": "crystalline bokeh, bright frames only" },
+    { "role": "cyan", "hex": "#4fc3ff", "use": "crystalline bokeh, bright frames only" },
+    { "role": "magenta", "hex": "#ff6ad5", "use": "crystalline bokeh, bright frames only" },
+    { "role": "danger", "hex": "#ff2a2a", "use": "one glowing red on monochrome, for one or two shock cuts in a whole video" }
+  ],
+  "fonts": {
+    "display": { "family": "Cinzel", "source": "google", "weights": [500, 600] },
+    "body": { "family": "Jost", "source": "google", "weights": [300, 400] }
+  },
+  "type": {
+    "display": 84,
+    "title": 104,
+    "number": 260,
+    "small": 30,
+    "label": 30,
+    "body": 30,
+    "min": 28,
+    "leading": 1.12,
+    "tracking": 0.08,
+    "smallTracking": 0.32,
+    "case": "upper",
+    "emphasis": "one or two words in the accent (gold in dark frames)",
+    "charEm": 0.72,
+    "maxWords": 8
+  },
+  "layout": { "margin": 110, "safe": { "top": 230, "bottom": 330 }, "align": "center", "heroY": 760, "captionY": 1220 },
+  "motion": {
+    "recipes": {
+      "veil": { "kind": "ease", "curve": [0.22, 1, 0.36, 1], "duration": 1.6, "distance": 16 },
+      "shaft": { "kind": "ease", "curve": [0.25, 0.1, 0.25, 1], "duration": 2.0 },
+      "bloom": { "kind": "ease", "curve": [0.22, 1, 0.36, 1], "duration": 2.4 },
+      "drift": { "kind": "ease", "curve": [0.37, 0, 0.63, 1], "duration": 6.0, "distance": 24 },
+      "rise": { "kind": "ease", "curve": "linear", "duration": 6.0 },
+      "fadeBlack": { "kind": "ease", "curve": [0.45, 0, 0.55, 1], "duration": 2.0 },
+      "cut": { "kind": "ease", "curve": "linear", "duration": 0 }
+    },
+    "enter": "veil",
+    "exit": "fadeBlack",
+    "stagger": 0.14,
+    "hold": 1.5,
+    "push": 0.04,
+    "bpm": 138
+  },
+  "elements": {
+    "flash": { "frames": [0, 3, 12], "fps": 30, "blend": "screen" },
+    "shaft": { "width": [90, 420], "blur": 26, "opacity": 0.55 },
+    "dust": { "count": 46, "size": [1.4, 4.2], "rise": [90, 260], "glow": 6 },
+    "halo": { "width": 2, "opacity": 0.7, "glow": 18 },
+    "bloom": { "radius": 300, "opacity": 0.9 },
+    "clouds": { "count": 14, "blur": 40, "opacity": [0.08, 0.26] },
+    "bokeh": { "count": 22, "size": [24, 140], "blur": [2, 18], "opacity": [0.25, 0.7] },
+    "aberration": { "offset": 1.6, "opacity": 0.35 },
+    "captionGlow": 0.35
+  },
+  "finish": { "grain": 0.05, "vignette": 0.5, "glow": true, "bloom": true, "aberration": 1.6, "brightFrames": { "grain": 0, "vignette": 0 } },
+  "banned": [
+    "more than one accent per shot: gold in dark frames, iridescence in bright frames, never both in one shot",
+    "red more than once or twice in a whole video",
+    "crossfades or dissolves in tempo sections (verse, drop); a shot held past its musical phrase",
+    "grey, lifted blacks: the void stays near-black",
+    "type that keeps moving once it has landed (the world drifts, the words don't)",
+    "readable UI chrome, status bars or captions copied from references; mixed aspect ratios",
+    "busy frames: one light, one hero, the rest void",
+    "lowercase captions or a second display face"
+  ],
+  "sources": [
+    { "what": "ECC's taste skill: \"The Mood System\" (angelcore × cloud-trance, hyperpop accent), \"Editing Grammar\", \"Beat Math\", the shot plan and prompt presets", "where": "docs/research/styles/ecc-nullmotion-3b1b-web.md, \"Divine Void (angelcore x cloud-trance, hyperpop accent)\"", "licence": "MIT" }
+  ]
+}

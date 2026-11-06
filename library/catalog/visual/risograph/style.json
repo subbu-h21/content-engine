@@ -1,0 +1,99 @@
+{
+  "id": "risograph",
+  "name": "Risograph",
+  "kind": "visual",
+  "version": 1,
+  "status": "built-in",
+  "summary": "Stencil-printed animation: two or three translucent spot inks (Riso blue, yellow, fluorescent pink) overprinting on warm paper, stepped halftone bands instead of gradients, grainy streaky ink, plates that never quite line up, and heavy grotesque titles printed on one plate or double-hit on two.",
+  "tags": ["light", "print", "riso", "halftone", "fluorescent", "overprint", "grotesque", "zine"],
+  "suits": ["indie brands and zines", "lifestyle", "small figure in a big world", "something new arrives (one plate per turning point)", "two things overlapping or meeting"],
+  "needs": { "footage": false, "3d": false },
+  "frame": { "width": 1080, "height": 1920 },
+  "palette": [
+    { "role": "background", "hex": "#f6f1e6", "use": "warm off-white paper: knockouts, highlights, the caption strip (never pure white)" },
+    { "role": "text", "hex": "#0078bf", "use": "Riso blue, plate 1 (screen 15°): type, silhouettes, the one-ink plate" },
+    { "role": "accent", "hex": "#ff48b0", "use": "fluorescent pink, plate 3 (screen 75°): double-hits, emphasis, ground" },
+    { "role": "accent2", "hex": "#ffe800", "use": "yellow, plate 2 (screen 0°): sun, beams, tints" },
+    { "role": "muted", "hex": "#98c3d7", "use": "the 38% blue tint as a flat colour, for UI that can't halftone" },
+    { "role": "faint", "hex": "#c5d9de", "use": "the 20% blue tint as a flat colour" },
+    { "role": "teal", "hex": "#00838a", "use": "alternative two-ink set: teal" },
+    { "role": "orange", "hex": "#ff7477", "use": "alternative two-ink set: fluorescent orange" },
+    { "role": "federal", "hex": "#3d5588", "use": "alternative three-ink set: federal blue" },
+    { "role": "red", "hex": "#ff665e", "use": "alternative three-ink set: red" },
+    { "role": "sunflower", "hex": "#ffb511", "use": "alternative three-ink set: sunflower" }
+  ],
+  "inks": {
+    "blue": { "role": "text", "screen": 15 },
+    "yellow": { "role": "accent2", "screen": 0 },
+    "pink": { "role": "accent", "screen": 75 }
+  },
+  "fonts": {
+    "display": { "family": "Bricolage Grotesque", "source": "google", "weights": [800] },
+    "body": { "family": "Jost", "source": "google", "weights": [500, 600] }
+  },
+  "type": {
+    "display": 104,
+    "title": 260,
+    "number": 430,
+    "list": 60,
+    "body": 42,
+    "label": 38,
+    "kicker": 34,
+    "min": 26,
+    "leading": 1.0,
+    "charEm": 0.62,
+    "captionTracking": 0.5,
+    "case": "titles uppercase; headlines and captions sentence case",
+    "emphasis": "a second plate: the emphasised word prints on pink, or double-hits pink + blue 10 px apart",
+    "maxWords": 8
+  },
+  "layout": { "margin": 90, "safe": { "top": 230, "bottom": 330 }, "align": "center", "strip": { "padX": 22, "padY": 12, "radius": 6 } },
+  "elements": {
+    "period": 10,
+    "bands": [20, 26, 38, 62],
+    "solidFrom": 0.9,
+    "registration": 2.5,
+    "rotation": 0.03,
+    "kick": 11,
+    "kickHalfLife": 0.07,
+    "kickHz": 7,
+    "doubleHit": 10,
+    "halo": 4.5,
+    "grain": 2.2,
+    "pinhole": 0.55,
+    "density": [0.8, 0.14, 0.08],
+    "boil": 12
+  },
+  "motion": {
+    "recipes": {
+      "roller": { "kind": "ease", "curve": "linear", "duration": 0.45, "band": 26 },
+      "wipe": { "kind": "ease", "curve": "linear", "duration": 0.35 },
+      "grow": { "kind": "ease", "curve": "cubic-in-out", "duration": 0.6 },
+      "drift": { "kind": "ease", "curve": "sine-in-out", "duration": 2.0, "distance": 25 }
+    },
+    "enter": "roller",
+    "exit": "grow",
+    "stagger": 0.35,
+    "hold": 1.8
+  },
+  "finish": { "grain": 0, "vignette": 0, "glow": false },
+  "banned": [
+    "flat vector art with a noise overlay: every colour comes from the plates",
+    "CMYK pop-art halftone: no process colours, no keylines",
+    "screen-print poster looks: riso ink is translucent and grainy",
+    "the RISO brand, logo or machine trade dress (ink names are colour references only)",
+    "more than 3 inks; three halftoned plates in one area",
+    "gradients other than stepped halftone",
+    "registration jitter or streaks that change every frame",
+    "cross-dissolves, soft digital wipes and fading titles",
+    "saturated dots on skin; pure white paper",
+    "copying a named illustrator's characters, compositions or palettes"
+  ],
+  "sources": [
+    {
+      "what": "Lemo-Opuscar style No. 12 \"Risograph\" (Risograph Print): STYLE.md, DEMO.md, style.json",
+      "where": "github.com/lemomo-ai/lemo-opuscar styles/risograph; research notes docs/research/styles/five-skills.md, \"Risograph Print\"",
+      "licence": "MIT (code and docs); demo films and stills CC BY 4.0. No code copied; plates rebuilt as SVG patterns and filters. Bricolage Grotesque and Jost are SIL OFL."
+    }
+  ]
+}

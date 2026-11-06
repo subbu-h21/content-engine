@@ -1,0 +1,103 @@
+{
+  "id": "paper-form",
+  "name": "Paper Form",
+  "kind": "visual",
+  "version": 1,
+  "status": "built-in",
+  "summary": "A deadpan bureaucratic paper form: typewritten as it is spoken, ticked and struck with an orange marker, and slammed with a distressed rubber stamp.",
+  "tags": ["light", "paper", "deadpan", "typewriter", "mono", "orange", "humour", "form"],
+  "suits": ["comparisons (old way vs new way)", "checklists", "verdicts", "process charts", "FAQs", "humour", "a light breather inside a dark video"],
+  "needs": { "footage": false, "3d": false },
+  "frame": { "width": 1080, "height": 1920 },
+  "palette": [
+    { "role": "background", "hex": "#eae5dc", "use": "paper: bone × 0.965 in linear light, darkened up to ~6.5% by fibres" },
+    { "role": "surface", "hex": "#171716", "use": "the header band (ink at 94% over paper)" },
+    { "role": "text", "hex": "#0a0a0b", "use": "ink: type, box outlines, rules, arrows" },
+    { "role": "muted", "hex": "#5e5b57", "use": "graphite: box notes, fine print, the printed grid (at 3.5%)" },
+    { "role": "faint", "hex": "#9c978f", "use": "ash: empty checkboxes, dotted answer lines, unchosen options (proposed)" },
+    { "role": "accent", "hex": "#ff4d12", "use": "signal: typing heat, ticks, crosses, the marker strike, the stamp" },
+    { "role": "accent2", "hex": "#c21d0b", "use": "blood: proposed-row numbers, chosen answers, totals on the good row" },
+    { "role": "bone", "hex": "#eee9df", "use": "header text on the ink band" }
+  ],
+  "fonts": {
+    "display": { "family": "Archivo", "source": "google", "weights": [900], "variable": { "wdth": [62, 125] } },
+    "body": { "family": "IBM Plex Mono", "source": "google", "weights": [400, 500, 600] },
+    "mono": { "family": "IBM Plex Mono", "source": "google", "weights": [400, 500, 600] }
+  },
+  "type": {
+    "display": 76,
+    "headerWidth": 112.5,
+    "stamp": 150,
+    "answer": 44,
+    "body": 40,
+    "box": 32,
+    "section": 26,
+    "option": 30,
+    "label": 26,
+    "note": 24,
+    "fine": 24,
+    "min": 24,
+    "leading": 1.25,
+    "jitter": 0.8,
+    "sectionTracking": 0.18,
+    "optionTracking": 0.14,
+    "case": "spaced caps for labels, sentence case for typed answers",
+    "emphasis": "a signal tick, a blood answer, or the stamp",
+    "maxWords": 14
+  },
+  "layout": {
+    "margin": 80,
+    "safe": { "top": 230, "bottom": 330 },
+    "align": "left",
+    "band": { "top": 236, "height": 128 },
+    "rule": 1.6,
+    "grid": 24,
+    "gridAlpha": 0.035,
+    "checkbox": 38
+  },
+  "elements": {
+    "box": 1.6,
+    "boxStrong": 2.4,
+    "arrow": 2.2,
+    "arrowHead": [14, 8],
+    "marker": 12,
+    "tick": 5,
+    "stamp": { "outer": 12, "inner": 4, "speckles": 3600, "streaks": 34, "opacity": 0.92, "rotate": -0.07, "lineSpacing": 9 },
+    "fibre": { "x": 0.004, "y": 0.05, "dark": 0.035 },
+    "cloud": { "scale": 0.0025, "dark": 0.03 }
+  },
+  "motion": {
+    "recipes": {
+      "box": { "kind": "ease", "curve": "linear", "duration": 0.2 },
+      "type": { "kind": "ease", "curve": "linear", "duration": 0.85 },
+      "cool": { "kind": "ease", "curve": "linear", "duration": 0.35 },
+      "arrow": { "kind": "ease", "curve": [0.45, 0, 0.55, 1], "duration": 0.16, "head": 0.07 },
+      "strike": { "kind": "ease", "curve": [0.45, 0, 0.55, 1], "duration": 0.3 },
+      "tick": { "kind": "ease", "curve": [0.45, 0, 0.55, 1], "duration": 0.14 },
+      "stamp": { "kind": "ease", "curve": "expo-out", "duration": 0.12, "from": 1.6, "opacityIn": 0.05 },
+      "hit": { "kind": "ease", "curve": "linear", "duration": 0.07, "zoom": 0.025, "shake": 7, "halfLife": 0.07 },
+      "camera": { "kind": "ease", "curve": [0.65, 0, 0.35, 1], "duration": 0.6, "driftX": 6, "driftY": 5, "roll": 0.004, "hz": 0.6 }
+    },
+    "enter": "type",
+    "exit": "cut",
+    "stagger": 0.07,
+    "hold": 0.6
+  },
+  "finish": { "grain": 0.04, "vignette": 0.28, "glow": false, "bloom": 0.15, "halation": 0.05, "aberration": 0.6 },
+  "banned": [
+    "a light-blue grid or ruled lines (off-palette): the printed grid is graphite at 3.5%",
+    "a dark halo or shadow behind captions on paper",
+    "rounded friendly UI: boxes are square hairlines, the form is bureaucratic",
+    "more than one stamp per form",
+    "colour other than ink, graphite, ash, signal and blood on the page",
+    "handwriting fonts or emoji ticks: ticks and crosses are drawn strokes",
+    "a cheerful tone: the form is deadpan; the joke is in the content"
+  ],
+  "sources": [
+    {
+      "what": "Motion as Code kit, the bone-paper forms (\"FORM 2-B\" process chart and the \"FORM 9\" exit questionnaire)",
+      "where": "D:\\code_files\\resources to make content engine\\aman thakur's resources\\Claude workflow guide\\Motion_as_kit.zip (app/src/scenes/pipeline.ts, verdict.ts, engine palette/post/hud); research notes docs/research/styles/local-guides.md, \"Motion as Code — Bone Paper Form\"",
+      "licence": "MIT (pdoom-video engine, © 2026 Giacomo Magnanini); no code copied, the look is rebuilt; Archivo and IBM Plex Mono are SIL OFL"
+    }
+  ]
+}

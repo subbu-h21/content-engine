@@ -49,9 +49,27 @@ folder name stays). Ask a few questions at a time, never a long form. Settle, in
 3. **Script**: write `script.json`. One cue per sentence; calm narration runs about **2.8 words per second**, and
    with the lead-in, gaps and pauses a 30 s video holds about 65–75 words; `pause` (seconds) adds silence after a line for emphasis. Read the whole script back
    in chat once it's drafted and adjust together.
-4. **Look**: without references, propose the engine's default look (ink background, one bone text colour, Bodoni MT
-   headlines with italics for emphasis, Inter labels on quiet pills, ember/ice accents only in diagrams; see
-   `src/lib/theme.ts`). Write `style.md` (sections below).
+4. **Look**: the look comes from the engine's style catalog. The user browses it on the Catalog page; `ce catalog list`
+   lists it. The styles are in `D:\code_files\content-engine\library\catalog\visual\<id>\` and
+   `<workspace>\catalog\visual\<id>\`; each has `STYLE.md` and `preview/sheet.jpg`.
+   - **The video already has a style** when `src/style/STYLE.md` exists (`project.json` → `style`; it came from the
+     video's channel, and the board's Look card shows it). Read `src/style/STYLE.md` and the `visual-taste` skill, and
+     keep to them.
+     - If `project.json` → `style.locked` is true, the channel's look is locked: don't change the look. If the user
+       asks, say it's locked in Settings → Channels.
+   - **No style yet, or the user wants a different look** (and it isn't locked):
+     - propose 2–3 catalog styles that fit the idea: read their `STYLE.md` "In one line" and look at their
+       `preview/sheet.jpg`;
+     - or let the user pick one with **Change** on the Look card;
+     - apply it with `ce catalog use <id>`. It copies the style into `src/style/` (STYLE.md, style.json, scenes),
+       `src/kit/`, `public/style/fonts/` and the board's cover.
+   - **A new look from the user's files, a reference video or a description:** make it a catalog style with the
+     `make-style` skill (in `<workspace>\catalog\visual\<id>\`, status `experimental`), then `ce catalog use <id>`.
+   - **Without any catalog style** the template's default look applies (Editorial Neuro: `src/lib/theme.ts` and
+     `src/components`).
+   - **Write `style.md`** (sections below), the board's Look text. Start with `Catalog style: <name> (<id>)`, then write
+     what this video takes from the style and what is its own: which accent means what here, which scenes are 3D. Add
+     to the style's rules; never contradict them.
 5. **Sound**: narrator voice (`project.json` → `voice.voice`, e.g. cedar, marin, alloy, ash, coral, sage, verse —
    offer a sample with `ce pipeline . vo --sample "<a line from the script>"`, about $0.003, the board plays it) and the
    voice direction (`voice.style`); music mood → `music.prompt` (instrumental, tempo, instruments, structure, "sits
@@ -94,6 +112,14 @@ After the OK set the stage to `building` and give a one-line update after each s
    `src/scenes/index.ts`, schema in `src/scenes/schema.ts`, defaults inside `<Composition id="Reel" defaultProps={{…}}>`
    in `src/Root.tsx` (an inline literal; never a variable). Remove the example `S01Intro` scene. Key every animation to
    `cue(scene, id)` + offsets; name a headline's props after its cue (`scenes.s03.response` for cue `response`).
+   **With a catalog style** (`src/style/`):
+   - set the theme in `src/Root.tsx` from `src/style/style.json`:
+     - colours by palette role: ink = background, bone = text, ash = muted, dim = faint, ember = accent, ice = accent2;
+     - displayFont and bodyFont = its display and body fonts, with fallbacks;
+   - load its fonts the way `src/style/scenes/fonts.ts` does;
+   - build each scene from the style's pieces in `src/style/scenes/` (parts and sample scenes are the starting
+     point: copy and adapt them into `src/scenes/`), reading every value from `style.json`;
+   - the template's `src/components` are Editorial Neuro's: use them only where they fit the style.
 4. **3D** (only scenes the plan marks 3D): builders from the engine's library — copy
    `D:\code_files\content-engine\library\blender` to `blender/lib` (brain, phone; read its README) or write new ones
    there. One shot script per plate in `blender/` (see the library README for the header), timed from
@@ -158,6 +184,8 @@ Stop and ask if a login, checkpoint or security prompt appears: never enter pass
 
 ## Rules
 
+- **The look:** follow the `visual-taste` skill. The video's style (`src/style/STYLE.md`) wins over it, and the user's
+  words win over both.
 - Never spend money (voice, music) or start long renders before the checkpoint OK, except a voice sample.
 - Newest user feedback wins; if a request changes something already approved, say what it affects.
 - Keep `brief/status.json` truthful: the user reads it on the board.

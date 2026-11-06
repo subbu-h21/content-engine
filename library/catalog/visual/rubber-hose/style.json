@@ -1,0 +1,102 @@
+{
+  "id": "rubber-hose",
+  "name": "Rubber Hose",
+  "kind": "visual",
+  "version": 1,
+  "status": "built-in",
+  "summary": "A black-and-white hand-inked early-sound-era cartoon: every object is alive and breathes on the beat, noodle limbs, white gloves and pie eyes, a fat script title hopping over a rotating sunburst, subtitle plates with double rules, projected as a worn print with gate weave, scratches and dust.",
+  "tags": ["black and white", "cartoon", "retro", "1930s", "ink", "film print", "playful", "mascot"],
+  "suits": ["food and drink", "retro ads", "kids", "mascot intros", "jingles and slogans", "a place comes alive"],
+  "needs": { "footage": false, "3d": false },
+  "frame": { "width": 1080, "height": 1920 },
+  "palette": [
+    { "role": "background", "hex": "#c8c5bc", "use": "light grey: the backdrop's main wash and the form-shadow band" },
+    { "role": "surface", "hex": "#f1eee6", "use": "paper: the lightest background grey" },
+    { "role": "text", "hex": "#fcfbf7", "use": "character white: character fills, plate type, title faces" },
+    { "role": "ink", "hex": "#0e0d0c", "use": "outlines, pupils, shoes, hose limbs" },
+    { "role": "muted", "hex": "#9a978f", "use": "mid grey: walls, sunburst wedges" },
+    { "role": "faint", "hex": "#6b6963", "use": "dark-mid: hills, furniture" },
+    { "role": "dark", "hex": "#3b3a37", "use": "dark grey: cards, deep shade" },
+    { "role": "accent", "hex": "#fcfbf7", "use": "no hue anywhere: the accent is character white" },
+    { "role": "accent2", "hex": "#0e0d0c", "use": "no hue anywhere: the second accent is ink" },
+    { "role": "plate", "hex": "#0c0b0a", "use": "the subtitle plate (at 92%)" },
+    { "role": "bezel", "hex": "#000000", "use": "outside the gate" }
+  ],
+  "fonts": {
+    "display": { "family": "Shrikhand", "source": "google", "weights": [400] },
+    "body": { "family": "IM Fell English SC", "source": "google", "weights": [400] },
+    "sub": { "family": "Limelight", "source": "google", "weights": [400] }
+  },
+  "type": {
+    "display": 150,
+    "title": 216,
+    "number": 230,
+    "body": 50,
+    "sub": 62,
+    "label": 44,
+    "min": 40,
+    "leading": 1.05,
+    "tracking": 0,
+    "case": "script title; small caps plates; caps sub-lines",
+    "emphasis": "hopping letters and the band hit, never colour",
+    "outline": 0.14,
+    "maxWords": 8
+  },
+  "layout": {
+    "margin": 72,
+    "safe": { "top": 230, "bottom": 330 },
+    "align": "center",
+    "gate": { "inset": 14, "radius": 28 },
+    "plateY": 1480
+  },
+  "elements": {
+    "ink": 6,
+    "limb": 13,
+    "boil": 2.4,
+    "bpm": 144,
+    "breath": 0.06,
+    "rays": 16,
+    "wedges": 18
+  },
+  "motion": {
+    "recipes": {
+      "pop": { "kind": "spring", "damping": 9, "stiffness": 170, "mass": 1 },
+      "stretch": { "kind": "ease", "curve": "expo-out", "duration": 0.3 },
+      "hop": { "kind": "ease", "curve": "cubic-out", "duration": 0.2 },
+      "iris": { "kind": "ease", "curve": "cubic-in-out", "duration": 0.9 },
+      "shade": { "kind": "ease", "curve": "cubic-in-out", "duration": 0.5 }
+    },
+    "twos": 12,
+    "enter": "pop",
+    "exit": "iris",
+    "stagger": 0.08,
+    "hold": 1.8
+  },
+  "finish": {
+    "grain": 0.05,
+    "vignette": 0.62,
+    "glow": false,
+    "contrast": 1.14,
+    "blur": 0.55,
+    "weave": 1.2,
+    "flicker": 0.04,
+    "scratches": 3,
+    "dust": 8
+  },
+  "banned": [
+    "colour or hue of any kind, even in film damage",
+    "gradients in shading, joints, rendered shading: this isn't a retro filter on modern animation",
+    "1950s limited animation with graphic backgrounds; a silent film; dissolves",
+    "far-wide shots for gags: faces must read",
+    "any existing cartoon character, name, silhouette, design, melody or logo; a cup-headed figure on a human body",
+    "period racial caricature",
+    "flat grey frames; flashing subtitles; backgrounds that boil"
+  ],
+  "sources": [
+    {
+      "what": "Lemo-Opuscar style No. 26 \"1930s Rubber Hose Cartoon\" (STYLE.md, DEMO.md, style.json), via research notes",
+      "where": "github.com/lemomo-ai/lemo-opuscar styles/rubber-hose; docs/research/styles/five-skills.md, section \"1930s Rubber Hose Cartoon\"",
+      "licence": "MIT (code and docs); demo film and stills CC BY 4.0 (LemoLab). No code copied; the characters are invented. Shrikhand, Limelight, IM Fell English SC: SIL OFL"
+    }
+  ]
+}

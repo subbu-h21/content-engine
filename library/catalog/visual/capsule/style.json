@@ -1,0 +1,98 @@
+{
+  "id": "capsule",
+  "name": "Capsule",
+  "kind": "visual",
+  "version": 1,
+  "status": "built-in",
+  "summary": "A friendly pill editorial, Memphis meets ice-cream parlour: every container is a 2 px-outlined capsule that stretches out of a dot on sun-bleached cream, nine candy accents, Bodoni Moda headlines that blur into focus, confetti pills, soft glows and grain.",
+  "tags": ["light", "cream", "candy", "pastel", "friendly", "pills", "serif", "editorial", "playful"],
+  "suits": ["lifestyle and consumer brands", "friendly explainers", "community and creator content"],
+  "needs": { "footage": false, "3d": false },
+  "frame": { "width": 1080, "height": 1920 },
+  "palette": [
+    { "role": "background", "hex": "#f5f5f0", "use": "cream: the ground" },
+    { "role": "surface", "hex": "#ffffff", "use": "white: content pill fills" },
+    { "role": "text", "hex": "#1a1a1a", "use": "ink: all type" },
+    { "role": "muted", "hex": "#1a1a1a", "use": "ink again: there's no grey type" },
+    { "role": "faint", "hex": "#1e1e1e", "use": "outline: the universal 2 px stroke" },
+    { "role": "accent", "hex": "#e85d4e", "use": "coral: the accent line, the active caption word; a candy" },
+    { "role": "accent2", "hex": "#8bb4f7", "use": "sky: a candy; the highlight pill" },
+    { "role": "lime", "hex": "#c4d94e", "use": "candy; the orbit centre; the highlight pill" },
+    { "role": "lavender", "hex": "#c5b5e0", "use": "candy" },
+    { "role": "violet", "hex": "#a06ce8", "use": "candy; stat numerals; the closing italic word" },
+    { "role": "yellow", "hex": "#f2d160", "use": "the title pill" },
+    { "role": "peach", "hex": "#f5b895", "use": "candy" },
+    { "role": "mint", "hex": "#a8e6cf", "use": "candy" }
+  ],
+  "fonts": {
+    "display": { "family": "Bodoni Moda", "source": "google", "weights": [600, 700, 800], "italic": true },
+    "body": { "family": "Space Grotesk", "source": "google", "weights": [400, 500, 600] }
+  },
+  "type": {
+    "display": 226,
+    "closing": 186,
+    "headline": 122,
+    "stat": 300,
+    "card": 58,
+    "body": 38,
+    "pill": 28,
+    "pillTracking": 0.12,
+    "min": 24,
+    "leading": 0.92,
+    "tracking": -0.03,
+    "case": "sentence case Bodoni, never uppercase; uppercase pill text",
+    "emphasis": "an italic key word, or a phrase wrapped in a lime or sky highlight pill; never bold, never a coloured headline",
+    "maxWords": 8
+  },
+  "layout": { "margin": 84, "safe": { "top": 230, "bottom": 330 }, "align": "center" },
+  "elements": {
+    "stroke": 2.4,
+    "shadowAlpha": 0.08,
+    "shadow": { "node": 4, "stat": 6, "card": 8, "frame": 12 },
+    "cardRadius": 40,
+    "accentLine": { "w": 60, "h": 4, "closer": 80 },
+    "track": 56,
+    "glow": { "alphaMin": 0.06, "alphaMax": 0.15 }
+  },
+  "motion": {
+    "recipes": {
+      "stretch": { "kind": "spring", "damping": 15, "stiffness": 190, "mass": 1 },
+      "scatter": { "kind": "spring", "damping": 13, "stiffness": 130, "mass": 1 },
+      "focus": { "kind": "ease", "curve": "quart-out", "duration": 0.13, "blur": 6 },
+      "pop": { "kind": "ease", "curve": [0.32, 1.9, 0.6, 1], "duration": 0.18, "from": 0.92 },
+      "line": { "kind": "ease", "curve": "expo-out", "duration": 0.5 },
+      "glow": { "kind": "ease", "curve": "sine-in-out", "duration": 1.0 },
+      "fill": { "kind": "spring", "damping": 17, "stiffness": 120, "mass": 1 },
+      "out": { "kind": "ease", "curve": "quart-in", "duration": 0.26 }
+    },
+    "enter": "stretch",
+    "exit": "out",
+    "stagger": 0.067,
+    "pillStagger": 0.05,
+    "hold": 1.0,
+    "orbitSpeed": 10
+  },
+  "finish": { "grain": 0.04, "vignette": 0, "glow": true },
+  "banned": [
+    "sharp-cornered text containers; unstroked pills",
+    "coloured or uppercase Bodoni headlines (a highlight pill or one italic key word in candy is the exception)",
+    "blurred or recoloured shadows; a tenth accent",
+    "shadows on decorative pills; edge-to-edge headlines",
+    "two candies of one family side by side",
+    "three cards in a row: rows of capsules stack",
+    "floating pills that keep bobbing: they settle and stay",
+    "text on a confetti pill"
+  ],
+  "sources": [
+    {
+      "what": "HyperFrames frame preset Capsule: palette, faces, type ramp, elements, frames, banned list, caption skin",
+      "where": "github.com/heygen-com/hyperframes skills/hyperframes/assets/frame-presets/capsule; research notes docs/research/styles/hyperframes.md, \"Capsule\"",
+      "licence": "Apache-2.0. Tokens and rules re-expressed; no code copied. Bodoni Moda and Space Grotesk are SIL OFL."
+    },
+    {
+      "what": "HyperFrames taste rules T36-T60 (motion)",
+      "where": "docs/research/styles/hyperframes.md, \"Taste rules\"",
+      "licence": "Apache-2.0"
+    }
+  ]
+}

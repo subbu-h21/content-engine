@@ -1,0 +1,25 @@
+{
+  "topic": "Why the sky is blue",
+  "kicker": "Daily insight",
+  "chapter": "The science",
+  "title": "Why is the sky *blue?*",
+  "headline": ["Sunlight carries", "every colour *at once.*"],
+  "body": "Air molecules scatter short blue waves far more than long red ones.",
+  "diagram": {
+    "object": "Air molecule",
+    "label": "Scatters blue light",
+    "in": "Sunlight",
+    "out": "Blue, in every direction"
+  },
+  "number": {
+    "value": 5.9,
+    "decimals": 1,
+    "unit": "×",
+    "caption": "more scattering for blue (450 nm) than red (700 nm)"
+  },
+  "list": ["Sunlight enters the air", "Blue scatters everywhere", "Blue reaches you from all sides"],
+  "end": {
+    "line": "Look up *again.*",
+    "cta": "One fact a day"
+  }
+}

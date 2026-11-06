@@ -1,0 +1,111 @@
+{
+  "id": "clean-launch",
+  "name": "Clean Launch",
+  "kind": "visual",
+  "version": 1,
+  "status": "built-in",
+  "summary": "Swiss-clean launch film: near-black ink on pure white, one red accent that means \"now\", a red now-dot that travels through every shot, big tight statements of five words or fewer, every move on a 120 BPM grid.",
+  "tags": ["clean", "light", "white", "swiss", "sans", "launch", "product", "red accent", "precise"],
+  "suits": ["product launches", "teasers", "feature videos", "logo stings", "UI walkthroughs", "short punchy facts"],
+  "needs": { "footage": false, "3d": false },
+  "frame": { "width": 1080, "height": 1920 },
+  "palette": [
+    { "role": "background", "hex": "#ffffff", "use": "paper: the ground of every frame" },
+    { "role": "surface", "hex": "#f4f5f7", "use": "mist: windows and secondary surfaces" },
+    { "role": "text", "hex": "#0b0b0c", "use": "ink: every statement, UI text, strokes; dark surfaces" },
+    { "role": "muted", "hex": "#8a8d96", "use": "descriptors and secondary text" },
+    { "role": "faint", "hex": "#e3e4e8", "use": "line: hairlines, borders, idle tracks" },
+    { "role": "accent", "hex": "#ec2a3a", "use": "red: only for \"now\" or \"just happened\" (the now-dot, a thing arriving); at most 8% of the pixels; floods the frame once per film" }
+  ],
+  "fonts": {
+    "display": { "family": "Schibsted Grotesk", "source": "google", "weights": [600] },
+    "body": { "family": "Schibsted Grotesk", "source": "google", "weights": [500] }
+  },
+  "type": {
+    "display": 140,
+    "title": 112,
+    "hero": 290,
+    "number": 360,
+    "descriptor": 44,
+    "ui": 32,
+    "label": 32,
+    "body": 44,
+    "min": 32,
+    "leading": 0.98,
+    "tracking": -0.05,
+    "heroTracking": -0.055,
+    "descriptorTracking": -0.01,
+    "uiTracking": -0.005,
+    "emphasisScale": 1.6,
+    "charEm": 0.52,
+    "case": "sentence",
+    "emphasis": "size (1.5–1.7× inside a line, 2–5× for a hero word); the red only while a thing is arriving",
+    "maxWordsPerLine": 5,
+    "maxLines": 2
+  },
+  "layout": {
+    "margin": 96,
+    "safe": { "top": 230, "bottom": 330 },
+    "align": "left",
+    "mass": { "top": 270, "bottom": 1500 },
+    "window": { "width": 0.84, "radius": 28, "pad": 48 },
+    "dot": 44
+  },
+  "motion": {
+    "recipes": {
+      "out": { "kind": "ease", "curve": [0.16, 1, 0.3, 1], "duration": 0.43, "distance": 60 },
+      "outSoft": { "kind": "ease", "curve": [0.22, 1, 0.36, 1], "duration": 0.51, "distance": 120 },
+      "in": { "kind": "ease", "curve": [0.7, 0, 0.84, 0], "duration": 0.32 },
+      "exit": { "kind": "ease", "curve": [0.55, 0.055, 0.675, 0.19], "duration": 0.23 },
+      "inOut": { "kind": "ease", "curve": [0.87, 0, 0.13, 1], "duration": 0.6 },
+      "smooth": { "kind": "ease", "curve": [0.65, 0, 0.35, 1], "duration": 0.2 },
+      "ui": { "kind": "ease", "curve": [0.4, 0, 0.2, 1], "duration": 0.5 },
+      "cam": { "kind": "ease", "curve": [0.48, 0.1, 0, 0.9], "duration": 1.2 },
+      "glide": { "kind": "ease", "curve": [0.47, 0.2, 0.15, 1], "duration": 0.7 },
+      "iris": { "kind": "ease", "curve": [0.7, 0, 0.84, 0], "duration": 0.5 },
+      "relax": { "kind": "ease", "curve": [0.65, 0, 0.35, 1], "duration": 0.4 },
+      "blur": { "kind": "ease", "curve": "linear", "duration": 0.1, "distance": 7 },
+      "snap": { "kind": "spring", "damping": 18, "stiffness": 260, "mass": 0.7 },
+      "pop": { "kind": "spring", "damping": 11, "stiffness": 180, "mass": 0.6 },
+      "soft": { "kind": "spring", "damping": 26, "stiffness": 120, "mass": 1 },
+      "heavy": { "kind": "spring", "damping": 30, "stiffness": 90, "mass": 1.4 }
+    },
+    "enter": "out",
+    "exit": "exit",
+    "bpm": 120,
+    "beat": 0.5,
+    "batch": 0.03,
+    "durationBase": 0.35,
+    "durationPerPx": 0.00135,
+    "hold": 0.6,
+    "holdPerWord": 0.1,
+    "creep": 0.06
+  },
+  "elements": {
+    "shadow": "0 30px 90px rgba(0,0,0,.16)",
+    "hairline": 1,
+    "darkTopHairline": 0.1,
+    "track": { "height": 8, "radius": 4 },
+    "bar": { "height": 18, "radius": 9 },
+    "handle": 40,
+    "stroke": 6,
+    "iris": { "from": 2240, "to": 28 },
+    "accentMax": 0.08
+  },
+  "finish": { "grain": 0, "vignette": 0, "glow": false },
+  "banned": [
+    "eyebrow or kicker labels, stacked taglines, \"Introducing…\", text walls, filler, decorative mono captions, fake metrics",
+    "more than 5 words on a line or 2 lines in a shot; a feature name as a headline; stock phrases (seamless, unlock, AI-powered, streamline)",
+    "serif type, italic or faked oblique",
+    "orange, amber, beige, cream, tan or sand as accent, paper or glow; purple, violet or indigo; multi-hue or purple-to-blue gradients",
+    "neon, glow, bloom, halos, glassmorphism",
+    "emoji, stock icons, AI sparkles, particles, confetti, lens flares, code rain",
+    "the red on anything that isn't happening now; red over 8% of the pixels; more than one red flood per film",
+    "bouncy overshoot except on true landings (1–7%, at most twice per film)",
+    "transition presets: glitch or RGB split, light leak, film burn, swirl, ripple, dreamy zoom, flash through white, page burn; crossfades as the default or through black",
+    "linear easing except for drift; more than about 3 easing characters in one film"
+  ],
+  "sources": [
+    { "what": "Cinetic, the \"tessel\" skill bundle (SKILL.md, the Tessel worked example, README, treatment template, critic prompts, references/transitions.md)", "where": "docs/research/styles/ecc-nullmotion-3b1b-web.md, \"Cinetic Clean Launch (the tessel bundle)\"; https://ai-x-leaders.com/en/prompt/video/revid-2104148233106723099/ and https://github.com/Leonxlnx/cinetic", "licence": "MIT" }
+  ]
+}

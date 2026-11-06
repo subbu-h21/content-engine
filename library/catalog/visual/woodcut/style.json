@@ -1,0 +1,97 @@
+{
+  "id": "woodcut",
+  "name": "Woodcut",
+  "kind": "visual",
+  "version": 1,
+  "status": "built-in",
+  "summary": "A relief print that carves itself: every frame is a black wood block inside a warm paper margin, and light exists only where a gouge has cut it away; sweeps, ray bursts and form-following hatching are cut stroke by stroke, titles are carved out of black panels, captions are letterpress in the margin, and one colour plate (Prussian blue here) prints only inside the cuts of the one thing that matters.",
+  "tags": ["light", "dark", "print", "woodcut", "relief", "black and white", "folk", "serif"],
+  "suits": ["folk tales", "craft and heritage brands", "book trailers", "labour and perseverance stories", "wordless-novel sequences", "a line becomes a world"],
+  "needs": { "footage": false, "3d": false },
+  "frame": { "width": 1080, "height": 1920 },
+  "palette": [
+    { "role": "background", "hex": "#efe8d8", "use": "warm laid paper: carved whites and the margin" },
+    { "role": "text", "hex": "#111111", "use": "ink: the uncut block and the letterpress captions" },
+    { "role": "accent", "hex": "#3a76ad", "use": "the colour plate of this film (cold Prussian blue): printed only inside cuts, for the one thing that matters (the blue light) (proposed hex)" },
+    { "role": "accent2", "hex": "#c8502a", "use": "the source's copper plate, for heat stories (molten metal, fire); a film uses one plate, never both" },
+    { "role": "surface", "hex": "#d8c29c", "use": "the wood block itself, only in shots that show the block" },
+    { "role": "muted", "hex": "#5a5348", "use": "small letterpress credits in the margin (ink thinned) (proposed)" },
+    { "role": "faint", "hex": "#d9d0bd", "use": "the paper's laid lines and fibres (proposed)" }
+  ],
+  "fonts": {
+    "display": { "family": "IM Fell English SC", "source": "google", "weights": [400] },
+    "body": { "family": "IM Fell English", "source": "google", "weights": [400], "italic": true }
+  },
+  "type": {
+    "display": 92,
+    "title": 170,
+    "number": 400,
+    "body": 60,
+    "caption": 52,
+    "label": 44,
+    "kicker": 36,
+    "min": 30,
+    "leading": 1.12,
+    "charEm": 0.58,
+    "case": "carved titles in small capitals; captions in sentence case",
+    "emphasis": "italic in captions; in the block, the colour plate printed in the carved letters",
+    "maxWords": 10
+  },
+  "layout": {
+    "margin": 54,
+    "safe": { "top": 230, "bottom": 330 },
+    "align": "center",
+    "block": [54, 150, 1026, 1300],
+    "captionY": 1440
+  },
+  "elements": {
+    "knife": [1.2, 2],
+    "vgouge": [2, 8],
+    "ugouge": [10, 22],
+    "stab": [3, 8],
+    "cutLength": [30, 220],
+    "rays": { "count": 36, "width": 10 },
+    "skySpacing": 15,
+    "halo": 2.4,
+    "speed": 1300,
+    "strokeTime": [0.08, 0.35],
+    "colourShift": 3,
+    "ink": 0.06,
+    "burr": 1.6,
+    "jolt": [[5, -3], [-2, 1]]
+  },
+  "motion": {
+    "recipes": {
+      "carve": { "kind": "ease", "curve": "linear", "duration": 0.25 },
+      "letter": { "kind": "ease", "curve": "linear", "duration": 0.06 },
+      "ink": { "kind": "ease", "curve": "linear", "duration": 0.1 },
+      "inkOut": { "kind": "ease", "curve": "linear", "duration": 0.15 },
+      "strike": { "kind": "ease", "curve": "expo-in", "duration": 0.083 },
+      "peel": { "kind": "ease", "curve": [0.6, 0, 0.9, 0.6], "duration": 0.9 },
+      "push": { "kind": "ease", "curve": "sine-in-out", "duration": 4.0, "scale": 1.13 }
+    },
+    "enter": "carve",
+    "exit": "peel",
+    "stagger": 0.06,
+    "hold": 1.8
+  },
+  "finish": { "grain": 0.03, "vignette": 0, "glow": false },
+  "banned": [
+    "copperplate engraving: no swelling burin lines on white, no crosshatch built up from a white ground",
+    "linocut poster art with flat colour areas",
+    "a photo run through a threshold filter: cuts follow form",
+    "fades in, dissolves: things are carved, prints are pulled",
+    "colour sitting on black; a decorative colour plate; two colour plates",
+    "hatching on every surface (it reads as fur or rain); grey on grey",
+    "text over the picture (only carved out of an uncut black panel, or letterpress in the margin)",
+    "black faces with white cuts at small sizes",
+    "copying named printmakers' plates, figures, borders or titles"
+  ],
+  "sources": [
+    {
+      "what": "Lemo-Opuscar style No. 15 \"Woodcut\" (Woodcut Print, a relief print that carves itself): STYLE.md, DEMO.md, style.json",
+      "where": "github.com/lemomo-ai/lemo-opuscar styles/woodcut; research notes docs/research/styles/five-skills.md, \"Woodcut Print (relief print that carves itself)\"",
+      "licence": "MIT (code and docs); demo films and stills CC BY 4.0. No code copied; the cuts are rebuilt in SVG. IM Fell English and IM Fell English SC are SIL OFL."
+    }
+  ]
+}

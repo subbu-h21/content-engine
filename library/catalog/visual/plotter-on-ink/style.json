@@ -1,0 +1,124 @@
+{
+  "id": "plotter-on-ink",
+  "name": "Plotter on Ink",
+  "kind": "visual",
+  "version": 1,
+  "status": "built-in",
+  "summary": "A dark engineer's drawing board: a glowing orange pen spark plots every line and word as it is said; spoken-word karaoke (outline, signal wipe, bone), Archivo slams stepping through widths, deadpan technical annotation, HDR glow and grain.",
+  "tags": ["dark", "technical", "engineering", "orange", "graph paper", "karaoke", "deadpan", "glow"],
+  "suits": ["voice-over explainers", "how X works", "process and pipelines", "tools, code and AI", "diagrams", "deadpan humour"],
+  "needs": { "footage": false, "3d": false },
+  "frame": { "width": 1080, "height": 1920 },
+  "palette": [
+    { "role": "background", "hex": "#0a0a0b", "use": "ink: the board, slightly warm black" },
+    { "role": "surface", "hex": "#151517", "use": "ink2: raised panels, boxes, inset graphs" },
+    { "role": "text", "hex": "#eee9df", "use": "bone: primary text, said words, plotted lines, the grid" },
+    { "role": "muted", "hex": "#9c978f", "use": "ash: unsaid-word outlines, notes, dimension text, axes" },
+    { "role": "faint", "hex": "#5e5b57", "use": "graphite: dim lines, secondary text, line numbers" },
+    { "role": "accent", "hex": "#ff4d12", "use": "signal (hazard orange): the spark, the word being said, carets, strikes, numbers" },
+    { "role": "accent2", "hex": "#ff8a3d", "use": "ember: the spark's ring and the first frames of a fresh stroke or slam" },
+    { "role": "blood", "hex": "#c21d0b", "use": "deep red-orange: signal's shadow; halation" },
+    { "role": "acid", "hex": "#d8ff3c", "use": "one rare accent for a single moment per video; never in these samples" },
+    { "role": "whiteHot", "hex": "#fff1e2", "use": "the spark's core" }
+  ],
+  "fonts": {
+    "display": { "family": "Archivo", "source": "google", "weights": [700, 900], "variable": { "wdth": [62, 125] } },
+    "body": { "family": "IBM Plex Mono", "source": "google", "weights": [400, 500, 600] },
+    "mono": { "family": "IBM Plex Mono", "source": "google", "weights": [400, 500, 600] },
+    "serif": { "family": "Cormorant Garamond", "source": "google", "weights": [400, 600], "italic": true, "features": "lnum" }
+  },
+  "type": {
+    "display": 360,
+    "row": 84,
+    "emphasis": 130,
+    "number": 300,
+    "caption": 44,
+    "formula": 80,
+    "body": 28,
+    "label": 24,
+    "note": 26,
+    "readout": 48,
+    "min": 24,
+    "leading": 1.08,
+    "tracking": 0,
+    "labelTracking": 0.2,
+    "widths": [62, 75, 87.5, 100, 112.5, 125],
+    "case": "UPPERCASE slams, spoken rows as written, spaced-caps labels",
+    "emphasis2": "the voice: outline → signal wipe → bone",
+    "maxWords": 12
+  },
+  "layout": {
+    "margin": 90,
+    "safe": { "top": 230, "bottom": 330 },
+    "align": "left",
+    "grid": { "minor": 24, "major": 96, "minorAlpha": 0.07, "majorAlpha": 0.12, "minorWidth": 1.5, "majorWidth": 2 },
+    "crop": { "inset": 36, "arm": 22, "width": 1.25, "alpha": 0.34 },
+    "furniture": { "x": 90, "top": 250, "bottom": 1560 }
+  },
+  "motion": {
+    "recipes": {
+      "slam": { "kind": "ease", "curve": "expo-out", "duration": 0.18, "from": 1.22 },
+      "cool": { "kind": "ease", "curve": "expo-out", "duration": 0.4 },
+      "widthStep": { "kind": "ease", "curve": "expo-out", "duration": 0.32 },
+      "drop": { "kind": "ease", "curve": [0.33, 1, 0.68, 1], "duration": 0.25, "distance": 0.12 },
+      "karaokeLead": { "kind": "ease", "curve": "linear", "duration": 0.18, "early": 0.3, "outline": 1.1, "outlineAlpha": 0.45 },
+      "said": { "kind": "ease", "curve": "linear", "duration": 0.3 },
+      "pen": { "kind": "ease", "curve": [0.65, 0, 0.35, 1], "duration": 0.3, "base": 0.08, "perPx": 0.00035 },
+      "hot": { "kind": "ease", "curve": "linear", "duration": 0.32, "ember": 0.05, "widen": 1.6 },
+      "type": { "kind": "ease", "curve": "linear", "duration": 0.45, "perChar": 0.012, "base": 0.05 },
+      "panel": { "kind": "ease", "curve": "expo-out", "duration": 0.45, "rise": 120 },
+      "strike": { "kind": "ease", "curve": [0.45, 0, 0.55, 1], "duration": 0.14 },
+      "ignite": { "kind": "ease", "curve": [0.33, 1, 0.68, 1], "duration": 1.35, "radius": 5200 },
+      "ring": { "kind": "ease", "curve": [0.33, 1, 0.68, 1], "duration": 0.75, "from": 30, "to": 930 },
+      "odometer": { "kind": "ease", "curve": [0.33, 1, 0.68, 1], "duration": 0.3, "min": 0.12 },
+      "whip": { "kind": "ease", "curve": "expo-out", "duration": 0.24, "roll": 0.015 },
+      "hit": { "kind": "ease", "curve": "linear", "duration": 0.1, "halfLife": 0.08, "zoom": 0.02, "shake": 8 }
+    },
+    "enter": "pen",
+    "exit": "dim",
+    "stagger": 0.045,
+    "hold": 0.6
+  },
+  "elements": {
+    "strokes": { "axis": 0.6, "construction": 0.5, "dimension": 0.85, "hatch": 0.55, "plot": 0.88, "ink": 0.95, "signal": 1.0 },
+    "strokeWidth": 1.2,
+    "strokeScale": 1.5,
+    "dash": [5.5, 4.5],
+    "arrow": 9,
+    "endTick": 8,
+    "registration": [6, 18],
+    "spark": { "core": 5, "ember": 12, "halo": 26, "haloAlpha": 0.35, "rays": [9, 14], "rayWidth": 1.2, "trail": 90, "scale": 1.6 },
+    "readoutBar": 220,
+    "packetSpeed": 520,
+    "packetEvery": 0.22
+  },
+  "finish": {
+    "grain": 0.05,
+    "vignette": 0.42,
+    "glow": true,
+    "bloom": 0.7,
+    "bloomThreshold": 0.84,
+    "halation": 0.25,
+    "aberration": 1.2,
+    "sparkGlow": 140,
+    "dimTo": 0.35
+  },
+  "banned": [
+    "hand-set keyframes: every move is a function of time keyed to a spoken word",
+    "cutting after a line's first word: cuts sit in the pause before it",
+    "off-palette colours (no light-blue grid; acid only once per video)",
+    "old-style figures in Cormorant (lining figures only)",
+    "relying on the ▸ and ⏎ glyphs in Plex Mono: draw them",
+    "a dark halo behind captions on paper",
+    "photos, footage or stock icons: everything is line, type and glow",
+    "decorative motion that no word triggers",
+    "pen fonts without a known licence (the source's Hershey/EMS single-stroke fonts are not used)"
+  ],
+  "sources": [
+    {
+      "what": "Motion as Code workflow guide and its kit (the engine and style of pdoom-video)",
+      "where": "D:\\code_files\\resources to make content engine\\aman thakur's resources\\Motion as Code - Workflow Guide.pdf and Claude workflow guide\\Motion_as_kit.zip (palette.ts, post.ts, type.ts, stroke.ts, hud.ts, util.ts, glsl/common.ts, _vo.ts, the plates); research notes docs/research/styles/local-guides.md, \"Motion as Code — Plotter on Ink\"",
+      "licence": "MIT (pdoom-video engine, © 2026 Giacomo Magnanini); no code copied here, the look is rebuilt; Archivo, IBM Plex Mono and Cormorant Garamond are SIL OFL; the Hershey/EMS stroke fonts have no licence file and are not used"
+    }
+  ]
+}

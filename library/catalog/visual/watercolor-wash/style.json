@@ -1,0 +1,95 @@
+{
+  "id": "watercolor-wash",
+  "name": "Watercolor Wash",
+  "kind": "visual",
+  "version": 1,
+  "status": "built-in",
+  "summary": "A naturalist's field-journal page that paints itself: translucent washes and dry-brush strokes on warm fibrous paper, Cormorant titles, hand-written notes on pen leader lines, one vermilion seal sun.",
+  "tags": ["light", "paper", "watercolour", "painted", "hand-made", "calm", "serif", "nature"],
+  "suits": ["nature and geography", "science explainers", "specimen-and-label explainers", "processes, transects and gradients", "maps changing through time"],
+  "needs": { "footage": false, "3d": false },
+  "frame": { "width": 1080, "height": 1920 },
+  "palette": [
+    { "role": "background", "hex": "#f1e9da", "use": "the paper: the only white (never paint white); also the mist that erases" },
+    { "role": "text", "hex": "#2b2520", "use": "ink: titles, hand notes, leader lines, the darker edge of a form" },
+    { "role": "muted", "hex": "#3d3129", "use": "ink 2: mono labels, stems and branches" },
+    { "role": "faint", "hex": "#b9ab95", "use": "pencil guides and dimension lines (proposed)" },
+    { "role": "accent", "hex": "#cf4f2c", "use": "vermilion: the seal sun, reserved for that one recurring element" },
+    { "role": "accent2", "hex": "#3f7fa8", "use": "rain blue: the strongest blue wash (scattered blue light, the blue bar)" },
+    { "role": "sunBar", "hex": "#b8401f", "use": "the seven dry-brush bars across the seal sun" },
+    { "role": "sky", "hex": "#9fb4c4", "use": "the pale sky wash (from the source's harbour example)" },
+    { "role": "deep", "hex": "#5f7486", "use": "the deeper blue-grey wash: extra passes at the top of a sky, the molecule" },
+    { "role": "warm", "hex": "#f3e2c8", "use": "the warm dawn wash low in a sky" },
+    { "role": "ochre", "hex": "#cda35f", "use": "sunlight strokes, dry grass, the yellow of the spectrum" },
+    { "role": "rust", "hex": "#cf7c4f", "use": "red light (long waves), warm hills" },
+    { "role": "green", "hex": "#7f9a6c", "use": "hills, and green in the spectrum" },
+    { "role": "violet", "hex": "#6b5b8e", "use": "violet in the spectrum only (proposed)" }
+  ],
+  "fonts": {
+    "display": { "family": "Cormorant Garamond", "source": "google", "weights": [400, 500, 600], "italic": true },
+    "body": { "family": "Cormorant Garamond", "source": "google", "weights": [500], "italic": true },
+    "hand": { "family": "Caveat", "source": "google", "weights": [500, 600] },
+    "mono": { "family": "IBM Plex Mono", "source": "google", "weights": [400] }
+  },
+  "type": {
+    "display": 100,
+    "title": 128,
+    "number": 300,
+    "step": 58,
+    "body": 42,
+    "hand": 48,
+    "label": 24,
+    "min": 24,
+    "leading": 1.02,
+    "charEm": 0.42,
+    "labelTracking": 3,
+    "case": "sentence case; spaced caps for mono labels",
+    "emphasis": "italic in the same ink; the hand note; the one accent",
+    "maxWords": 10
+  },
+  "layout": { "margin": 96, "safe": { "top": 230, "bottom": 330 }, "align": "left", "labelY": 250 },
+  "elements": {
+    "paper": { "noise": 0.035, "fibres": 2600, "fibreDelta": 0.035, "tooth": 0.05 },
+    "stroke": { "roughness": 0.22, "rib": 0.62, "ribBare": 0.92, "opacity": 0.92, "bristleMin": 3, "bristleMax": 9, "bristleEvery": 3.2, "bristleAlpha": [0.3, 0.85], "dash": [18, 90], "orderShare": [0.12, 0.5] },
+    "wash": { "passes": 3, "passGain": 1.6, "jitter": 7, "rim": 4, "edgeNoise": 16, "granulation": 0.22 },
+    "note": { "halo": 12, "leader": 2.2, "charSeconds": 0.045, "dot": 4 },
+    "seal": { "bars": 7, "barWidth": 13 }
+  },
+  "motion": {
+    "recipes": {
+      "paint": { "kind": "ease", "curve": [0.42, 0, 0.58, 1], "duration": 0.9 },
+      "wipe": { "kind": "ease", "curve": [0.42, 0, 0.58, 1], "duration": 1.2 },
+      "burst": { "kind": "ease", "curve": [0.42, 0, 0.58, 1], "duration": 0.9 },
+      "seal": { "kind": "ease", "curve": [0, 0, 0.58, 1], "duration": 1.6 },
+      "write": { "kind": "ease", "curve": [0.3, 0, 0.7, 1], "duration": 1.0 },
+      "leader": { "kind": "ease", "curve": [0, 0, 0.58, 1], "duration": 0.5 },
+      "title": { "kind": "ease", "curve": [0.42, 0, 0.58, 1], "duration": 0.8 },
+      "subtitle": { "kind": "ease", "curve": "linear", "duration": 0.25, "out": 0.35 },
+      "mist": { "kind": "ease", "curve": [0.42, 0, 0.58, 1], "duration": 3.3 }
+    },
+    "enter": "paint",
+    "exit": "mist",
+    "stagger": 0.25,
+    "hold": 1.5
+  },
+  "finish": { "grain": 0.02, "vignette": 0.05, "glow": false },
+  "banned": [
+    "vector outlines: every edge is a brush edge (a darker stroke along a form is the only line)",
+    "pure white paint: the paper is the white",
+    "darker pigment for depth: darker means more passes",
+    "more than 3–5 hues in a scene, plus ink",
+    "continuous colour ramps: quantise into 4–6 bands",
+    "hard cuts or dissolves between unrelated pictures: brush-edge wipes, mist, a page turn or the camera",
+    "labels over the subject",
+    "ink wash, impasto, crayon or cute outlines; a watercolour texture laid over vector art",
+    "anything jittering or stepping; unseeded randomness",
+    "copying a specific artwork, character or layout"
+  ],
+  "sources": [
+    {
+      "what": "Lemo-Opuscar style No. 02 \"Watercolor\" (Watercolor Field Journal / Watercolor Brush): STYLE.md, DEMO.md, style.json, demo film \"Follow the Rain\"",
+      "where": "github.com/lemomo-ai/lemo-opuscar styles/watercolor; research notes docs/research/styles/five-skills.md, \"Watercolor Field Journal (lib: Watercolor Brush)\"",
+      "licence": "MIT (code and docs); demo films and stills CC BY 4.0. No code copied; the look is rebuilt in SVG. Cormorant Garamond, Caveat and IBM Plex Mono are SIL OFL."
+    }
+  ]
+}

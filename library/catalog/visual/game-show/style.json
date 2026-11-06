@@ -1,0 +1,118 @@
+{
+  "id": "game-show",
+  "name": "Game Show",
+  "kind": "visual",
+  "version": 1,
+  "status": "built-in",
+  "summary": "A flat-vector quiz show: candy-coloured sets with stripes, dots and sunbursts, bean contestants with thick ink outlines, white and yellow telops with ink strokes and hard shadows, everything popping on a 150 BPM beat, and a judgement word when a round is won.",
+  "tags": ["playful", "loud", "flat vector", "candy", "game", "quiz", "characters", "beat"],
+  "suits": ["quizzes", "rankings", "year in review", "variety explainers", "kids and family facts", "no-narration shorts"],
+  "needs": { "footage": false, "3d": false },
+  "frame": { "width": 1080, "height": 1920 },
+  "palette": [
+    { "role": "background", "hex": "#26264a", "use": "navy: the ending set and the last fade; the engine's ground colour" },
+    { "role": "surface", "hex": "#fff6e5", "use": "cream: round cards, scoreboards, banners, telop plates" },
+    { "role": "text", "hex": "#ffffff", "use": "telop fill on a set, catch-lights, mitten hands" },
+    { "role": "ink", "hex": "#1b1b1b", "use": "every outline, every hard shadow, text on cream, name-tag pills" },
+    { "role": "muted", "hex": "#c3cad9", "use": "grey props, the empty part of a bar" },
+    { "role": "faint", "hex": "#46318f", "use": "deep purple: the purple set's floor" },
+    { "role": "accent", "hex": "#ffd23f", "use": "yellow: emphasised telop words, the judgement word, burst stars, the sun" },
+    { "role": "accent2", "hex": "#ff8fb1", "use": "pink: blush, a judgement word on a non-pink set" },
+    { "role": "red", "hex": "#ff5a5f", "use": "candy red: the RED contestant, red light, open mouths" },
+    { "role": "orange", "hex": "#ff8c42", "use": "candy orange" },
+    { "role": "green", "hex": "#5bd68a", "use": "candy green: the GREEN contestant" },
+    { "role": "lime", "hex": "#c6f16d", "use": "candy lime" },
+    { "role": "sky", "hex": "#8ed1fc", "use": "candy sky: the AIR MOLECULE contestant" },
+    { "role": "blue", "hex": "#4d7cfe", "use": "candy blue: the BLUE contestant, blue light, emphasis on cream" },
+    { "role": "purple", "hex": "#6b4fbb", "use": "deep set: purple" },
+    { "role": "teal", "hex": "#3fb8af", "use": "deep set: teal" },
+    { "role": "teal-dark", "hex": "#2b8f88", "use": "the teal set's floor" },
+    { "role": "skin", "hex": "#ffd1a8", "use": "human stand-ins (none in the samples)" }
+  ],
+  "sets": {
+    "orange": { "ground": "#ffb870", "pattern": "#ffa85a", "floor": "#e08a4a", "kind": "stripes" },
+    "teal": { "ground": "#3fb8af", "pattern": "#4cc4bb", "floor": "#2b8f88", "kind": "dots" },
+    "purple": { "ground": "#6b4fbb", "pattern": "#7a5fc7", "floor": "#46318f", "kind": "sunburst" },
+    "pink": { "ground": "#ff8fb1", "pattern": "#ff9fbc", "floor": "#e0708f", "kind": "stripes" },
+    "green": { "ground": "#5bd68a", "pattern": "#6be096", "floor": "#3fb06a", "kind": "dots" },
+    "navy": { "ground": "#26264a", "pattern": "#323260", "floor": "#1b1b38", "kind": "sunburst" }
+  },
+  "fonts": {
+    "display": { "family": "Fredoka", "source": "google", "weights": [700] },
+    "body": { "family": "Fredoka", "source": "google", "weights": [600, 700] }
+  },
+  "type": {
+    "display": 132,
+    "title": 150,
+    "number": 300,
+    "judgement": 128,
+    "body": 52,
+    "label": 40,
+    "tag": 34,
+    "min": 28,
+    "leading": 1.0,
+    "tracking": 0,
+    "stroke": 0.14,
+    "shadow": 10,
+    "case": "sentence; tags and round names in capitals",
+    "emphasis": "yellow fill on a set; the set's own hue on cream",
+    "charEm": 0.56,
+    "maxWords": 6
+  },
+  "layout": { "margin": 72, "safe": { "top": 230, "bottom": 330 }, "align": "center", "floor": 1400, "floorLine": 8 },
+  "elements": {
+    "outline": 8,
+    "outlineSmall": 6,
+    "shadowSticker": 10,
+    "shadowCard": 14,
+    "card": { "radius": 50, "outline": 10 },
+    "board": { "radius": 40, "outline": 8, "tilt": -1.5 },
+    "bean": { "w": 160, "h": 172 },
+    "ball": 92,
+    "hop": [8, 30],
+    "stripe": 56,
+    "dot": { "r": 20, "gap": 112, "alpha": 0.22 },
+    "ray": 15,
+    "burst": { "points": 8, "ring": [40, 170], "lines": 8 },
+    "stage": { "edge": 1590, "bulb": 24, "bulbGap": 108, "bulbY": 1710, "chase": 3 }
+  },
+  "motion": {
+    "recipes": {
+      "pop": { "kind": "ease", "curve": [0.3, 1.6, 0.55, 1], "duration": 0.35, "overshoot": 1.9 },
+      "glyph": { "kind": "ease", "curve": [0.3, 1.6, 0.55, 1], "duration": 0.38, "overshoot": 1.9, "stagger": 0.05, "rise": 60 },
+      "drop": { "kind": "ease", "curve": [0.32, 0, 0.67, 0], "duration": 0.4, "distance": 700 },
+      "banner": { "kind": "ease", "curve": [0.3, 1.6, 0.55, 1], "duration": 0.35, "overshoot": 1.9 },
+      "out": { "kind": "ease", "curve": [0.32, 0, 0.67, 0], "duration": 0.25 },
+      "fly": { "kind": "ease", "curve": [0.33, 1, 0.68, 1], "duration": 0.8 },
+      "burst": { "kind": "ease", "curve": [0.33, 1, 0.68, 1], "duration": 0.3 },
+      "squash": { "kind": "spring", "damping": 6, "stiffness": 450, "mass": 0.5, "depth": 0.1, "decay": 16 },
+      "punch": { "kind": "ease", "curve": "expo-out", "duration": 0.16, "tick": 0.008, "hit": 0.02, "slam": 0.04 }
+    },
+    "enter": "glyph",
+    "exit": "cut",
+    "bpm": 150,
+    "stagger": 0.05,
+    "hold": 1.8,
+    "scroll": 40,
+    "spin": 12,
+    "flash": 0.08
+  },
+  "finish": { "grain": 0, "vignette": 0, "glow": false, "blur": false },
+  "banned": [
+    "gradients, blur, texture, glow or soft shadows: flat fills and hard ink shadows only",
+    "slow fade-ins, dissolves or crossfades (hard cuts with a 0.08 s white flash; one fade to navy at the very end)",
+    "anything off the beat grid: every pop, drop and stamp lands on a beat or a subdivision",
+    "the same hue for neighbouring sets, or for a character and its set",
+    "thin generic captions: words are outlined telops or sit on cream cards",
+    "real game shows' names, characters, logos, stages or music; real logos or product UI",
+    "invented scores or numbers: a counter only races to a true number",
+    "realistic characters or faces: contestants are beans"
+  ],
+  "sources": [
+    {
+      "what": "Lemo-Opuscar style No. 33 \"Game Show Flat\" (STYLE.md, DEMO.md, easing constants in demo/frame_head.html), via research notes",
+      "where": "github.com/lemomo-ai/lemo-opuscar styles/game-show; docs/research/styles/five-skills.md, section \"Game Show Flat\"",
+      "licence": "MIT (code and docs); demo films and stills CC BY 4.0 (LemoLab), except the demo's shouts (excluded, not used). Fredoka: SIL OFL"
+    }
+  ]
+}

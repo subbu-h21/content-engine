@@ -1,0 +1,82 @@
+{
+  "id": "one-take-journey",
+  "name": "One-Take Journey",
+  "kind": "visual",
+  "version": 1,
+  "status": "built-in",
+  "summary": "One unbroken shot: a bright white ball bounces through a chain of dark system-UI stations that react to it (sliders, notifications, checklists, buttons), the camera following tightly on a dot-grid world, then pulling far out to reveal the whole course.",
+  "tags": ["playful", "dark", "ui", "one take", "physics", "loop", "sans"],
+  "suits": ["explainer", "workflow", "loop", "process", "facts"],
+  "needs": { "footage": false, "3d": false },
+  "frame": { "width": 1080, "height": 1920 },
+  "palette": [
+    { "role": "background", "hex": "#0c0c0e", "use": "the world's canvas" },
+    { "role": "faint", "hex": "#1e1e22", "use": "the dot grid that moves with the camera; empty slots" },
+    { "role": "surface", "hex": "#1c1c1f", "use": "station cards" },
+    { "role": "surface2", "hex": "#2c2c2e", "use": "raised surfaces: key caps, tracks, inactive knobs" },
+    { "role": "text", "hex": "#f2f2f7", "use": "station names and messages" },
+    { "role": "muted", "hex": "#8e8e93", "use": "the state after the dot, sub-labels, 'now'" },
+    { "role": "accent", "hex": "#0a84ff", "use": "fills, toggles on, track fill, sent bubbles, checks (the brand's colour)" },
+    { "role": "accent2", "hex": "#ffffff", "use": "the hero ball: always the brightest thing on screen" },
+    { "role": "lightCanvas", "hex": "#f2f2f4", "use": "the canvas of the light variant (then the hero is the accent)" }
+  ],
+  "fonts": {
+    "display": { "family": "Inter", "source": "google", "weights": [600] },
+    "body": { "family": "Inter", "source": "google", "weights": [400, 500, 600] }
+  },
+  "type": {
+    "display": 140,
+    "message": 52,
+    "title": 36,
+    "body": 40,
+    "label": 30,
+    "small": 26,
+    "min": 24,
+    "leading": 1.25,
+    "tracking": -0.01,
+    "case": "sentence",
+    "emphasis": "none: the stations' own words, Name · state",
+    "maxWords": 12
+  },
+  "layout": { "margin": 100, "safe": { "top": 230, "bottom": 330 }, "align": "left", "stationWidth": 880, "radius": 36, "dotGap": 44, "dotSize": 5, "hero": 56 },
+  "motion": {
+    "recipes": {
+      "follow": { "kind": "spring", "damping": 12, "stiffness": 36, "mass": 1 },
+      "roll": { "kind": "ease", "curve": [0.65, 0, 0.35, 1], "duration": 0.6 },
+      "squashBack": { "kind": "spring", "damping": 22, "stiffness": 484, "mass": 1 },
+      "react": { "kind": "spring", "damping": 22.96, "stiffness": 196, "mass": 1 },
+      "toast": { "kind": "spring", "damping": 26.6, "stiffness": 196, "mass": 1 },
+      "reveal": { "kind": "ease", "curve": [0.65, 0, 0.35, 1], "duration": 1.2 }
+    },
+    "enter": "react",
+    "exit": "none",
+    "bpm": 116,
+    "beat": 0.517,
+    "gravity": 6000,
+    "squash": [1.25, 0.8],
+    "squashHold": 0.06,
+    "stretch": [1.15, 0.9],
+    "leadTime": 0.15,
+    "anchor": { "interaction": 0.7, "flight": 0.15, "payoff": 0.85 },
+    "payoffHold": 0.5,
+    "revealZoom": 0.3,
+    "revealTilt": 20,
+    "revealHold": 1.0,
+    "stagger": 0.08,
+    "hold": 0.5
+  },
+  "finish": { "grain": 0, "vignette": 0, "glow": false, "heroShadow": "0 4px 14px rgba(0,0,0,0.55)", "revealHalo": 48, "motionBlur": { "subframes": 8, "shutter": 180 } },
+  "banned": [
+    "cuts",
+    "fades to black",
+    "text overlays that explain what is happening: words live inside the stations",
+    "more than one hero",
+    "stations that don't react to the hero",
+    "floaty physics",
+    "the hero leaving the middle half of the frame",
+    "glow, grain or vignette (a soft halo on the hero only during the reveal)"
+  ],
+  "sources": [
+    { "what": "skill explainer-engaging (palette, stations, hero physics, follow camera, reveal, loop seam)", "where": "github.com/Barty-Bart/motion-graphics skills/explainer-engaging/SKILL.md; research notes docs/research/styles/barty-bart-and-prompt-motion.md, section One-Take Hero Journey", "licence": "MIT (c) 2026 Bart" }
+  ]
+}

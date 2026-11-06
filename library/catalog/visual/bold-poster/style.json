@@ -1,0 +1,105 @@
+{
+  "id": "bold-poster",
+  "name": "Bold Poster",
+  "kind": "visual",
+  "version": 1,
+  "status": "built-in",
+  "summary": "The cover of a vintage Italian sports magazine: heavy tilted Shrikhand display that stamps down and swings to its angle, a classical Baskerville body, one tomato red, grids ruled in ink, and full-bleed red and dark panels. It feels printed.",
+  "tags": ["light", "poster", "vintage", "editorial", "red", "printed", "display", "tilted"],
+  "suits": ["sports", "culture", "retro promos", "stat-led reels", "annual-report numbers"],
+  "needs": { "footage": false, "3d": false },
+  "frame": { "width": 1080, "height": 1920 },
+  "palette": [
+    { "role": "background", "hex": "#ffffff", "use": "the default ground" },
+    { "role": "surface", "hex": "#f5f2ef", "use": "light: the off-white foot and stripes on alternating panels" },
+    { "role": "text", "hex": "#1c1410", "use": "dark: body, borders, headers, the dark statement panel" },
+    { "role": "muted", "hex": "#1c1410", "use": "there's no grey: four colours only" },
+    { "role": "faint", "hex": "#f5f2ef", "use": "the light tone again: four colours only" },
+    { "role": "accent", "hex": "#d8000f", "use": "the lone accent: every numeral, rules, eyebrows, left bars, bullets, the progress bar, the full red statement panel; never body text, a tint, or a fill with no text on it" },
+    { "role": "accent2", "hex": "#1c1410", "use": "the dark panel; there's no second colour" }
+  ],
+  "fonts": {
+    "display": { "family": "Shrikhand", "source": "google", "weights": [400] },
+    "body": { "family": "Libre Baskerville", "source": "google", "weights": [400, 700], "italic": true },
+    "label": { "family": "Space Grotesk", "source": "google", "weights": [400, 600] }
+  },
+  "type": {
+    "display": 220,
+    "displayRed": 290,
+    "closeBig": 200,
+    "statBig": 396,
+    "section": 112,
+    "card": 66,
+    "cell": 84,
+    "body": 36,
+    "label": 28,
+    "labelTracking": 0.08,
+    "min": 24,
+    "leading": 1.0,
+    "bodyLeading": 1.6,
+    "tracking": 0,
+    "case": "sentence case Shrikhand; uppercase Space Grotesk labels",
+    "emphasis": "tilt, red and scale; inline strong in body switches to Space Grotesk 600; no italic display",
+    "maxWords": 7
+  },
+  "layout": {
+    "margin": 72,
+    "safe": { "top": 230, "bottom": 330 },
+    "align": "left",
+    "progressY": 1584,
+    "tilts": { "title": 2, "red": -4, "close": -5, "stat": -6 }
+  },
+  "elements": {
+    "progress": 12,
+    "leftBar": 8,
+    "grid": { "outer": 4, "inner": 2 },
+    "stackShadow": [
+      { "step": 2, "alpha": 0.25 },
+      { "step": 4, "alpha": 0.2 },
+      { "step": 6, "alpha": 0.15 }
+    ],
+    "stackScale": 3,
+    "scenes": 6
+  },
+  "motion": {
+    "recipes": {
+      "stamp": { "kind": "ease", "curve": "quart-out", "duration": 0.26, "from": 1.32 },
+      "swing": { "kind": "spring", "damping": 19, "stiffness": 240, "mass": 1 },
+      "plate": { "kind": "ease", "curve": "cubic-in-out", "duration": 0.4 },
+      "rule": { "kind": "ease", "curve": "quart-out", "duration": 0.5 },
+      "lift": { "kind": "ease", "curve": "expo-out", "duration": 0.6 },
+      "progress": { "kind": "ease", "curve": "cubic-in-out", "duration": 0.6 },
+      "out": { "kind": "ease", "curve": "cubic-in", "duration": 0.22 }
+    },
+    "enter": "stamp",
+    "exit": "out",
+    "stagger": 0.16,
+    "hold": 1.0,
+    "rollStep": 0.1,
+    "rollSteps": 6
+  },
+  "finish": { "grain": 0, "vignette": 0, "glow": false },
+  "banned": [
+    "a second accent colour; rounded corners",
+    "drop shadows, gradients, box shadows; the stacked text shadow anywhere but on a red panel",
+    "font substitutes; Shrikhand body, Baskerville labels, Space Grotesk headlines",
+    "default disc bullets; an untilted red statement",
+    "a crowded statement frame; edge-to-edge long lines",
+    "red as body text, as a tint, or as a fill with no text on it",
+    "italic display: Shrikhand is its own slant",
+    "rows of three cards",
+    "fades on display type: it stamps; titles that keep moving after they land"
+  ],
+  "sources": [
+    {
+      "what": "HyperFrames frame preset Bold Poster: palette, faces, type ramp, tilts, elements, frames, banned list, caption skin",
+      "where": "github.com/heygen-com/hyperframes skills/hyperframes/assets/frame-presets/bold-poster; research notes docs/research/styles/hyperframes.md, \"Bold Poster\"",
+      "licence": "Apache-2.0. Tokens and rules re-expressed; no code copied. Shrikhand, Libre Baskerville and Space Grotesk are SIL OFL."
+    },
+    {
+      "what": "HyperFrames taste rules T36-T60 (motion)",
+      "where": "docs/research/styles/hyperframes.md, \"Taste rules\"",
+      "licence": "Apache-2.0"
+    }
+  ]
+}

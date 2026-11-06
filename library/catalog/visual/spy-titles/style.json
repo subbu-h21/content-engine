@@ -1,0 +1,99 @@
+{
+  "id": "spy-titles",
+  "name": "Spy Titles",
+  "kind": "visual",
+  "version": 1,
+  "status": "built-in",
+  "summary": "A cut-paper, four-ink 1960s opening title: flat grounds that change with every location, condensed caps standing as architecture, a small profile silhouette against a giant circle, scissor-cut edges, 30° diagonals and hard cuts on the stab.",
+  "tags": ["bold", "retro", "cut paper", "flat", "condensed", "red", "mustard", "title sequence"],
+  "suits": ["title sequences", "event openers", "trailers", "product launches", "festival line-ups", "award nominees", "team intros"],
+  "needs": { "footage": false, "3d": false },
+  "frame": { "width": 1080, "height": 1920 },
+  "palette": [
+    { "role": "background", "hex": "#1b1714", "use": "ink black: figures, type, dark grounds" },
+    { "role": "text", "hex": "#efe4c9", "use": "paper cream: light grounds, type on dark, strips, eye slit" },
+    { "role": "accent", "hex": "#d23a22", "use": "signal red: the hero's tie, danger, emphasis, red grounds" },
+    { "role": "accent2", "hex": "#e2a52a", "use": "mustard: the object of the chase, mustard grounds" },
+    { "role": "surface", "hex": "#9a2a18", "use": "dark red shadow paper: depth only, props on a red ground" },
+    { "role": "muted", "hex": "#b07e1c", "use": "dark mustard shadow paper: depth only, props on a mustard ground" },
+    { "role": "faint", "hex": "#3a322b", "use": "distant props on black" }
+  ],
+  "altSets": [
+    { "name": "teal", "ink": "#161a22", "paper": "#ece6d6", "hot": "#1f8a8a", "warm": "#f07a28" },
+    { "name": "cobalt", "ink": "#000000", "paper": "#f3d6cc", "hot": "#2a46b8", "warm": "#f0d23a" }
+  ],
+  "fonts": {
+    "display": { "family": "League Gothic", "source": "google", "weights": [400] },
+    "body": { "family": "League Spartan", "source": "google", "weights": [600] }
+  },
+  "type": {
+    "display": 300,
+    "title": 310,
+    "number": 640,
+    "credit": 112,
+    "label": 76,
+    "body": 46,
+    "min": 40,
+    "leading": 0.9,
+    "charEm": 0.36,
+    "case": "credits in capitals; strips in sentence case",
+    "emphasis": "the word changes ink; never italic",
+    "maxWords": 10
+  },
+  "layout": { "margin": 96, "safe": { "top": 230, "bottom": 330 }, "align": "left", "diagonal": 30 },
+  "elements": {
+    "resample": 10,
+    "edgeNoise": [1.2, 2.2],
+    "notch": [1, 2],
+    "gap": 2.4,
+    "shadow": [2.5, 3.5, 5, 0.3],
+    "slit": 1.7,
+    "figureHeads": 7,
+    "letterRotate": 0.8,
+    "letterBaseline": 1.5,
+    "titleRotate": 1.8,
+    "titleBaseline": 9,
+    "stepFps": 12,
+    "bpm": 132,
+    "sixteenth": 0.1136,
+    "stripIn": 60,
+    "stripTilt": -1,
+    "voidSpeckle": 0.5,
+    "streaks": 0.035
+  },
+  "motion": {
+    "recipes": {
+      "land": { "kind": "ease", "curve": "cubic-out", "duration": 0.2 },
+      "strip": { "kind": "ease", "curve": "cubic-out", "duration": 0.18 },
+      "grow": { "kind": "ease", "curve": "cubic-out", "duration": 0.35 },
+      "shatter": { "kind": "ease", "curve": "cubic-in", "duration": 0.45 }
+    },
+    "enter": "land",
+    "exit": "shatter",
+    "stagger": 0.1136,
+    "hold": 1.8
+  },
+  "finish": { "grain": 0.03, "vignette": 0, "glow": false },
+  "banned": [
+    "gradients, halftone dots, glow",
+    "flat vector edges: every edge is cut",
+    "Swiss-grid rigidity",
+    "spy parody gadgets, gun-barrel openings, a figure drawing a pistol, agent numbers, a tiptoeing cartoon panther",
+    "copying any real title's logo, lettering, characters, silhouettes or shots",
+    "the famous spy-theme chromatic crawl and its ending chord",
+    "real people's names in credits",
+    "dissolves",
+    "outlining every internal body piece",
+    "background props in black",
+    "an object in its ground's ink without a black backing",
+    "credits seen only partially",
+    "a stepped (12 fps) camera"
+  ],
+  "sources": [
+    {
+      "what": "Lemo-Opuscar style No. 17 \"60s Spy Title Sequence\": STYLE.md, DEMO.md, style.json",
+      "where": "github.com/lemomo-ai/lemo-opuscar styles/spy-titles; research notes docs/research/styles/five-skills.md, \"60s Spy Title Sequence\"",
+      "licence": "Lemo-Opuscar (lemomo-ai/lemo-opuscar), MIT (code and docs); demo films and stills CC BY 4.0, not used. No code copied. League Gothic and League Spartan are SIL OFL."
+    }
+  ]
+}

@@ -1,0 +1,103 @@
+{
+  "id": "swiss-poster",
+  "name": "Swiss Poster",
+  "kind": "visual",
+  "version": 1,
+  "status": "built-in",
+  "summary": "International Typographic Style in motion: a visible modular grid on a warm grey page, white poster sheets built from black bars, one neo-grotesque, giant numerals beside tiny technical notes, one signal colour for the one protagonist, every move snapping onto a beat.",
+  "tags": ["light", "grid", "typographic", "swiss", "minimal", "precise", "sans", "poster"],
+  "suits": ["rules and steps", "spec sheets and timetables", "feature lists", "brand systems", "countdowns", "facts with one big number"],
+  "needs": { "footage": false, "3d": false },
+  "frame": { "width": 1080, "height": 1920 },
+  "palette": [
+    { "role": "background", "hex": "#eae9e5", "use": "the page: the frame's ground" },
+    { "role": "surface", "hex": "#ffffff", "use": "the paper: poster sheets (the artifact)" },
+    { "role": "text", "hex": "#111111", "use": "ink: all type and the black bars" },
+    { "role": "muted", "hex": "#6f6e6a", "use": "lead-ins and notes in medium grey (proposed)" },
+    { "role": "faint", "hex": "#cfcec9", "use": "grid lines on the page; the light-grey second-voice bars" },
+    { "role": "accent", "hex": "#e30613", "use": "signal: the one protagonist element (the red circle, the knife line); never a second" },
+    { "role": "accent2", "hex": "#cfcec9", "use": "secondary bars (there is no second colour)" },
+    { "role": "gridBuild", "hex": "#c9c8c2", "use": "grid lines while they are being drawn" },
+    { "role": "gridPaper", "hex": "#e2e1dc", "use": "grid lines on the paper" }
+  ],
+  "signals": {
+    "default": { "page": "#eae9e5", "ink": "#111111", "signal": "#e30613" },
+    "orange": { "page": "#f2f0ea", "ink": "#141414", "signal": "#ff5a00" },
+    "ultramarine": { "page": "#e9ecef", "ink": "#0b0b0b", "signal": "#1f3fff" }
+  },
+  "fonts": {
+    "display": { "family": "Archivo", "source": "google", "weights": [400, 500, 700, 800] },
+    "body": { "family": "Archivo", "source": "google", "weights": [400, 500] }
+  },
+  "type": {
+    "display": 104,
+    "title": 124,
+    "statement": 96,
+    "leadIn": 32,
+    "numeral": 780,
+    "rule": 56,
+    "ruleNumber": 150,
+    "note": 26,
+    "body": 32,
+    "label": 26,
+    "signoff": 40,
+    "min": 24,
+    "leading": 0.98,
+    "tracking": -0.022,
+    "case": "lowercase or sentence case statements; notes in sentence case",
+    "emphasis": "scale contrast (a giant numeral beside tiny notes) and weight (regular vs bold); never colour except the signal element",
+    "maxWords": 8
+  },
+  "layout": {
+    "margin": 72,
+    "safe": { "top": 230, "bottom": 330 },
+    "align": "left",
+    "columns": 6,
+    "gutter": 24,
+    "baseline": 24,
+    "module": [136, 80],
+    "noteY": 1560
+  },
+  "elements": {
+    "bar": { "inset": 8, "seam": 1 },
+    "rule": 1,
+    "knife": 2,
+    "paperGrid": { "columns": 7, "rows": 16 },
+    "poster": { "ratio": 0.7 }
+  },
+  "motion": {
+    "recipes": {
+      "snap": { "kind": "ease", "curve": [0.7, 0, 0.2, 1], "duration": 0.25 },
+      "word": { "kind": "ease", "curve": [0.7, 0, 0.2, 1], "duration": 0.125 },
+      "leave": { "kind": "ease", "curve": [0.7, 0, 0.2, 1], "duration": 0.25 },
+      "line": { "kind": "ease", "curve": "linear", "duration": 0.5 },
+      "wipe": { "kind": "ease", "curve": [0.7, 0, 0.2, 1], "duration": 0.5 },
+      "climb": { "kind": "ease", "curve": [0.7, 0, 0.2, 1], "duration": 0.125, "steps": 4 },
+      "knife": { "kind": "ease", "curve": "linear", "duration": 0.125, "collapse": 0.25 }
+    },
+    "enter": "word",
+    "exit": "leave",
+    "stagger": 0.125,
+    "hold": 1.8,
+    "bpm": 120
+  },
+  "finish": { "grain": 0, "vignette": 0, "glow": false },
+  "banned": [
+    "gradients, glow, shadows, particles, grain, device renders",
+    "words that fly, spin or bounce; overshoot, springs, bounce",
+    "fades and dissolves: everything wipes, clip-reveals or cuts",
+    "a second signal colour; colour used for emphasis",
+    "a Bauhaus pastiche of primary shapes; concentric-circle or fan layouts copied from historic posters",
+    "Helvetica or Akzidenz files; naming a real institution",
+    "rotating and labelling at the same time",
+    "too many thin columns (it reads as a chart)",
+    "centred layouts: flush left, ragged right"
+  ],
+  "sources": [
+    {
+      "what": "Lemo-Opuscar style No. 16 \"Swiss\" (Swiss Motion Graphics): STYLE.md, DEMO.md, style.json",
+      "where": "github.com/lemomo-ai/lemo-opuscar styles/swiss-motion; research notes docs/research/styles/five-skills.md, \"Swiss Motion Graphics\"",
+      "licence": "MIT (code and docs); demo films and stills CC BY 4.0. No code copied; the look is rebuilt with CSS and SVG. Archivo is SIL OFL."
+    }
+  ]
+}

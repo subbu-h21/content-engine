@@ -101,6 +101,11 @@ export function createProject({ workspace, slug, title }) {
   const n = nextProjectNumber(workspace);
   const dir = path.join(workspace, `project-${n}-${s}`);
   fs.cpSync(TEMPLATE_DIR, dir, { recursive: true, errorOnExist: true, force: false });
+  // the catalog's skills (the taste rules every video follows; making a new style from a reference), as they are now
+  for (const skill of ["visual-taste", "make-style"]) {
+    const from = path.join(ENGINE_DIR, "library", "catalog", "skills", skill);
+    if (fs.existsSync(from)) fs.cpSync(from, path.join(dir, ".claude", "skills", skill), { recursive: true });
+  }
   const manifestPath = path.join(dir, "project.json");
   const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf8"));
   manifest.title = title || s;

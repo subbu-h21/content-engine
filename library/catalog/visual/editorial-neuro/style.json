@@ -1,0 +1,69 @@
+{
+  "id": "editorial-neuro",
+  "name": "Editorial Neuro",
+  "kind": "visual",
+  "version": 1,
+  "status": "built-in",
+  "summary": "Calm editorial explainer: ink ground, one bone text colour, Bodoni headlines with italic emphasis, quiet labels on pills.",
+  "tags": ["calm", "dark", "serif", "editorial", "explainer", "minimal"],
+  "suits": ["explainer", "science", "facts", "3d plates"],
+  "needs": { "footage": false, "3d": false },
+  "frame": { "width": 1080, "height": 1920 },
+  "palette": [
+    { "role": "background", "hex": "#08070a", "use": "the ground of every frame; scrims and pill fills are this colour at lower opacity" },
+    { "role": "text", "hex": "#ede3d1", "use": "every headline and label: the only text colour" },
+    { "role": "muted", "hex": "#857d78", "use": "eyebrows, chapter markers, body copy" },
+    { "role": "faint", "hex": "#4d4847", "use": "guides, inactive rings and bars" },
+    { "role": "accent", "hex": "#ff6b29", "use": "diagram highlights only (ember), never type" },
+    { "role": "accent2", "hex": "#94d1ff", "use": "the second diagram colour (ice), never type" }
+  ],
+  "fonts": {
+    "display": { "family": "Bodoni Moda", "source": "google", "weights": [400], "italic": true, "prefer": "Bodoni MT" },
+    "body": { "family": "Inter", "source": "google", "weights": [400, 500], "prefer": "Inter 18pt" }
+  },
+  "type": {
+    "display": 104,
+    "title": 124,
+    "number": 260,
+    "body": 32,
+    "label": 28,
+    "eyebrow": 24,
+    "min": 24,
+    "leading": 1.04,
+    "tracking": 0,
+    "eyebrowTracking": 1.5,
+    "case": "sentence",
+    "emphasis": "italic",
+    "maxWords": 10
+  },
+  "layout": { "margin": 96, "safe": { "top": 230, "bottom": 330 }, "align": "left", "headlineY": 420 },
+  "motion": {
+    "recipes": {
+      "rise": { "kind": "ease", "curve": "expo-out", "duration": 0.55, "distance": 18 },
+      "eyebrow": { "kind": "ease", "curve": "expo-out", "duration": 0.5, "distance": 10 },
+      "rule": { "kind": "ease", "curve": "expo-out", "duration": 0.9 },
+      "leader": { "kind": "ease", "curve": "expo-out", "duration": 0.6 },
+      "count": { "kind": "ease", "curve": "expo-out", "duration": 1.4 },
+      "out": { "kind": "ease", "curve": "expo-out", "duration": 0.35 }
+    },
+    "enter": "rise",
+    "exit": "out",
+    "stagger": 0.09,
+    "hold": 0.8
+  },
+  "finish": { "grain": 0.035, "vignette": 0.42, "glow": false, "halo": 1, "scrimTop": 0.72 },
+  "banned": [
+    "a second text colour, or colour on type",
+    "accent colours outside diagrams",
+    "bold or all-caps headlines",
+    "glows, drop shadows or gradients on type (only the soft ink halo)",
+    "more than about 10 words of headline on screen",
+    "type over a busy or bright part of the picture: it stays in the dark band",
+    "emoji or stock icons",
+    "bouncy or linear easing"
+  ],
+  "sources": [
+    { "what": "the engine's default look", "where": "template/src/lib/theme.ts, src/components (Headline, Text, Leader, Diagrams, Finish)", "licence": "the engine's own" },
+    { "what": "the phone reel it was first made for", "where": "project-3-development / project-4-phone-reel", "licence": "the user's own" }
+  ]
+}

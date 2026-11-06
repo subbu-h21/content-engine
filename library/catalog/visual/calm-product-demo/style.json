@@ -1,0 +1,85 @@
+{
+  "id": "calm-product-demo",
+  "name": "Calm Product Demo",
+  "kind": "visual",
+  "version": 1,
+  "status": "built-in",
+  "summary": "Calm, premium product-demo look: an airy near-white canvas, one small centred line the camera pushes into, a soft accent box sweeping behind the key word, and clean rebuilt UI cards used by a slow cursor.",
+  "tags": ["calm", "light", "sans", "product", "ui", "minimal", "camera"],
+  "suits": ["explainer", "how it works", "product demo", "feature walkthrough"],
+  "needs": { "footage": false, "3d": false },
+  "frame": { "width": 1080, "height": 1920 },
+  "palette": [
+    { "role": "background", "hex": "#f7f7f8", "use": "the canvas of every frame, and the plain canvas between scenes" },
+    { "role": "surface", "hex": "#ffffff", "use": "UI cards, panels, inputs and popovers" },
+    { "role": "text", "hex": "#111114", "use": "title lines and UI text; the cursor fill" },
+    { "role": "muted", "hex": "#8a8a94", "use": "secondary labels, captions, the opening kicker" },
+    { "role": "faint", "hex": "#e7e7ec", "use": "1 px borders on UI surfaces, bar tracks, skeleton lines" },
+    { "role": "accent", "hex": "#2e6bff", "use": "the single accent (the brand's colour when there is one): ticks, buttons, the key bar; at 18% it is the highlight box behind the key word" },
+    { "role": "accent2", "hex": "#dce6ff", "use": "the pale accent of the silk light bands on the open and the end card (proposed)" }
+  ],
+  "fonts": {
+    "display": { "family": "Geist", "source": "google", "weights": [400, 500] },
+    "body": { "family": "Geist", "source": "google", "weights": [400, 500, 600] }
+  },
+  "type": {
+    "display": 112,
+    "number": 210,
+    "body": 32,
+    "label": 26,
+    "kicker": 32,
+    "min": 24,
+    "leading": 1.14,
+    "tracking": -0.02,
+    "charEm": 0.54,
+    "case": "sentence",
+    "emphasis": "highlight box",
+    "maxWords": 8
+  },
+  "layout": { "margin": 96, "safe": { "top": 230, "bottom": 330 }, "align": "center", "pushWidth": 0.75, "pushFrom": 0.5, "cardRadius": 28, "cardWidth": 888 },
+  "motion": {
+    "recipes": {
+      "push": { "kind": "ease", "curve": [0.65, 0, 0.35, 1], "duration": 1.0 },
+      "pushSpring": { "kind": "spring", "damping": 26.6, "stiffness": 196, "mass": 1 },
+      "word": { "kind": "ease", "curve": [0.65, 0, 0.35, 1], "duration": 0.45 },
+      "highlight": { "kind": "ease", "curve": [0.65, 0, 0.35, 1], "duration": 0.5 },
+      "dissolve": { "kind": "ease", "curve": [0.65, 0, 0.35, 1], "duration": 0.35 },
+      "count": { "kind": "ease", "curve": [0.65, 0, 0.35, 1], "duration": 1.2 },
+      "tick": { "kind": "spring", "damping": 41.8, "stiffness": 484, "mass": 1 },
+      "cursor": { "kind": "ease", "curve": [0.65, 0, 0.35, 1], "duration": 0.8 },
+      "pullBack": { "kind": "ease", "curve": [0.65, 0, 0.35, 1], "duration": 1.0 }
+    },
+    "enter": "word",
+    "exit": "dissolve",
+    "stagger": 0.08,
+    "hold": 2.0,
+    "resultPause": 0.5,
+    "typeRate": 25,
+    "dissolveBlur": 16,
+    "silkDrift": 24
+  },
+  "finish": {
+    "grain": 0,
+    "vignette": 0,
+    "glow": false,
+    "shadow": "0 1px 2px rgba(17,17,20,0.04), 0 14px 36px -14px rgba(17,17,20,0.14)",
+    "highlightOpacity": 0.18,
+    "motionBlur": { "subframes": 4, "shutter": 180 }
+  },
+  "banned": [
+    "busy backgrounds behind UI",
+    "more than one accent colour",
+    "bouncy easing",
+    "emoji",
+    "big drop shadows",
+    "glassmorphism",
+    "invented metrics, users or testimonials",
+    "hard cuts between scenes",
+    "more than one line of text plus one UI element on screen",
+    "screenshots of real apps: UI is rebuilt as clean vector",
+    "grain, vignette or glow"
+  ],
+  "sources": [
+    { "what": "skill explainer-default (palette, push-in titles, highlight sweep, UI vocabulary, motion and timing rules)", "where": "github.com/Barty-Bart/motion-graphics skills/explainer-default/SKILL.md; research notes docs/research/styles/barty-bart-and-prompt-motion.md, section Calm Product Demo", "licence": "MIT (c) 2026 Bart" }
+  ]
+}

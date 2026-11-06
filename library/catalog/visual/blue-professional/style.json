@@ -1,0 +1,111 @@
+{
+  "id": "blue-professional",
+  "name": "Blue Professional",
+  "kind": "visual",
+  "version": 1,
+  "status": "built-in",
+  "summary": "An investment-research briefing that moves: warm cream, one saturated cobalt for every numeral and chart, near-black headlines in Space Grotesk, soft cobalt-tinted rounded cards with no shadows, and measured slides along one axis with a progress bar keeping count.",
+  "tags": ["light", "cream", "cobalt", "corporate", "consulting", "data", "rounded", "sans", "measured"],
+  "suits": ["business explainers", "reports", "data stories", "B2B launches"],
+  "needs": { "footage": false, "3d": false },
+  "frame": { "width": 1080, "height": 1920 },
+  "palette": [
+    { "role": "background", "hex": "#fdfae7", "use": "every frame" },
+    { "role": "surface", "hex": "#f6f3e8", "use": "card-bg: cobalt at 4% on the cream (the source's rgba, flattened)" },
+    { "role": "text", "hex": "#111111", "use": "headlines, never cobalt" },
+    { "role": "muted", "hex": "#6b6b6b", "use": "body" },
+    { "role": "faint", "hex": "#9a9a9a", "use": "tertiary text, the light that passes straight through" },
+    { "role": "accent", "hex": "#1e2bfa", "use": "cobalt, the ONLY accent: eyebrows, every numeral, the CTA, chart fills, the progress bar, the 4 px highlight rule" },
+    { "role": "accent2", "hex": "#ebeae8", "use": "accent-light: cobalt at 8%: tag pills, bar tracks, highlight blocks (the source's rgba, flattened)" },
+    { "role": "positive", "hex": "#059669", "use": "only as inline up-change chip text" },
+    { "role": "negative", "hex": "#dc2626", "use": "only as inline down-change chip text" }
+  ],
+  "fonts": {
+    "display": { "family": "Space Grotesk", "source": "google", "weights": [500, 600, 700] },
+    "body": { "family": "Inter", "source": "google", "weights": [400] }
+  },
+  "type": {
+    "display": 196,
+    "h1": 168,
+    "h2": 104,
+    "h3": 58,
+    "metric": 300,
+    "stat": 42,
+    "body": 38,
+    "eyebrow": 28,
+    "eyebrowTracking": 0.08,
+    "tag": 26,
+    "counter": 26,
+    "min": 24,
+    "leading": 1.08,
+    "tracking": -0.02,
+    "case": "sentence case; uppercase only on the eyebrow",
+    "emphasis": "a tinted highlight block with a 4 px cobalt left rule; never italic, never a cobalt headline",
+    "maxWords": 8
+  },
+  "layout": {
+    "margin": 84,
+    "safe": { "top": 230, "bottom": 330 },
+    "align": "left",
+    "headerY": 244,
+    "contentY": 340,
+    "counterY": 1528,
+    "progressY": 1584
+  },
+  "elements": {
+    "card": { "border": 1.5, "borderAlpha": 0.2, "fillAlpha": 0.04, "radius": 14, "radiusSmall": 12 },
+    "tint": 0.08,
+    "line": { "w": 60, "h": 4, "radius": 2 },
+    "progress": 6,
+    "track": { "h": 36, "radius": 6 },
+    "step": { "size": 96, "opacities": [1, 0.85, 0.7, 0.55] },
+    "highlightRule": 4,
+    "ring": { "alpha": 0.22, "stroke": 2 },
+    "dots": { "size": 16, "gap": 44 },
+    "seam": 130,
+    "scenes": 6
+  },
+  "motion": {
+    "recipes": {
+      "slide": { "kind": "ease", "curve": "quart-out", "duration": 0.6, "distance": 64 },
+      "line": { "kind": "ease", "curve": "quart-out", "duration": 0.5 },
+      "panel": { "kind": "ease", "curve": "cubic-in-out", "duration": 0.7, "distance": 240 },
+      "card": { "kind": "ease", "curve": "expo-out", "duration": 0.7, "distance": 90 },
+      "fill": { "kind": "ease", "curve": "expo-out", "duration": 1.0 },
+      "count": { "kind": "ease", "curve": "expo-out", "duration": 1.2 },
+      "ring": { "kind": "ease", "curve": "expo-out", "duration": 1.2 },
+      "dot": { "kind": "ease", "curve": "quart-out", "duration": 0.35 },
+      "pop": { "kind": "ease", "curve": "cubic-out", "duration": 0.18, "from": 0.985 },
+      "progress": { "kind": "ease", "curve": "cubic-in-out", "duration": 0.6 },
+      "out": { "kind": "ease", "curve": "quart-in", "duration": 0.32 }
+    },
+    "enter": "slide",
+    "exit": "out",
+    "stagger": 0.08,
+    "listStagger": 0.07,
+    "hold": 1.0
+  },
+  "finish": { "grain": 0, "vignette": 0, "glow": false },
+  "banned": [
+    "a second accent colour; cobalt headlines",
+    "drop shadows on content; opaque cobalt borders",
+    "square corners (except the progress bar); font substitutes; uppercase body; italic",
+    "green or red as general accents: they're inline chip text only",
+    "heavier borders to fill space; edge-to-edge headlines",
+    "KPI grids and three cards in a row: one metric per frame, cards stack",
+    "bounce, overshoot, spinning, any move off the one horizontal axis except the panel",
+    "more than one solid cobalt surface per frame"
+  ],
+  "sources": [
+    {
+      "what": "HyperFrames frame preset Blue Professional: palette, faces, type ramp, elements, frames, banned list, caption skin",
+      "where": "github.com/heygen-com/hyperframes skills/hyperframes/assets/frame-presets/blue-professional; research notes docs/research/styles/hyperframes.md, \"Blue Professional\"",
+      "licence": "Apache-2.0. Tokens and rules re-expressed; no code copied. Space Grotesk and Inter are SIL OFL."
+    },
+    {
+      "what": "HyperFrames taste rules T36-T60 (motion)",
+      "where": "docs/research/styles/hyperframes.md, \"Taste rules\"",
+      "licence": "Apache-2.0"
+    }
+  ]
+}

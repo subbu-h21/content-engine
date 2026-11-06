@@ -1,0 +1,105 @@
+{
+  "id": "red-paper-cut",
+  "name": "Red Paper-cut",
+  "kind": "visual",
+  "version": 1,
+  "status": "built-in",
+  "summary": "Folk window-flower paper-cuts that come alive: China-red cut-outs with hand-cut edges, inset double outlines and soft paper shadows on rice paper or indigo night paper; rosettes fold and snap open, letters pop in on 12 fps steps, captions sit on serrated swallow-tail banners, and gold foil arrives once, at the end.",
+  "tags": ["light", "paper", "cut paper", "red", "festive", "folk", "serif", "stepped motion"],
+  "suits": ["festive greetings and new-year stories", "folk tales", "one thing becomes many (fold, cut, unfold)", "craft explainers", "facts told as a small ceremony"],
+  "needs": { "footage": false, "3d": false },
+  "frame": { "width": 1080, "height": 1920 },
+  "palette": [
+    { "role": "background", "hex": "#f2e8d0", "use": "rice paper: the day ground and the title paper" },
+    { "role": "text", "hex": "#d2201f", "use": "China red: the hero paper, cut letters, rosettes" },
+    { "role": "muted", "hex": "#a8111f", "use": "the banner strip under captions and labels (darker than picture reds)" },
+    { "role": "faint", "hex": "#e0877f", "use": "pale-red far layer on day grounds" },
+    { "role": "accent", "hex": "#d9a93f", "use": "gold foil: one late moment only (flecks on the end card)" },
+    { "role": "accent2", "hex": "#1c2446", "use": "indigo night paper: the second ground family" },
+    { "role": "heavy", "hex": "#b00f26", "use": "one step deeper red: printed small credits, heavy pieces" },
+    { "role": "near", "hex": "#c4162c", "use": "one step brighter red: near pieces" },
+    { "role": "far", "hex": "#8a0c20", "use": "darker red: far pieces, stacked folded edges" },
+    { "role": "foldBack", "hex": "#de3b30", "use": "the back of a flap past 90° while it folds" },
+    { "role": "cream", "hex": "#fff1d6", "use": "text on banners; cream cut letters on night paper" },
+    { "role": "inkSky", "hex": "#0f142a", "use": "night sky at the top of a night ground" },
+    { "role": "nightFar", "hex": "#1f2a55", "use": "night far hills" },
+    { "role": "nightNear", "hex": "#29356e", "use": "night near hills; the blue strip" },
+    { "role": "houses", "hex": "#35457f", "use": "night houses" },
+    { "role": "snow", "hex": "#7a88ba", "use": "pale indigo paper: scattered light, snow" },
+    { "role": "dayMid", "hex": "#cf4f4a", "use": "day mid layer" },
+    { "role": "light1", "hex": "#fff6d6", "use": "backlight centre (the lit window behind a rosette)" },
+    { "role": "light2", "hex": "#ffc46e", "use": "backlight middle; lit windows" },
+    { "role": "light3", "hex": "#ec782e", "use": "backlight edge" },
+    { "role": "transmission", "hex": "#b51d18", "use": "a backlit rosette's red" },
+    { "role": "shadow", "hex": "#34060a", "use": "paper shadow under every piece, at 38%" }
+  ],
+  "fonts": {
+    "display": { "family": "Fraunces", "source": "google", "weights": [800], "italic": false },
+    "body": { "family": "Fraunces", "source": "google", "weights": [600], "italic": true }
+  },
+  "type": {
+    "display": 112,
+    "title": 140,
+    "knockout": 150,
+    "number": 400,
+    "banner": 44,
+    "body": 44,
+    "label": 34,
+    "kicker": 34,
+    "min": 26,
+    "leading": 1.02,
+    "charEm": 0.6,
+    "case": "cut titles in capitals; banners and headlines in sentence case",
+    "emphasis": "paper material: the emphasised words are knocked out of a red banner (yin cut); never a colour change in text",
+    "maxWords": 8
+  },
+  "layout": { "margin": 90, "safe": { "top": 230, "bottom": 330 }, "align": "center", "border": 70 },
+  "elements": {
+    "wobble": 4,
+    "rim": 1.2,
+    "slit": [3.5, 5],
+    "shadow": { "dx": 2.6, "dy": 3.6, "blur": 2.5, "alpha": 0.38 },
+    "mottle": 0.07,
+    "stepFps": 12,
+    "pop": 1.15,
+    "bump": 1.05,
+    "tooth": [14, 5],
+    "tail": 46,
+    "rosetteTeeth": 96
+  },
+  "motion": {
+    "recipes": {
+      "unfold": { "kind": "ease", "curve": "quart-out", "duration": 0.5, "apart": 0.25 },
+      "fold": { "kind": "ease", "curve": "sine-in-out", "duration": 0.55 },
+      "banner": { "kind": "ease", "curve": "linear", "duration": 0.1667, "drop": 26 },
+      "letter": { "kind": "ease", "curve": "linear", "duration": 0.0833 },
+      "cut": { "kind": "ease", "curve": "linear", "duration": 0.9 },
+      "peel": { "kind": "ease", "curve": "cubic-in-out", "duration": 0.7 },
+      "flash": { "kind": "ease", "curve": "expo-out", "duration": 0.12 }
+    },
+    "enter": "unfold",
+    "exit": "peel",
+    "stagger": 0.0833,
+    "hold": 1.8
+  },
+  "finish": { "grain": 0, "vignette": 0, "glow": false, "bloom": 0.3 },
+  "banned": [
+    "painting, gradient shading or outline strokes (the backlight behind a lit rosette is the one exception)",
+    "shadow-puppet looks: no light behind a screen, no translucent hide, no rods",
+    "flat vector art without cut edges, rims and paper shadows",
+    "a silhouette film: every shape's interior is cut",
+    "perspective depth: layers stay parallel to the screen",
+    "dissolves and fades: paper folds, peels, drops or is cut",
+    "smoothed architecture; floating islands in a cut; morphing faces",
+    "a red hero on a red ground; gold as a second main colour",
+    "copying named artists' cuts, studio characters or real motif sheets",
+    "film grain (the paper fibres are the texture)"
+  ],
+  "sources": [
+    {
+      "what": "Lemo-Opuscar style No. 09 \"Red Paper-cut\" (Chinese window flowers): STYLE.md, DEMO.md, style.json",
+      "where": "github.com/lemomo-ai/lemo-opuscar styles/papercut-red; research notes docs/research/styles/five-skills.md, \"Red Paper-cut (Chinese window flowers)\"",
+      "licence": "MIT (code and docs); demo films and stills CC BY 4.0. No code copied; rebuilt in SVG. Fraunces is SIL OFL."
+    }
+  ]
+}

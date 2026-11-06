@@ -1,0 +1,86 @@
+{
+  "id": "whiteboard",
+  "name": "Whiteboard",
+  "kind": "visual",
+  "version": 1,
+  "status": "built-in",
+  "summary": "A lesson written live on one glossy dry-erase board by floating markers with no hand: a single-stroke handwriting, three marker colours with fixed meanings, wobbly circles that overshoot their start, ghosts of old lessons, a window sheen, and an orange map-pin magnet on the point that matters.",
+  "tags": ["whiteboard", "hand-drawn", "marker", "explainer", "light", "handwriting", "diagram", "classroom"],
+  "suits": ["science explainers", "how does X work", "online courses", "proofs and worked problems", "timelines", "two-quantity comparisons"],
+  "needs": { "footage": false, "3d": false },
+  "frame": { "width": 1080, "height": 1920 },
+  "palette": [
+    { "role": "background", "hex": "#fbfbf9", "use": "the warm white board (top of its gradient)" },
+    { "role": "boardLow", "hex": "#eeede9", "use": "the bottom of the board's gradient" },
+    { "role": "text", "hex": "#23262c", "use": "black marker: things, structure, most words" },
+    { "role": "accent2", "hex": "#2a5cb3", "use": "blue marker: signals, light, measurement, process" },
+    { "role": "accent", "hex": "#d97757", "use": "orange marker: you, time, the thing that matters (one per region); the magnet; the subtitle dash" },
+    { "role": "muted", "hex": "#9aa0a8", "use": "ghost marks of old lessons, at 5–10%" },
+    { "role": "faint", "hex": "#8aa0c8", "use": "pale-blue ghost marks, at 5–10%" },
+    { "role": "wall", "hex": "#d8d3ca", "use": "the warm grey wall, only when the camera passes the board's edge" },
+    { "role": "frame", "hex": "#c9ccd0", "use": "the aluminium frame and tray (proposed)" },
+    { "role": "label", "hex": "#fbfbf9", "use": "the burned-in subtitle label, at 90%" },
+    { "role": "eraser", "hex": "#3a3c40", "use": "the charcoal felt eraser (proposed)" }
+  ],
+  "fonts": {
+    "display": { "family": "Architects Daughter", "source": "google", "weights": [400] },
+    "body": { "family": "Architects Daughter", "source": "google", "weights": [400] }
+  },
+  "type": {
+    "display": 112,
+    "title": 112,
+    "hero": 220,
+    "number": 300,
+    "label": 52,
+    "small": 42,
+    "body": 46,
+    "min": 32,
+    "leading": 1.1,
+    "tracking": 0,
+    "charEm": 0.46,
+    "case": "mixed, handwriting",
+    "emphasis": "the accent marker, a box or a double circle, and timing (a term finishes on its spoken word)",
+    "maxWords": 10
+  },
+  "layout": { "margin": 90, "safe": { "top": 230, "bottom": 330 }, "align": "left", "textRight": 960, "subtitleBand": 0.12 },
+  "motion": {
+    "recipes": {
+      "stroke": { "kind": "ease", "curve": [0.48, 0.04, 0.52, 0.96], "duration": 0.6 },
+      "write": { "kind": "ease", "curve": [0.48, 0.04, 0.52, 0.96], "duration": 0.8 },
+      "title": { "kind": "ease", "curve": [0.48, 0.04, 0.52, 0.96], "duration": 1.6 },
+      "hop": { "kind": "ease", "curve": "cubic-in-out", "duration": 0.42 },
+      "magnet": { "kind": "ease", "curve": "cubic-out", "duration": 0.3 },
+      "camera": { "kind": "ease", "curve": "cubic-in-out", "duration": 1.2 }
+    },
+    "enter": "stroke",
+    "exit": "erase",
+    "stagger": 0.15,
+    "hold": 1.0
+  },
+  "elements": {
+    "stroke": { "min": 6, "max": 11, "wobble": 2.6, "wavelength": 220, "tremor": 0.6, "chisel": [0.8, 1.0], "rampStart": 0.72, "ramp": 0.08, "taper": 0.12, "pool": 120 },
+    "glyph": { "tilt": 2, "baseline": 0.035, "scale": 0.035 },
+    "ink": 0.94,
+    "dry": { "threshold": 0.66, "strength": 0.85 },
+    "ghost": { "count": 14, "opacity": [0.05, 0.08] },
+    "sheen": 0.13,
+    "marker": { "length": 290, "width": 42, "shadow": { "dx": 16, "dy": 26, "blur": 9, "opacity": 0.2 } },
+    "magnet": { "r": 30, "drop": 0.3 },
+    "label": { "radius": 18, "padX": 26, "padY": 14, "opacity": 0.9, "dash": 46 }
+  },
+  "finish": { "grain": 0.02, "vignette": 0, "glow": false, "sheen": 0.13 },
+  "banned": [
+    "a hand, arm or cursor, ever: markers float",
+    "text animated as blocks (kinetic type): words are written",
+    "a blue sheet or drafting conventions (that's Blueprint)",
+    "wax texture or a children's-book look (that's Crayon)",
+    "more than three marker colours, or a colour changing its meaning",
+    "a label half-cut by the frame or a push-in",
+    "cuts on the board: the camera rides a drawn line, or whips",
+    "a pooled-ink dot larger than the stroke's start",
+    "a dark board, chalk, or slate (that's Chalkboard)"
+  ],
+  "sources": [
+    { "what": "Lemo-Opuscar style 06 \"Whiteboard Explainer\" (styles/whiteboard: STYLE.md, DEMO.md)", "where": "docs/research/styles/five-skills.md, \"Whiteboard Explainer\"", "licence": "MIT (lemomo-ai/lemo-opuscar); demo films and stills CC BY 4.0, not used" }
+  ]
+}

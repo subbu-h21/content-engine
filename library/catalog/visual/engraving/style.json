@@ -1,0 +1,99 @@
+{
+  "id": "engraving",
+  "name": "Engraving",
+  "kind": "visual",
+  "version": 1,
+  "status": "built-in",
+  "summary": "A natural-history copperplate that engraves itself on laid paper: swelling burin lines and cross-hatching build every tone, magnified roundels sit in the margins, roman capitals and italic names label the parts, and a hand-laid watercolour wash arrives last.",
+  "tags": ["light", "paper", "print", "engraving", "line", "scientific", "antique", "serif"],
+  "suits": ["science explainers", "museum and specimen labels", "textbook figures with labelled parts", "craft heritage", "maps and site plans"],
+  "needs": { "footage": false, "3d": false },
+  "frame": { "width": 1080, "height": 1920 },
+  "palette": [
+    { "role": "background", "hex": "#f1e8d2", "use": "laid paper: the sheet, its fibres and laid lines" },
+    { "role": "text", "hex": "#1c1510", "use": "ink: every line, every letter (warm near-black)" },
+    { "role": "muted", "hex": "#2b1e14", "use": "the script ink of notes and the subtitle" },
+    { "role": "faint", "hex": "#e8ddc2", "use": "plate tone inside the pressed plate mark (at 55%)" },
+    { "role": "accent", "hex": "#a9c3cf", "use": "the pale blue-grey wash (at 50–60%): sky, the blue bar, the scattered glow" },
+    { "role": "accent2", "hex": "#d9962a", "use": "the amber wash: the one stronger pigment, used once (the sun)" },
+    { "role": "foxing", "hex": "#9a6a34", "use": "sparse foxing spots on the paper" },
+    { "role": "slip", "hex": "#f4eddb", "use": "the deckled paper slip under a subtitle" },
+    { "role": "earth", "hex": "#a8743e", "use": "an earth wash for ground or a second part (rare)" }
+  ],
+  "fonts": {
+    "display": { "family": "Bodoni Moda", "source": "google", "weights": [400, 500], "italic": true },
+    "body": { "family": "Bodoni Moda", "source": "google", "weights": [400], "italic": true },
+    "script": { "family": "Pinyon Script", "source": "google", "weights": [400] }
+  },
+  "type": {
+    "display": 64,
+    "title": 74,
+    "italicTitle": 104,
+    "number": 330,
+    "label": 26,
+    "italic": 40,
+    "body": 40,
+    "script": 48,
+    "subtitle": 46,
+    "min": 24,
+    "leading": 1.12,
+    "titleTracking": 0.16,
+    "labelTracking": 0.14,
+    "case": "roman capitals for titles and labels, italic for names, script for notes",
+    "emphasis": "hierarchy: roman title → italic name → script note; colour never on type",
+    "maxWords": 8
+  },
+  "layout": {
+    "margin": 120,
+    "safe": { "top": 230, "bottom": 330 },
+    "align": "center",
+    "plate": [44, 96, 1036, 1824],
+    "border": [84, 136, 996, 1784],
+    "borderInset": 9,
+    "labelY": 262
+  },
+  "elements": {
+    "light": [-0.55, -0.62, 0.56],
+    "hatch": { "spacing": 5, "cross": 1.1, "third": 1.25, "wMin": 0.7, "wMax": 2.6, "crossW": 0.78, "thirdW": 0.6, "thresholds": [0.14, 0.48, 0.76], "step": 3, "speed": 2600 },
+    "outline": { "w": 2.2, "swell": [0.45, 1.35], "runs": 3 },
+    "rule": { "outer": 2.4, "inner": 0.8 },
+    "roundel": { "r": 150, "rule": [2, 0.75], "gap": 4, "ground": 11, "halo": 10 },
+    "leader": { "w": 0.95, "dot": 3, "clear": 34 },
+    "wash": { "spill": 3.5, "misregister": [2, 1.5], "lift": 0.55, "alpha": 0.45 },
+    "paper": { "laid": 4.5, "chain": 96, "foxing": 26 }
+  },
+  "motion": {
+    "recipes": {
+      "cut": { "kind": "ease", "curve": "linear", "duration": 1.0 },
+      "sweep": { "kind": "ease", "curve": [0.42, 0, 0.58, 1], "duration": 1.1 },
+      "letter": { "kind": "ease", "curve": "linear", "duration": 0.045, "line": 0.9 },
+      "write": { "kind": "ease", "curve": [0.3, 0, 0.7, 1], "duration": 1.0 },
+      "bloom": { "kind": "ease", "curve": [0, 0, 0.58, 1], "duration": 1.4, "apart": 0.42 },
+      "fly": { "kind": "ease", "curve": [0.42, 0, 0.58, 1], "duration": 0.9, "lift": 30 },
+      "slip": { "kind": "ease", "curve": "linear", "duration": 0.1, "off": 0.6 },
+      "proof": { "kind": "ease", "curve": [0.42, 0, 0.58, 1], "duration": 0.7 }
+    },
+    "enter": "cut",
+    "exit": "proof",
+    "stagger": 0.045,
+    "hold": 2.2
+  },
+  "finish": { "grain": 0, "vignette": 0, "glow": false },
+  "banned": [
+    "uniform-width lines (they read as pen or vector)",
+    "grey fills in the ink: all tone is line density",
+    "opaque colour; colour on lettering, rules or paper outside the figure",
+    "fades and UI-style slides: lines are cut, text is cut or written, colour blooms",
+    "dissolves and wipes between plates",
+    "leaders hugging the subject; outline-only parts beside a hatched body",
+    "a woodcut, pen sketch, engineering drawing or sepia filter",
+    "copying a historic plate, pose, border or title"
+  ],
+  "sources": [
+    {
+      "what": "Lemo-Opuscar style No. 53 \"Engraving\" (Copperplate Engraving): STYLE.md, DEMO.md, style.json",
+      "where": "github.com/lemomo-ai/lemo-opuscar styles/engraving; research notes docs/research/styles/five-skills.md, \"Copperplate Engraving\"",
+      "licence": "MIT (code and docs); demo films and stills CC BY 4.0. No code copied; the hatching is rebuilt in SVG. Bodoni Moda and Pinyon Script are SIL OFL."
+    }
+  ]
+}

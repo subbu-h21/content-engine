@@ -1,6 +1,6 @@
 /** The Brief board: the video's plan as Claude writes it (read live from the project files), plus references. */
 import React, { useEffect, useRef, useState } from "react";
-import { api, type Brief, type Stage } from "./api";
+import { api, previewUrl, type Brief, type CatalogStyle, type Stage } from "./api";
 import { Markdown } from "./Markdown";
 import { navigate } from "./nav";
 import { STAGE_WORD as STAGES } from "./words";
@@ -165,7 +165,9 @@ export const BriefBoard: React.FC<{ name: string; onOpenEditor: () => void }> = 
         ))}
       </Section>
 
-      <Section title="Look" empty={!b.style && !b.frames.length}>
+      <Section title="Look" empty={!b.style && !b.frames.length && !b.look}>
+        {b.look ? <StyleRow name={name} look={b.look} onError={setError} /> : null}
+        {b.look && !b.look.style && !b.style && !b.frames.length ? <p className="hint">Not decided yet.</p> : null}
         {b.frames.length ? (
           <div className="frames">
             {b.frames.map((f) => (
@@ -274,6 +276,136 @@ export const BriefBoard: React.FC<{ name: string; onOpenEditor: () => void }> = 
         </ul>
         {b.skills.length ? <p className="meta">Skills for this video: {b.skills.join(", ")}</p> : null}
       </section>
+    </div>
+  );
+};
+
+/**
+ * The video's catalog style on the Look card: its cover and name, its channel, and (unless the channel's look is
+ * locked) Change (a picker of catalog styles) and New look from a file (Claude makes a catalog style from it).
+ */
+const StyleRow: React.FC<{ name: string; look: NonNullable<Brief["look"]>; onError: (e: string | null) => void }> = ({ name, look, onError }) => {
+  const [picking, setPicking] = useState(false);
+  const [note, setNote] = useState<string | null>(null);
+  const [busy, setBusy] = useState<string | null>(null);
+  const files = useRef<HTMLInputElement>(null);
+  const locked = !!look.style?.locked;
+
+  const newLook = async (list: FileList) => {
+    onError(null);
+    setNote(null);
+    try {
+      const { id: draft } = await api.catalogNewDraft();
+      for (const [i, f] of Array.from(list).entries()) {
+        setBusy(`Adding ${f.name} (${i + 1}/${list.length})…`);
+        await api.catalogDraftUpload(draft, f);
+      }
+      setBusy("Handing it to Claude…");
+      const r = await api.projectStyleFromDraft(name, draft);
+      setNote(r.told ? "Claude is making a new catalog style from it and will use it here: follow along in the chat." : `Saved, but Claude wasn't reached: ${r.reason ?? "try again"}.`);
+    } catch (e) {
+      onError((e as Error).message);
+    }
+    setBusy(null);
+  };
+
+  return (
+    <div className="style-row">
+      {look.style?.cover ? <img className="style-thumb" src={look.style.cover} alt="" /> : null}
+      <div className="style-row-main">
+        {look.style ? (
+          <p>
+            <strong>{look.style.name}</strong> <span className="dim">from the catalog</span>
+            {locked ? <span className="pill">look locked</span> : null}
+          </p>
+        ) : (
+          <p className="dim">No catalog style yet: Claude proposes one while you talk, or choose one.</p>
+        )}
+        {look.channel ? <p className="dim">Channel: {look.channel.name}</p> : null}
+        {locked ? (
+          <p className="hint">The {look.channel?.name ?? "channel"} channel's look is locked (Settings → Channels).</p>
+        ) : (
+          <div className="actions">
+            <button onClick={() => setPicking(true)} disabled={!!busy}>
+              {look.style ? "Change" : "Choose a style"}
+            </button>
+            <button className="quiet" onClick={() => files.current?.click()} disabled={!!busy} title="An image, PDF, style guide or video: Claude makes it a catalog style and uses it here">
+              New look from a file
+            </button>
+            <input
+              ref={files}
+              type="file"
+              multiple
+              hidden
+              onChange={(e) => {
+                const l = e.target.files;
+                if (l?.length) newLook(l).finally(() => (e.target.value = ""));
+              }}
+            />
+            {look.style ? (
+              <a className="quiet" href={`/catalog/${look.style.id}`} onClick={(e) => (e.preventDefault(), navigate(`/catalog/${look.style!.id}`))}>
+                See it in the Catalog
+              </a>
+            ) : null}
+          </div>
+        )}
+        {busy ? <p className="hint">{busy}</p> : null}
+        {note ? <p className="hint">{note}</p> : null}
+      </div>
+      {picking ? (
+        <StylePicker
+          current={look.style?.id ?? null}
+          onClose={() => setPicking(false)}
+          onPick={async (id) => {
+            onError(null);
+            try {
+              const r = await api.projectStyle(name, id);
+              setNote(r.told ? `Now using “${r.style.name}”: Claude is updating the look (see the chat).` : `Now using “${r.style.name}”. Claude wasn't reached (${r.reason ?? "try again"}); tell it in the chat.`);
+              setPicking(false);
+            } catch (e) {
+              onError((e as Error).message);
+            }
+          }}
+        />
+      ) : null}
+    </div>
+  );
+};
+
+/** A pop-up grid of catalog styles to pick from. */
+const StylePicker: React.FC<{ current: string | null; onClose: () => void; onPick: (id: string) => void }> = ({ current, onClose, onPick }) => {
+  const [styles, setStyles] = useState<CatalogStyle[] | null>(null);
+  const [q, setQ] = useState("");
+  useEffect(() => {
+    api.catalog().then((r) => setStyles(r.styles), () => setStyles([]));
+    const esc = (e: KeyboardEvent) => e.key === "Escape" && onClose();
+    window.addEventListener("keydown", esc);
+    return () => window.removeEventListener("keydown", esc);
+  }, [onClose]);
+  const shown = (styles ?? []).filter((s) => !q.trim() || `${s.name} ${s.summary} ${s.tags.join(" ")}`.toLowerCase().includes(q.trim().toLowerCase()));
+  return (
+    <div className="modal-back" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
+      <div className="modal picker" role="dialog" aria-modal="true">
+        <div className="picker-head">
+          <h2>Choose a style</h2>
+          <input placeholder="Search styles" value={q} onChange={(e) => setQ(e.target.value)} autoFocus />
+          <button className="quiet" onClick={onClose}>
+            Close
+          </button>
+        </div>
+        {styles === null ? <p className="hint">Loading…</p> : null}
+        <ul className="style-grid small">
+          {shown.map((s) => (
+            <li key={s.id}>
+              <button className={`style-card ${s.id === current ? "current" : ""}`} onClick={() => onPick(s.id)} title={s.summary}>
+                <span className="style-cover">{s.cover ? <img src={previewUrl(s.id, "cover.jpg", s.stamp)} alt="" loading="lazy" /> : null}</span>
+                <span className="style-name">{s.name}</span>
+                {s.id === current ? <span className="pill">in use</span> : s.status === "experimental" ? <span className="pill warn-pill">experimental</span> : null}
+              </button>
+            </li>
+          ))}
+        </ul>
+      </div>
     </div>
   );
 };

@@ -27,8 +27,12 @@ This is a content-engine project; the engine is `D:\code_files\content-engine` (
 - Generated, never hand-edited: `src/data/*.json`, `public/**`, `audio/vo_full.wav`. Regenerate with
   `ce pipeline <project> vo | music | stems | sfx | plates | captions | audio`. `vo` and `music` make paid OpenRouter
   calls, but only for missing files; `audio` re-runs everything free after a script or timing change.
-- Visual rules live in `src/lib/theme.ts`: one text colour; italics for emphasis; accents only in diagrams; type stays
-  in the dark band; labels on pills.
+- **The look:**
+  - If `src/style/` exists, the video uses that catalog style: `src/style/STYLE.md`, `style.json` and `scenes/`, copied
+    in by `ce catalog use <id>`. Keep to it.
+  - Otherwise the engine's default look (Editorial Neuro) is in `src/lib/theme.ts`: one text colour; italics for
+    emphasis; accents only in diagrams; type stays in the dark band; labels on pills.
+  - Every video also follows the `visual-taste` skill.
 - Verify visually: `npx remotion still src/index.ts Reel out/x.png --frame=N`, and look at it before reporting.
   Scene compositions (`S01-…`) start at frame 0 for quick checks.
 - 3D: shot scripts in `blender/` (`ce blender <project> shot.py draft | final | frame <n>`), builders in `blender/lib`.

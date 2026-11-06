@@ -1,14 +1,15 @@
-/** The menu at the top of the Videos, Publish and Settings pages (compact: a thin bar, for the full-width Publish page). */
+/** The menu at the top of the Videos, Catalog, Publish and Settings pages (compact: a thin bar, for the full-width Publish page). */
 import React from "react";
 import { navigate } from "./nav";
 
 const ITEMS = [
   ["videos", "/", "Videos"],
+  ["catalog", "/catalog", "Catalog"],
   ["publish", "/publish", "Publish"],
   ["settings", "/settings", "Settings"],
 ] as const;
 
-export const TopNav: React.FC<{ current: "videos" | "publish" | "settings"; compact?: boolean }> = ({ current, compact }) => (
+export const TopNav: React.FC<{ current: "videos" | "catalog" | "publish" | "settings"; compact?: boolean }> = ({ current, compact }) => (
   <header className={compact ? "bar topbar" : "home-head"}>
     {compact ? (
       <a

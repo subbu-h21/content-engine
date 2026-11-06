@@ -1,0 +1,133 @@
+{
+  "id": "neural-console",
+  "name": "Neural Console",
+  "kind": "visual",
+  "version": 1,
+  "status": "built-in",
+  "summary": "A vertical sci-fi control screen: a rounded, feathered console on deep navy-black, a glowing cyan ring hub with a magenta second ring, dashed network paths, scrolling mono logs, a glass status card with meters, scanlines.",
+  "tags": ["sci-fi", "dark", "cyan", "magenta", "console", "hud", "glow", "tech", "maximal"],
+  "suits": ["AI and tech explainers", "system-online intros", "data and stat reveals", "cyber hooks", "science facts told as a machine reading"],
+  "needs": { "footage": false, "3d": false },
+  "frame": { "width": 1080, "height": 1920 },
+  "palette": [
+    { "role": "background", "hex": "#03050d", "use": "the void outside and at the edge of the console field" },
+    { "role": "surface", "hex": "#09111f", "use": "the console field's centre (radial to the void), glass card fill at 60%" },
+    { "role": "text", "hex": "#eafcff", "use": "headlines and status titles (paper)" },
+    { "role": "muted", "hex": "#d2f1f7", "use": "small labels and log lines, always at 48%" },
+    { "role": "faint", "hex": "#087c9c", "use": "core deep: the 74 px grid (at 18%), the meter gradient's start, idle ring segments" },
+    { "role": "accent", "hex": "#00e5ff", "use": "core cyan: rings, labels, network paths, meters; means short (blue) waves in this catalog's samples" },
+    { "role": "accentHot", "hex": "#c6faff", "use": "core hot: dust motes, the metric, node fills, the hub's core label" },
+    { "role": "accent2", "hex": "#ff2bd6", "use": "secondary magenta: the second ring, log emphasis, the meter's other end; means long (red) waves in the samples" },
+    { "role": "accent2Hot", "hex": "#ffc4f3", "use": "secondary hot: magenta nodes" },
+    { "role": "orb", "hex": "#6c43ff", "use": "one blurred depth orb at 4.5% only; never a fill, line or text" }
+  ],
+  "fonts": {
+    "display": { "family": "Arimo", "source": "google", "weights": [400, 700], "prefer": "Arial" },
+    "body": { "family": "Arimo", "source": "google", "weights": [400, 700], "prefer": "Arial" },
+    "mono": { "family": "Inconsolata", "source": "google", "weights": [400, 600], "prefer": "Consolas" }
+  },
+  "type": {
+    "display": 92,
+    "title": 112,
+    "core": 44,
+    "metric": 150,
+    "brand": 35,
+    "status": 34,
+    "body": 30,
+    "log": 24,
+    "logLine": 40,
+    "label": 24,
+    "min": 24,
+    "leading": 1.02,
+    "tracking": -0.045,
+    "labelTracking": 0.22,
+    "brandTracking": 0.12,
+    "mutedOpacity": 0.48,
+    "metricGlow": 24,
+    "charEm": 0.55,
+    "case": "sentence",
+    "emphasis": "colour + glow (core cyan)",
+    "maxWords": 10
+  },
+  "layout": {
+    "margin": 86,
+    "safe": { "top": 230, "bottom": 330 },
+    "align": "left",
+    "field": { "top": 34, "side": 28, "bottom": 30, "radius": 54 },
+    "headerY": 262,
+    "hub": { "x": 442, "r": 310 },
+    "logs": { "right": 66, "width": 258 },
+    "card": { "x": 122, "width": 836, "radius": 34, "bottom": 340 }
+  },
+  "motion": {
+    "recipes": {
+      "field": { "kind": "ease", "curve": [0.25, 1, 0.5, 1], "duration": 1.05 },
+      "header": { "kind": "ease", "curve": "expo-out", "duration": 0.72, "distance": 32 },
+      "mark": { "kind": "ease", "curve": [0.34, 1.6, 0.64, 1], "duration": 0.68 },
+      "copy": { "kind": "ease", "curve": "expo-out", "duration": 0.72, "distance": 24 },
+      "path": { "kind": "ease", "curve": [0.76, 0, 0.24, 1], "duration": 1.25 },
+      "node": { "kind": "ease", "curve": [0.34, 1.9, 0.64, 1], "duration": 0.4 },
+      "hubIn": { "kind": "ease", "curve": "expo-out", "duration": 0.78 },
+      "hubSettle": { "kind": "ease", "curve": [0.33, 1, 0.68, 1], "duration": 0.34 },
+      "rings": { "kind": "ease", "curve": [0.45, 0, 0.55, 1], "duration": 6.12 },
+      "logs": { "kind": "ease", "curve": "linear", "duration": 5.92, "distance": 612 },
+      "card": { "kind": "ease", "curve": "expo-out", "duration": 0.82, "distance": 58 },
+      "meter": { "kind": "ease", "curve": [0.22, 1, 0.36, 1], "duration": 1.18 },
+      "cell": { "kind": "ease", "curve": [0.34, 1.4, 0.64, 1], "duration": 0.3 },
+      "scan": { "kind": "ease", "curve": [0.65, 0, 0.35, 1], "duration": 5.52 },
+      "orbs": { "kind": "ease", "curve": [0.37, 0, 0.63, 1], "duration": 7.2, "distance": 36 },
+      "dust": { "kind": "ease", "curve": "linear", "duration": 7.05 },
+      "pulse": { "kind": "ease", "curve": [0.37, 0, 0.63, 1], "duration": 0.15 },
+      "out": { "kind": "ease", "curve": [0.32, 0, 0.67, 0], "duration": 0.4 }
+    },
+    "enter": "copy",
+    "exit": "out",
+    "stagger": 0.09,
+    "pathStagger": 0.08,
+    "nodeStagger": 0.11,
+    "cellStagger": 0.08,
+    "hold": 1.5
+  },
+  "elements": {
+    "grid": { "size": 74, "opacity": 0.18 },
+    "noise": 0.14,
+    "orbs": [
+      { "x": 0.25, "y": 0.3, "r": 300, "blur": 140, "opacity": 0.075, "role": "accent" },
+      { "x": 0.8, "y": 0.62, "r": 320, "blur": 158, "opacity": 0.06, "role": "accent2" },
+      { "x": 0.45, "y": 0.85, "r": 280, "blur": 132, "opacity": 0.045, "role": "orb" }
+    ],
+    "dust": { "count": 30, "min": 2, "max": 4, "rise": [74, 164] },
+    "paths": { "dash": [8, 12], "width": 1.7, "opacity": 0.42 },
+    "rings": {
+      "dashed": { "dash": [4, 15], "width": 2, "opacity": 0.55 },
+      "arc": { "dash": [510, 1170], "width": 8 },
+      "second": { "dash": [114, 38, 24, 72], "width": 3, "opacity": 0.85 },
+      "inner": { "width": 1.5, "opacity": 0.3 },
+      "overshoot": 1.15,
+      "fromScale": 0.6,
+      "fromBlur": 6,
+      "turn": 356
+    },
+    "meter": { "height": 8, "radius": 4, "track": 0.14 },
+    "cell": { "size": 18, "gap": 8 },
+    "glow": [2, 10, 35, 90],
+    "scanlines": { "period": 6, "opacity": 0.19 },
+    "chroma": 0.085,
+    "scanBeam": { "height": 220, "opacity": 0.08 },
+    "card": { "fill": 0.6, "border": 0.22, "blur": 18 }
+  },
+  "finish": { "grain": 0.016, "vignette": 0.87, "glow": true, "scanlines": 0.19, "chroma": 0.085 },
+  "banned": [
+    "orange, amber or red as a colour: the console is cyan and magenta only (that is what keeps it apart from the orange broadcast HUD)",
+    "corner brackets and timecodes: the console is a rounded, feathered screen, not a camera viewfinder",
+    "invented telemetry: every log line, metric and meter value is true",
+    "flat, unlit graphics: rings, nodes and the metric carry their glow",
+    "type that moves once it has landed; only the system parts run (rings, logs, scan beam, dust)",
+    "more than two hues of accent in one frame (cyan and magenta), and violet anywhere but the faint depth orb",
+    "text in the bottom 330 px or the top 230 px; the header sits just inside the top line",
+    "cuts inside a shot: the console builds in one continuous take"
+  ],
+  "sources": [
+    { "what": "NullMotion's \"Cinematic Neural HUD\" preview page (27-cinematic-hud-overlay): palette, sizes, layout, layers and GSAP timeline", "where": "docs/research/styles/ecc-nullmotion-3b1b-web.md, \"Neural HUD (NullMotion page outside the catalog)\"", "licence": "MIT" }
+  ]
+}

@@ -25,6 +25,22 @@ const writeJson = (f, o) => {
   fs.writeFileSync(f, JSON.stringify(o, null, 2) + "\n");
 };
 
+/** The engine's prompt hook in a folder's .claude/settings.local.json (replacing an older copy of it), plus `extra`. */
+function writeHookSettings(dir, extra = {}) {
+  const setFile = path.join(dir, ".claude", "settings.local.json");
+  const set = { ...readJson(setFile), ...extra };
+  set.hooks = set.hooks ?? {};
+  const groups = (set.hooks.UserPromptSubmit ?? []).filter((g) => !(g.hooks ?? []).some((h) => (h.args ?? []).some((a) => String(a).endsWith("/hook.mjs") && String(a).includes("content-engine"))));
+  groups.push({ hooks: [{ type: "command", command: "node", args: [HOOK], timeout: 5 }] });
+  set.hooks.UserPromptSubmit = groups;
+  writeJson(setFile, set);
+}
+
+/** The catalog folder's Claude: only the prompt hook (it says which style the Catalog page shows); no editor tools. */
+export function ensureCatalogIntegration(dir) {
+  writeHookSettings(dir);
+}
+
 export function ensureIntegration(dir, name, engineUrl) {
   const mcpFile = path.join(dir, ".mcp.json");
   const mcp = readJson(mcpFile);
@@ -32,13 +48,7 @@ export function ensureIntegration(dir, name, engineUrl) {
   writeJson(mcpFile, mcp);
 
   const setFile = path.join(dir, ".claude", "settings.local.json");
-  const set = readJson(setFile);
-  set.enabledMcpjsonServers = [...new Set([...(set.enabledMcpjsonServers ?? []), SERVER_NAME])];
-  set.hooks = set.hooks ?? {};
-  const groups = (set.hooks.UserPromptSubmit ?? []).filter((g) => !(g.hooks ?? []).some((h) => (h.args ?? []).some((a) => String(a).endsWith("/hook.mjs") && String(a).includes("content-engine"))));
-  groups.push({ hooks: [{ type: "command", command: "node", args: [HOOK], timeout: 5 }] });
-  set.hooks.UserPromptSubmit = groups;
-  writeJson(setFile, set);
+  writeHookSettings(dir, { enabledMcpjsonServers: [...new Set([...(readJson(setFile).enabledMcpjsonServers ?? []), SERVER_NAME])] });
 
   const gi = path.join(dir, ".gitignore");
   const lines = fs.existsSync(gi) ? fs.readFileSync(gi, "utf8").split(/\r?\n/) : [];

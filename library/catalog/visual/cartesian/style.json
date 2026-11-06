@@ -1,0 +1,92 @@
+{
+  "id": "cartesian",
+  "name": "Cartesian",
+  "kind": "visual",
+  "version": 1,
+  "status": "built-in",
+  "summary": "A quiet museum catalogue drawn with compass and rule: warm stone, thin Playfair Display, taupe hairlines and faint compass rings that draw themselves round, words traced on left to right, and no colour at all. Sparse and breathing.",
+  "tags": ["light", "stone", "serif", "quiet", "museum", "architectural", "minimal", "monochrome"],
+  "suits": ["architecture", "design", "luxury", "heritage", "calm documentary explainers"],
+  "needs": { "footage": false, "3d": false },
+  "frame": { "width": 1080, "height": 1920 },
+  "palette": [
+    { "role": "background", "hex": "#ede8e0", "use": "bg-primary: the ground" },
+    { "role": "surface", "hex": "#e2dbd1", "use": "bg-secondary: the only secondary fill: placeholders, photo frames" },
+    { "role": "text", "hex": "#1a1a1a", "use": "text-primary: headlines; the one ink accent rule" },
+    { "role": "muted", "hex": "#5a5a5a", "use": "text-secondary: body" },
+    { "role": "faint", "hex": "#b8b0a4", "use": "line: every structural line; the quote mark" },
+    { "role": "accent", "hex": "#8a8178", "use": "taupe: labels, numerals, small text, compass rings, the active caption word's underline" },
+    { "role": "accent2", "hex": "#b8b0a4", "use": "line: there's no second accent" }
+  ],
+  "fonts": {
+    "display": { "family": "Playfair Display", "source": "google", "weights": [400], "italic": true },
+    "body": { "family": "Inter", "source": "google", "weights": [400, 500] }
+  },
+  "type": {
+    "display": 154,
+    "h1": 124,
+    "h2": 100,
+    "h3": 64,
+    "stat": 176,
+    "numeral": 60,
+    "body": 36,
+    "label": 26,
+    "labelTracking": 0.12,
+    "min": 24,
+    "leading": 1.06,
+    "tracking": 0,
+    "case": "sentence case Playfair, never uppercase; uppercase taupe labels",
+    "emphasis": "grow the type, switch sans to serif, one italic word, or the one ink rule; never colour",
+    "maxWords": 8
+  },
+  "layout": {
+    "margin": 96,
+    "safe": { "top": 230, "bottom": 330 },
+    "align": "left",
+    "guideX": 54,
+    "empty": "55-60% of every frame is empty; there's no dense frame"
+  },
+  "elements": {
+    "hairline": 1.5,
+    "guideAlpha": 0.38,
+    "ring": { "alpha": 0.62, "dashedAlpha": 0.42, "inner": 0.76, "dash": [5, 11] },
+    "inkRule": { "w": 200, "h": 1.5 }
+  },
+  "motion": {
+    "recipes": {
+      "compass": { "kind": "ease", "curve": "sine-in-out", "duration": 1.6 },
+      "rule": { "kind": "ease", "curve": "expo-out", "duration": 1.1 },
+      "trace": { "kind": "ease", "curve": "cubic-in-out", "duration": 0.9, "soft": 14 },
+      "fade": { "kind": "ease", "curve": "quart-out", "duration": 0.7 },
+      "pop": { "kind": "ease", "curve": "cubic-out", "duration": 0.2, "from": 0.985 },
+      "out": { "kind": "ease", "curve": "cubic-in", "duration": 0.45 }
+    },
+    "enter": "trace",
+    "exit": "out",
+    "stagger": 0.2,
+    "hold": 1.4
+  },
+  "finish": { "grain": 0, "vignette": 0, "glow": false },
+  "banned": [
+    "a populist accent: no red, blue or green, even when the subject is colour",
+    "bold Playfair; taupe headlines; uppercase Playfair",
+    "borders of 2 px or more; shadows, elevated cards, rounded rectangles (circles only)",
+    "crowding; more than 2 compass decorations in a frame; edge-to-edge headlines",
+    "a hero numeral: stats stay modest",
+    "bounce, overshoot, anything fast; moves under 0.5 s except the exit",
+    "three cards in a row",
+    "text moving once it's traced"
+  ],
+  "sources": [
+    {
+      "what": "HyperFrames frame preset Cartesian: palette, faces, type ramp, elements, frames, banned list, caption skin",
+      "where": "github.com/heygen-com/hyperframes skills/hyperframes/assets/frame-presets/cartesian; research notes docs/research/styles/hyperframes.md, \"Cartesian\"",
+      "licence": "Apache-2.0. Tokens and rules re-expressed; no code copied. Playfair Display and Inter are SIL OFL."
+    },
+    {
+      "what": "HyperFrames taste rules T36-T60 (motion)",
+      "where": "docs/research/styles/hyperframes.md, \"Taste rules\"",
+      "licence": "Apache-2.0"
+    }
+  ]
+}

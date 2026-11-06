@@ -1,0 +1,120 @@
+{
+  "id": "low-poly",
+  "name": "Low-poly",
+  "kind": "visual",
+  "version": 1,
+  "status": "built-in",
+  "summary": "A tiny faceted pastel island under an orthographic isometric camera: flat-shaded hex columns, box houses, cone pines and icosphere props drawn as SVG polygons, faceted water, time of day as colour keyframes, and every piece arriving with a bounce.",
+  "tags": ["calm", "pastel", "isometric", "low-poly", "faceted", "3d look", "world building"],
+  "suits": ["calm explainers", "something grows", "world and place stories", "day-cycle pieces", "game-like trailers"],
+  "needs": { "footage": false, "3d": false },
+  "frame": { "width": 1080, "height": 1920 },
+  "palette": [
+    { "role": "background", "hex": "#88c8e8", "use": "the day sky's zenith (the default ground)" },
+    { "role": "surface", "hex": "#eaf5f2", "use": "the day sky's horizon and the haze far water fades into" },
+    { "role": "text", "hex": "#fffdf8", "use": "subtitles and titles over water, dusk and night skies (with the navy drop shadow)" },
+    { "role": "ink", "hex": "#2b3157", "use": "titles and subtitles over a light day or dawn sky; the soft drop shadow under light text" },
+    { "role": "muted", "hex": "#8f949c", "use": "rock sides; the sub-line under titles at night" },
+    { "role": "faint", "hex": "#b4b8bd", "use": "rock caps, the thin water line under titles" },
+    { "role": "accent", "hex": "#d9644a", "use": "red roofs, red light (700 nm), the lighthouse rings" },
+    { "role": "accent2", "hex": "#4f7fb8", "use": "blue roofs, blue light (450 nm) and its scattered shards" },
+    { "role": "sand", "hex": "#f3dfab", "use": "sand tile caps (sides #e2c68e)" },
+    { "role": "sand-side", "hex": "#e2c68e", "use": "sand tile columns" },
+    { "role": "grass", "hex": "#93c96c", "use": "grass tile caps" },
+    { "role": "grass-2", "hex": "#7fbd62", "use": "grass tile caps, the second tone" },
+    { "role": "earth", "hex": "#c99c6e", "use": "the columns under grass tiles" },
+    { "role": "pine", "hex": "#3f8a5a", "use": "cone pines" },
+    { "role": "pine-2", "hex": "#4f9c63", "use": "cone pines, the second tone" },
+    { "role": "leaf", "hex": "#7fc36a", "use": "icosahedron trees" },
+    { "role": "leaf-2", "hex": "#9ad06f", "use": "icosahedron trees, the second tone" },
+    { "role": "window", "hex": "#ffc676", "use": "warm windows: the only bright things at night" },
+    { "role": "lighthouse", "hex": "#f6f2ea", "use": "the lighthouse's white rings" },
+    { "role": "wall-1", "hex": "#fbf3e6", "use": "house walls" },
+    { "role": "wall-2", "hex": "#f5c2b0", "use": "house walls" },
+    { "role": "wall-3", "hex": "#b5dccb", "use": "house walls" },
+    { "role": "wall-4", "hex": "#a9cbe8", "use": "house walls; the light tone of blue shards" },
+    { "role": "wall-5", "hex": "#f7df8f", "use": "house walls; the sun and yellow light" },
+    { "role": "wall-6", "hex": "#e9c9e6", "use": "house walls" },
+    { "role": "roof-3", "hex": "#e0874f", "use": "orange roofs; orange light" },
+    { "role": "roof-4", "hex": "#6a5a8e", "use": "violet roofs; violet light" },
+    { "role": "roof-5", "hex": "#3f8f86", "use": "teal roofs" },
+    { "role": "sunlight", "hex": "#fff3d6", "use": "the sunlight ribbon and its halo (proposed)" }
+  ],
+  "times": {
+    "dawn": { "zenith": "#9fb6cf", "horizon": "#f3d2c4", "deep": "#4f8ea3", "shallow": "#8fc9c4", "sun": "#ffd9b8", "intensity": 0.9, "elevation": 14, "azimuth": -30, "icon": "#f5c2b0", "text": "ink" },
+    "day": { "zenith": "#88c8e8", "horizon": "#eaf5f2", "deep": "#38a5bc", "shallow": "#86e2d4", "sun": "#fff6e8", "intensity": 1.0, "elevation": 48, "azimuth": -25, "icon": "#93c96c", "text": "ink" },
+    "dusk": { "zenith": "#6f6fa8", "horizon": "#ffa888", "deep": "#5a6a9e", "shallow": "#b08aa6", "sun": "#ff9a68", "intensity": 0.8, "elevation": 8, "azimuth": -40, "icon": "#e0874f", "text": "text" },
+    "night": { "zenith": "#12163a", "horizon": "#4a4478", "deep": "#23264a", "shallow": "#363a66", "sun": "#a9b0e8", "intensity": 0.42, "elevation": 40, "azimuth": -30, "icon": "#ffc676", "text": "text" }
+  },
+  "fonts": {
+    "display": { "family": "Josefin Sans", "source": "google", "weights": [300, 600] },
+    "body": { "family": "Quicksand", "source": "google", "weights": [600] }
+  },
+  "type": {
+    "display": 104,
+    "title": 104,
+    "number": 300,
+    "body": 54,
+    "label": 40,
+    "sub": 46,
+    "min": 32,
+    "leading": 1.2,
+    "tracking": 0.2,
+    "numberTracking": 0.02,
+    "subTracking": 0.04,
+    "case": "titles in capitals; subtitles in sentence case; the sub-line in lower case",
+    "emphasis": "on titles, the emphasised word in the time of day's icon colour; in subtitles, none",
+    "shadowBlur": 14,
+    "shadowAlpha": 0.55,
+    "maxWords": 8
+  },
+  "layout": { "margin": 96, "safe": { "top": 230, "bottom": 330 }, "align": "center", "skyBand": 600, "subtitleY": 1330 },
+  "elements": {
+    "camera": { "azimuth": 45, "elevation": 30 },
+    "unit": 60,
+    "tile": { "r": 1, "gap": 0.015, "cap": 0.16, "jitter": 0.04 },
+    "heights": { "sand": 0.4, "grass": 0.82, "hill": 1.25, "rock": 1.95 },
+    "light": { "ambient": 0.76, "diffuse": 0.38, "haze": 0.1 },
+    "surf": { "scale": 1.12, "alpha": 0.32 },
+    "water": { "cell": 84, "amp": 7, "haze": 0.55 },
+    "ribbon": { "width": 34, "halo": 2.4, "haloAlpha": 0.32, "tilt": 7 },
+    "icon": 34,
+    "stars": 70
+  },
+  "motion": {
+    "recipes": {
+      "rise": { "kind": "ease", "curve": [0.33, 1, 0.68, 1], "duration": 0.5, "freq": 13, "decay": 7, "amp": 0.18 },
+      "drop": { "kind": "ease", "curve": [0.32, 0, 0.67, 0], "duration": 0.22, "distance": 2.4, "bounce": 0.22 },
+      "pop": { "kind": "spring", "damping": 18, "stiffness": 370, "mass": 1 },
+      "letter": { "kind": "ease", "curve": [0.33, 1, 0.68, 1], "duration": 0.5, "stagger": 0.055, "freq": 13, "decay": 7, "amp": 0.18 },
+      "subtitle": { "kind": "ease", "curve": [0.33, 1, 0.68, 1], "duration": 0.35 },
+      "fly": { "kind": "ease", "curve": [0.33, 1, 0.68, 1], "duration": 1.2 },
+      "beam": { "kind": "ease", "curve": [0.65, 0, 0.35, 1], "duration": 0.6 },
+      "turn": { "kind": "ease", "curve": [0.65, 0, 0.35, 1], "duration": 5 }
+    },
+    "enter": "rise",
+    "exit": "cut",
+    "slot": 0.156,
+    "stagger": 0.156,
+    "hold": 1.8
+  },
+  "finish": { "grain": 0, "vignette": 0, "glow": false, "bloom": 0.22, "bloomNight": 0.5, "edgeBlur": 3 },
+  "banned": [
+    "outlines or black: shadows and facet shading are the only darks",
+    "textures, photos or smooth (rounded) shading: every face is one flat colour",
+    "perspective: the projection never changes (orthographic, azimuth 45°)",
+    "cubes of cubes or pixel textures (that's a voxel game)",
+    "grain, dissolves or perspective whip-pans",
+    "two pieces arriving in the same time slot",
+    "movers heading at the lens",
+    "copying any existing game's grids, buildings, characters, UI or type",
+    "saturated or neon colour: pastel, low contrast, a handful of hues"
+  ],
+  "sources": [
+    {
+      "what": "Lemo-Opuscar style No. 43 \"Low-poly Isometric Island\" (STYLE.md, DEMO.md), via research notes",
+      "where": "github.com/lemomo-ai/lemo-opuscar styles/lowpoly-island; docs/research/styles/five-skills.md, section \"Low-poly Isometric Island\"",
+      "licence": "MIT (code and docs); demo films and stills CC BY 4.0 (LemoLab). Josefin Sans and Quicksand: SIL OFL"
+    }
+  ]
+}

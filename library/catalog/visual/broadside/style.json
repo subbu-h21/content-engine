@@ -1,0 +1,103 @@
+{
+  "id": "broadside",
+  "name": "Broadside",
+  "kind": "visual",
+  "version": 1,
+  "status": "built-in",
+  "summary": "A protest poster where type is so big it stops being text and becomes a shape: massive lowercase Barlow Black crowding the frame, two registers only (ink-black or fire-orange) that flood over each other, mono chrome, no ornament but a short rule.",
+  "tags": ["dark", "orange", "poster", "loud", "lowercase", "typographic", "flat", "manifesto"],
+  "suits": ["manifestos", "opinion pieces", "bold claims", "startup and activist promos", "statement reels"],
+  "needs": { "footage": false, "3d": false },
+  "frame": { "width": 1080, "height": 1920 },
+  "palette": [
+    { "role": "background", "hex": "#111111", "use": "ink-black: the dark register's ground; ink on orange" },
+    { "role": "surface", "hex": "#1a1a18", "use": "ink-black-alt: the alternate dark" },
+    { "role": "text", "hex": "#f0ece5", "use": "cream: text on dark; never on orange" },
+    { "role": "muted", "hex": "#888880", "use": "cream-muted: muted text on dark" },
+    { "role": "faint", "hex": "#505048", "use": "cream-hint: non-accent chart bars" },
+    { "role": "accent", "hex": "#e85d26", "use": "fire-orange, the ONLY colour: on dark, one clause, stat numerals, the / bullet, the rule stub; the full ground of the orange register" },
+    { "role": "accent2", "hex": "#282826", "use": "border-dark: 1 px hairlines on dark" }
+  ],
+  "fonts": {
+    "display": { "family": "Barlow", "source": "google", "weights": [400, 500, 600, 700, 800, 900] },
+    "body": { "family": "Barlow", "source": "google", "weights": [400, 500] },
+    "mono": { "family": "IBM Plex Mono", "source": "google", "weights": [400, 500] }
+  },
+  "type": {
+    "display": 272,
+    "h1": 168,
+    "h2": 120,
+    "fade": 104,
+    "stat": 440,
+    "fadeTitle": 174,
+    "lead": 44,
+    "body": 38,
+    "label": 26,
+    "labelTracking": 0.14,
+    "min": 24,
+    "leading": 0.88,
+    "tracking": -0.04,
+    "trackingH1": -0.03,
+    "trackingH2": -0.02,
+    "case": "all lowercase display; uppercase mono labels",
+    "emphasis": "one clause in orange on the dark register; weight and size otherwise; no italic, no underline",
+    "maxWords": 6
+  },
+  "layout": {
+    "margin": 60,
+    "safe": { "top": 230, "bottom": 330 },
+    "align": "left",
+    "seam": 960,
+    "barTop": 230,
+    "barBottom": 1590
+  },
+  "elements": {
+    "stub": { "w": 72, "h": 5 },
+    "hairline": 2,
+    "ray": 16,
+    "inkAlpha": { "muted": 0.75, "hint": 0.55, "faint": 0.4, "border": 0.2 },
+    "fade": [0.22, 0.5, 1]
+  },
+  "motion": {
+    "recipes": {
+      "drop": { "kind": "ease", "curve": "quart-out", "duration": 0.18, "distance": 76 },
+      "word": { "kind": "ease", "curve": "quart-out", "duration": 0.15, "distance": 46 },
+      "flood": { "kind": "ease", "curve": "cubic-in-out", "duration": 0.45 },
+      "mask": { "kind": "ease", "curve": "expo-out", "duration": 0.55 },
+      "stub": { "kind": "ease", "curve": "quart-out", "duration": 0.3 },
+      "ray": { "kind": "ease", "curve": "expo-out", "duration": 0.5 },
+      "bar": { "kind": "ease", "curve": "quart-out", "duration": 0.5 },
+      "dim": { "kind": "ease", "curve": "cubic-out", "duration": 0.3 },
+      "out": { "kind": "ease", "curve": "quart-in", "duration": 0.25 }
+    },
+    "enter": "drop",
+    "exit": "out",
+    "stagger": 0.14,
+    "wordStagger": 0.11,
+    "hold": 1.0
+  },
+  "finish": { "grain": 0, "vignette": 0, "glow": false },
+  "banned": [
+    "uppercase Barlow display; a second accent",
+    "cream text on orange; a cream or paper register",
+    "drop shadows, rounded surfaces, gradient grounds",
+    "a serif companion; Barlow used for chrome",
+    "two display moments in one frame; edge-to-edge long lines",
+    "ornament beyond the rule stub",
+    "fades on display type: words are there or they aren't",
+    "text that moves after it lands",
+    "rows of three cards"
+  ],
+  "sources": [
+    {
+      "what": "HyperFrames frame preset Broadside: palette, registers, faces, type ramp, elements, frames, banned list, caption skin",
+      "where": "github.com/heygen-com/hyperframes skills/hyperframes/assets/frame-presets/broadside; research notes docs/research/styles/hyperframes.md, \"Broadside\"",
+      "licence": "Apache-2.0. Tokens and rules re-expressed; no code copied. Barlow and IBM Plex Mono are SIL OFL."
+    },
+    {
+      "what": "HyperFrames taste rules T36-T60 (motion)",
+      "where": "docs/research/styles/hyperframes.md, \"Taste rules\"",
+      "licence": "Apache-2.0"
+    }
+  ]
+}

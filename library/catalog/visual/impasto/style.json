@@ -1,0 +1,88 @@
+{
+  "id": "impasto",
+  "name": "Impasto",
+  "kind": "visual",
+  "version": 1,
+  "status": "built-in",
+  "summary": "A moving oil painting made of thick palette-knife strokes raked by low light so every ridge shows: value-planned, readable at thumbnail size, colour laid in planes of slightly broken paint, titles laid in with the knife, and colour itself as the event.",
+  "tags": ["painting", "oil", "impasto", "palette knife", "textured", "warm", "colourful", "gallery"],
+  "suits": ["music films without narration", "colour returns stories (recovery, relaunch, a town waking)", "city and street scenes", "still lifes that come alive", "warm science and nature explainers"],
+  "needs": { "footage": false, "3d": false },
+  "frame": { "width": 1080, "height": 1920 },
+  "palette": [
+    { "role": "background", "hex": "#34507e", "use": "cobalt: the top of an after-rain sky, the default ground" },
+    { "role": "text", "hex": "#f4ead6", "use": "titanium cream: titles laid in with the knife, crisp small text (proposed)" },
+    { "role": "muted", "hex": "#c98d7e", "use": "facade rose: secondary planes" },
+    { "role": "faint", "hex": "#3b2c24", "use": "burnt umber: calm dark planes behind diagrams (the source's 'night kitchen' umber, proposed hex)" },
+    { "role": "accent", "hex": "#dc2f28", "use": "cadmium red: the subject's colour, the brightest and purest, the first colour back" },
+    { "role": "accent2", "hex": "#2f62c0", "use": "pure cobalt: blue light, the second subject colour" },
+    { "role": "peach", "hex": "#d99a78", "use": "the middle of the sky" },
+    { "role": "gold", "hex": "#f7dca0", "use": "the low sky, the sun, sunlight" },
+    { "role": "ochre", "hex": "#dca064", "use": "facades" },
+    { "role": "shutter", "hex": "#3f7a6c", "use": "shutters, dark greens" },
+    { "role": "awning", "hex": "#b8342a", "use": "awnings, red planes" },
+    { "role": "yellow", "hex": "#f4bc2a", "use": "full-chroma yellow (props, the spectrum)" },
+    { "role": "viridian", "hex": "#23906c", "use": "full-chroma green" },
+    { "role": "magenta", "hex": "#cc3a82", "use": "full-chroma magenta" },
+    { "role": "orange", "hex": "#ee7a2a", "use": "full-chroma orange" },
+    { "role": "turquoise", "hex": "#26aab4", "use": "full-chroma turquoise; scattered light" },
+    { "role": "violet", "hex": "#6e4cc0", "use": "full-chroma violet" },
+    { "role": "ultramarine", "hex": "#1f2a6e", "use": "the deep ultramarine end-card ground (proposed hex)" },
+    { "role": "umberDark", "hex": "#2a201b", "use": "dark paint for type on light planes, cast ridges (proposed)" }
+  ],
+  "fonts": {
+    "display": { "family": "Fraunces", "source": "google", "weights": [900] },
+    "body": { "family": "Fraunces", "source": "google", "weights": [600] }
+  },
+  "type": {
+    "display": 126,
+    "title": 126,
+    "hero": 260,
+    "number": 330,
+    "headline": 112,
+    "body": 44,
+    "label": 44,
+    "min": 32,
+    "leading": 1.02,
+    "tracking": -0.01,
+    "charEm": 0.6,
+    "case": "sentence",
+    "emphasis": "a word laid in a pure subject colour",
+    "maxWords": 8
+  },
+  "layout": { "margin": 90, "safe": { "top": 230, "bottom": 330 }, "align": "left", "textRight": 960 },
+  "motion": {
+    "recipes": {
+      "lay": { "kind": "ease", "curve": "cubic-out", "duration": 0.16 },
+      "sweep": { "kind": "ease", "curve": "sine-in-out", "duration": 1.0 },
+      "reveal": { "kind": "ease", "curve": "sine-in-out", "duration": 1.4 },
+      "pop": { "kind": "spring", "damping": 9, "stiffness": 180, "mass": 1 },
+      "camera": { "kind": "ease", "curve": "sine-in-out", "duration": 3.0 }
+    },
+    "enter": "laid in stroke by stroke by the knife (a sweep), or re-painted from grey to colour by a reveal wave",
+    "exit": "painted over, scraped, or washed by the weather",
+    "hold": 1.2
+  },
+  "elements": {
+    "knife": { "length": [1.7, 3.1], "width": [0.95, 1.45], "skew": 0.55, "angleJitter": 13, "valueJitter": 0.06, "plane": 56, "edge": 12, "letter": 15 },
+    "light": { "azimuth": 227, "elevation": 41, "diffuse": 0.28, "ambient": 0.8, "specular": 0.22, "relief": 2.6 },
+    "ridge": { "lip": 0.42, "shadow": 0.2, "streaks": 5 },
+    "grey": { "residue": 0.05, "cool": 0.04 }
+  },
+  "finish": { "grain": 0, "vignette": 0.2, "glow": false },
+  "banned": [
+    "a swirl filter or strokes boiling everywhere: static paint never moves",
+    "a brush texture over flat vector art, or a painterly photo filter: strokes are designed",
+    "watercolour: the paint is opaque",
+    "dissolves (two layers of knife ridges turn to mud)",
+    "film grain (it eats the knife edges)",
+    "pixel-blended gradients: a gradient is stroke-to-stroke steps",
+    "strokes crossing from one shape into another: silhouettes stay crisp",
+    "a painted rectangle for a reflection, or plain rectangles as figures",
+    "the camera leaving the painted plate",
+    "copying a painter's or film's images, compositions or characters"
+  ],
+  "sources": [
+    { "what": "Lemo-Opuscar style 04 \"Impasto Palette Knife\" (styles/impasto: STYLE.md, DEMO.md)", "where": "docs/research/styles/five-skills.md, \"Impasto Palette Knife\"", "licence": "MIT (lemomo-ai/lemo-opuscar); demo films and stills CC BY 4.0, not used" }
+  ]
+}

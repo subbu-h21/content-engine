@@ -55,7 +55,39 @@ export async function settingsView() {
       ffmpeg: ffmpeg ? ffmpeg.split("\n")[0].slice(0, 60) : null,
     },
     publish: publishDefaults(),
+    channels: s.channels ?? [],
   };
+}
+
+/**
+ * Channels: [{id, name, style, locked}]. A new video belongs to one; its style comes from the channel (always, when
+ * the look is locked; otherwise the channel's last video's style, then the channel's own). `styleExists(id)` checks
+ * the catalog.
+ */
+function cleanChannels(list, styleExists) {
+  if (!Array.isArray(list)) throw new Error("Channels must be a list.");
+  if (list.length > 50) throw new Error("That's more channels than the engine keeps (50).");
+  const seen = new Set();
+  return list.map((c) => {
+    const name = str(c?.name, 80);
+    if (!name) throw new Error("Every channel needs a name.");
+    let id = str(c?.id, 60) || slug(name);
+    if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(id)) id = slug(name) || "channel";
+    for (let i = 2; seen.has(id); i++) id = `${slug(name) || "channel"}-${i}`;
+    seen.add(id);
+    const style = c?.style ? str(c.style, 80) : null;
+    if (style && !styleExists(style)) throw new Error(`The style "${style}" isn't in the catalog any more; pick another for ${name}.`);
+    if (c?.locked && !style) throw new Error(`Pick a style for ${name} before locking its look.`);
+    return { id, name, style, locked: !!c?.locked };
+  });
+}
+const slug = (s) => s.toLowerCase().normalize("NFKD").replace(/[^\w\s-]/g, "").trim().replace(/[\s_]+/g, "-").replace(/-+/g, "-").slice(0, 40);
+
+/** The channels part of an update (or nothing): checked separately, because it needs the catalog. */
+export function updateChannels(list, styleExists) {
+  const channels = cleanChannels(list, styleExists);
+  saveSettings({ channels });
+  return channels;
 }
 
 /** Apply a partial update from the Settings page. Throws a readable error for anything invalid. */

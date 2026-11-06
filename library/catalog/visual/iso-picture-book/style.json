@@ -1,0 +1,109 @@
+{
+  "id": "iso-picture-book",
+  "name": "Isometric Picture Book",
+  "kind": "visual",
+  "version": 1,
+  "status": "built-in",
+  "summary": "A calm, full-bleed true-isometric place in flat three-tone paper colours: small faceless people seen from behind keep to a rule in order, marks on the ground show the way, and serif words land on the floor one character at a time. One persimmon accent, only where the rule is.",
+  "tags": ["light", "isometric", "calm", "picture book", "paper", "serif", "people", "flat"],
+  "suits": ["everyday rules and manners", "process orders", "two ways compared", "gentle science explainers", "public-information films"],
+  "needs": { "footage": false, "3d": false },
+  "frame": { "width": 1080, "height": 1920 },
+  "palette": [
+    { "role": "background", "hex": "#f1e8d8", "use": "the paper ground: every ground, warm neutral" },
+    { "role": "surface", "hex": "#faf4e8", "use": "paper light: lid undersides, the caption bar" },
+    { "role": "text", "hex": "#2a2e29", "use": "ink: floor type, dark marks" },
+    { "role": "muted", "hex": "#7a7468", "use": "soft ink: secondary marks" },
+    { "role": "faint", "hex": "#d6ccba", "use": "the pale ghost a floor character fades from" },
+    { "role": "accent", "hex": "#d0573a", "use": "persimmon, reserved for the rule: the key character, stand-here outlines, the winning number" },
+    { "role": "accent2", "hex": "#3f6f9a", "use": "the subject hue of this place: blue light, seats (proposed for the sample; the source's demo place is green)" },
+    { "role": "accent-tint", "hex": "#edbfa9", "use": "persimmon's light tint: the shorter floor bar" },
+    { "role": "subject-2", "hex": "#6f9bbd", "use": "the subject hue, paler (proposed)" },
+    { "role": "subject-3", "hex": "#abc7d9", "use": "the subject hue, palest (proposed)" },
+    { "role": "marking", "hex": "#e2ae3a", "use": "marking ginger: lead-in lines, sunlight" },
+    { "role": "joint", "hex": "#ddd3c1", "use": "slab joint lines" },
+    { "role": "concrete", "hex": "#eae2d3", "use": "outdoor ground, a touch cooler" },
+    { "role": "top-1", "hex": "#b9824f", "use": "people's tops: ochre" },
+    { "role": "top-2", "hex": "#7f98ae", "use": "people's tops: fog blue" },
+    { "role": "top-3", "hex": "#8c8199", "use": "people's tops: grey violet" },
+    { "role": "top-4", "hex": "#d3c29e", "use": "people's tops: oat" },
+    { "role": "legs-1", "hex": "#3e4450", "use": "trousers" },
+    { "role": "legs-2", "hex": "#59534a", "use": "trousers" },
+    { "role": "legs-3", "hex": "#3a3d42", "use": "trousers" },
+    { "role": "legs-4", "hex": "#4b4f5a", "use": "trousers" },
+    { "role": "hair", "hex": "#2a2624", "use": "the round dark head" },
+    { "role": "skin", "hex": "#d9a882", "use": "a sliver at the ear" },
+    { "role": "shoes", "hex": "#232524", "use": "shoes" },
+    { "role": "sage", "hex": "#6e9886", "use": "the sixth spectrum lane (the source's subject green)" },
+    { "role": "bar-text", "hex": "#4a4a42", "use": "the caption line" },
+    { "role": "lift", "hex": "#fff8ea", "use": "tone target: top faces lift 22% toward it" },
+    { "role": "drop", "hex": "#5b4434", "use": "tone target: +x faces drop 20% toward warm umber" }
+  ],
+  "fonts": {
+    "display": { "family": "Newsreader", "source": "google", "weights": [500, 700] },
+    "body": { "family": "Newsreader", "source": "google", "weights": [400] }
+  },
+  "type": {
+    "display": 150,
+    "title": 240,
+    "small": 84,
+    "body": 44,
+    "min": 36,
+    "leading": 1.1,
+    "tracking": 0,
+    "case": "sentence",
+    "emphasis": "one accent character or number per phrase, in persimmon",
+    "maxWords": 3
+  },
+  "layout": {
+    "margin": 72,
+    "safe": { "top": 230, "bottom": 330 },
+    "align": "floor",
+    "k": 90,
+    "slab": 2,
+    "bar": { "y": 1500, "pad": 22, "radius": 6, "alpha": 0.86 }
+  },
+  "elements": {
+    "person": { "height": 1.7, "head": 0.135, "spacing": 0.75 },
+    "lane": 0.3,
+    "outline": 0.05,
+    "arrow": 0.42,
+    "lift": 0.22,
+    "drop": 0.2
+  },
+  "motion": {
+    "recipes": {
+      "char": { "kind": "ease", "curve": "cubic-out", "duration": 0.34, "from": 1.22 },
+      "ink": { "kind": "ease", "curve": "sine-in-out", "duration": 0.38 },
+      "grow": { "kind": "ease", "curve": "cubic-in-out", "duration": 0.9 },
+      "camera": { "kind": "ease", "curve": "sine-in-out", "duration": 3 },
+      "bar": { "kind": "ease", "curve": "linear", "duration": 0.04 }
+    },
+    "charEvery": 0.14,
+    "walk": 1.5,
+    "maxSpeed": 3,
+    "push": 0.07,
+    "enter": "char",
+    "exit": "camera",
+    "stagger": 0.14,
+    "hold": 2.5
+  },
+  "finish": { "grain": 0, "vignette": 0, "glow": false },
+  "banned": [
+    "a floating board, dot lattice, sans-serif pins, icon stats or inset bubbles (that's the infographic)",
+    "lighting, faceted terrain, shadows or glow; expressions or gags; headers, centred titles or cards",
+    "faces or hands; people walking toward the camera; people passing through seats, walls or each other",
+    "outlines, shadows, textures or highlight spots on solids; shading toward grey or violet; gradients",
+    "zigzag paths or serpentine crowds; high seat backs hiding seated people",
+    "the accent as decoration, or an accent trail across the whole film",
+    "page turns, wipes, black frames; type standing behind raised objects; flat sign cards facing the lens; a sentence on the floor",
+    "copying any reference explainer's characters, layouts, typefaces or music"
+  ],
+  "sources": [
+    {
+      "what": "Lemo-Opuscar style No. 74 \"Isometric Picture Book\" (STYLE.md, DEMO.md, style.json, demo/kit.js), via research notes",
+      "where": "github.com/lemomo-ai/lemo-opuscar styles/isometric-picture-book; docs/research/styles/five-skills.md, section \"Isometric Picture Book\"",
+      "licence": "MIT (code and docs); demo film and stills CC BY 4.0 (LemoLab). No code copied. Newsreader: SIL OFL"
+    }
+  ]
+}

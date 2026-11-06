@@ -1,0 +1,89 @@
+{
+  "id": "shadow-puppet",
+  "name": "Shadow Puppet",
+  "kind": "visual",
+  "version": 1,
+  "status": "built-in",
+  "summary": "Shadow theatre on a lamp-lit cotton screen: translucent dyed-hide puppets carved like lace, pressed onto the cloth from behind so colour arrives as transmitted light, jointed figures on rods, plaques with glowing cut-out letters, a lacquer stage frame and a storyteller's placard.",
+  "tags": ["shadow theatre", "puppets", "east asian", "warm", "folk", "lamp light", "carved", "stage"],
+  "suits": ["myths and folklore", "heritage and festivals", "fables with good and bad actors", "who-pulls-the-strings stories", "warm storytelling explainers"],
+  "needs": { "footage": false, "3d": false },
+  "frame": { "width": 1080, "height": 1920 },
+  "palette": [
+    { "role": "background", "hex": "#f0bf78", "use": "the lamp-lit cotton screen at its brightest (lamp light through cloth, proposed hex)" },
+    { "role": "text", "hex": "#f3e2bf", "use": "cream placard text; the light seen through cut-out letters" },
+    { "role": "muted", "hex": "#e2bd80", "use": "raw undyed hide" },
+    { "role": "faint", "hex": "#b37840", "use": "the warm vignette at the cloth's edges (never grey)" },
+    { "role": "accent", "hex": "#b8211a", "use": "vermilion dye: costume pieces, seals, borders, red light" },
+    { "role": "accent2", "hex": "#22647e", "use": "indigo dye: water, sky, scattered blue light" },
+    { "role": "flame", "hex": "#d9541c", "use": "flame dye: fire, suns" },
+    { "role": "ochre", "hex": "#dc9d1e", "use": "ochre dye: sunlight, sleeves" },
+    { "role": "gold", "hex": "#c98a26", "use": "gold dye; carved gold on the lintel" },
+    { "role": "malachite", "hex": "#236e3a", "use": "malachite dye: robes, corner roundels" },
+    { "role": "jade", "hex": "#2f8a5c", "use": "jade dye" },
+    { "role": "ink", "hex": "#1a100a", "use": "carved outlines, hair, boots, plaques" },
+    { "role": "shaft", "hex": "#4a2612", "use": "thin things that must read (3 px), rods" },
+    { "role": "lamp", "hex": "#ffc475", "use": "the lamp's light: warm, never white" },
+    { "role": "bloom", "hex": "#ffd199", "use": "the warm bloom round the hotspot" },
+    { "role": "lacquer", "hex": "#7a1a12", "use": "the red lacquer of the stage frame (proposed)" },
+    { "role": "lacquerBlack", "hex": "#140b07", "use": "the black lacquer, the dark room (proposed)" },
+    { "role": "placard", "hex": "#2a160c", "use": "the storyteller's dark-lacquer placard (proposed)" }
+  ],
+  "fonts": {
+    "display": { "family": "Cinzel", "source": "google", "weights": [700] },
+    "body": { "family": "Cormorant Garamond", "source": "google", "weights": [600] }
+  },
+  "type": {
+    "display": 92,
+    "plaque": 92,
+    "number": 250,
+    "body": 48,
+    "label": 40,
+    "min": 32,
+    "leading": 1.18,
+    "tracking": 0.06,
+    "charEm": 0.8,
+    "case": "caps on plaques (cut out of hide); sentence case on the placard",
+    "emphasis": "a word on its own plaque; the plaque's red seal",
+    "maxWords": 8
+  },
+  "layout": { "margin": 100, "safe": { "top": 230, "bottom": 330 }, "align": "center", "screen": { "x": 56, "y": 190, "w": 968, "h": 1550 } },
+  "motion": {
+    "recipes": {
+      "pressOn": { "kind": "ease", "curve": "expo-out", "duration": 0.55 },
+      "liftOff": { "kind": "ease", "curve": "cubic-in", "duration": 0.9 },
+      "placard": { "kind": "ease", "curve": "cubic-out", "duration": 0.22 },
+      "lampFlare": { "kind": "spring", "damping": 8, "stiffness": 120, "mass": 1 },
+      "crash": { "kind": "ease", "curve": "expo-out", "duration": 0.17 }
+    },
+    "enter": "pressOn",
+    "exit": "liftOff",
+    "pressScale": 2.6,
+    "pressBlur": 34,
+    "tremor": { "px": 3, "rad": 0.018, "hz": 0.6 },
+    "flicker": { "amount": 0.06, "hz": 7, "fast": 23 },
+    "hold": 1.0
+  },
+  "elements": {
+    "outline": 2.2,
+    "hide": 0.9,
+    "rod": { "width": 3, "opacity": 0.45 },
+    "plaque": { "border": 26, "radius": 6 },
+    "placard": { "height": 112, "opacity": 0.93, "slide": 18 },
+    "lamp": { "lobe": 700, "hot": 120, "exposure": 1.75 }
+  },
+  "finish": { "grain": 0.02, "vignette": 0.0, "glow": true, "bloom": 0.72, "saturation": 1.1, "warmVignette": 0.55 },
+  "banned": [
+    "a black silhouette film: colour is the second protagonist",
+    "paper-cut (light comes through the hide, not around it), stained glass (no lead lines), flat vector cut-outs",
+    "particles for fire, smoke or water: they are carved pieces, swapped",
+    "morphing: pieces rotate on rivets, slide on rods, or are swapped",
+    "white or blue light, a grey vignette: every hue leans warm",
+    "pale thin pieces (they vanish): thin things are dark",
+    "a generic crossfade or digital wipe",
+    "reproducing a specific historical puppet, play or melody, or naming one"
+  ],
+  "sources": [
+    { "what": "Lemo-Opuscar style 07 \"Shadow Puppetry\" (styles/shadow-puppet: STYLE.md, DEMO.md)", "where": "docs/research/styles/five-skills.md, \"Shadow Puppetry\"", "licence": "MIT (lemomo-ai/lemo-opuscar); demo films and stills CC BY 4.0, not used" }
+  ]
+}

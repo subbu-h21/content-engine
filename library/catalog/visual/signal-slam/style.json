@@ -1,0 +1,86 @@
+{
+  "id": "signal-slam",
+  "name": "Signal Slam",
+  "kind": "visual",
+  "version": 1,
+  "status": "built-in",
+  "summary": "A hazard-orange field where one black Archivo word slams full-frame per spoken word, each at its own width, with stacks, ink bands and a shutter that closes to black. Built for hooks and hype.",
+  "tags": ["loud", "orange", "hype", "hook", "one word", "poster", "kinetic type", "black type"],
+  "suits": ["hooks and openers", "hype beats inside a darker video", "punchlines", "countdowns", "short manifestos"],
+  "needs": { "footage": false, "3d": false },
+  "frame": { "width": 1080, "height": 1920 },
+  "palette": [
+    { "role": "background", "hex": "#ff4d12", "use": "the field: full frame, brightened ~12% at the centre" },
+    { "role": "surface", "hex": "#0a0a0b", "use": "ink blocks: inverted keywords, bands, the shutter" },
+    { "role": "text", "hex": "#0a0a0b", "use": "every slam word, labels, the readout" },
+    { "role": "muted", "hex": "#531e0c", "use": "corner labels and the line strip (ink at about 70% over the field, derived)" },
+    { "role": "faint", "hex": "#c21d0b", "use": "the diagonal hatch engraving (16%, 9 px pitch)" },
+    { "role": "accent", "hex": "#ff8a3d", "use": "the centre glow pulse on the final word" },
+    { "role": "accent2", "hex": "#eee9df", "use": "the bone flash on hits; type on the ink shutter (proposed)" },
+    { "role": "fieldCentre", "hex": "#ff6016", "use": "the field's brightened centre (+12%)" }
+  ],
+  "fonts": {
+    "display": { "family": "Archivo", "source": "google", "weights": [900], "variable": { "wdth": [62, 125] } },
+    "body": { "family": "IBM Plex Mono", "source": "google", "weights": [500, 600] },
+    "mono": { "family": "IBM Plex Mono", "source": "google", "weights": [500, 600] }
+  },
+  "type": {
+    "display": 900,
+    "stack": 240,
+    "label": 24,
+    "strip": 26,
+    "readout": 48,
+    "body": 26,
+    "min": 24,
+    "leading": 0.84,
+    "tracking": 0,
+    "labelTracking": 0.2,
+    "widths": [62, 75, 87.5, 100, 112.5, 125],
+    "charEm": { "62": 0.52, "75": 0.6, "87.5": 0.67, "100": 0.74, "112.5": 0.81, "125": 0.88 },
+    "capHeight": 0.72,
+    "case": "UPPERCASE",
+    "emphasis": "width 125 and the glow pulse, or an ink block with orange type",
+    "maxWords": 1
+  },
+  "layout": {
+    "margin": 60,
+    "safe": { "top": 230, "bottom": 330 },
+    "align": "center",
+    "maxWordHeight": 820,
+    "furniture": { "x": 60, "top": 250, "strip": 1400, "readout": 1490 },
+    "readoutBar": 220
+  },
+  "motion": {
+    "recipes": {
+      "slam": { "kind": "ease", "curve": "expo-out", "duration": 0.16, "from": 1.25 },
+      "stretch": { "kind": "ease", "curve": "expo-out", "duration": 0.3, "stagger": 0.05, "scaleFrom": 1.3, "scaleTime": 0.15, "jitter": 6, "jitterHalfLife": 0.12 },
+      "readout": { "kind": "ease", "curve": "expo-out", "duration": 0.6 },
+      "shutter": { "kind": "ease", "curve": [0.5, 0, 0.75, 0], "duration": 0.32 },
+      "punch": { "kind": "ease", "curve": "linear", "duration": 0.07, "zoom": 0.02, "halfLife": 0.07, "shake": 14, "aberration": 4.2 },
+      "glow": { "kind": "ease", "curve": "linear", "duration": 0.5, "halfLife": 0.25 },
+      "invert": { "kind": "ease", "curve": "expo-out", "duration": 0.1 },
+      "band": { "kind": "ease", "curve": "expo-out", "duration": 0.14 }
+    },
+    "enter": "slam",
+    "exit": "cut",
+    "stagger": 0.05,
+    "hold": 0
+  },
+  "finish": { "grain": 0.06, "vignette": 0.3, "glow": true, "bloom": 0.4, "hatch": 0.16, "hatchPitch": 9, "centreLift": 0.12 },
+  "banned": [
+    "more than one word on screen in the slam beat (stacks and bands are their own beats, 2–5 words)",
+    "lowercase or a second typeface for slam words",
+    "easing in: every word arrives already big and settles in 0.16 s",
+    "fades between words: hard cuts only, one per spoken word",
+    "colours other than signal orange, ink, the hatch and the ember glow",
+    "beats longer than about 5 s: it is an interlude, not a whole video",
+    "smooth width animation: widths step through the font's instances"
+  ],
+  "sources": [
+    {
+      "what": "Motion as Code kit, the orange interlude of the \"crazy\" plate (part A, \"and this is where it gets crazy\")",
+      "where": "D:\\code_files\\resources to make content engine\\aman thakur's resources\\Claude workflow guide\\Motion_as_kit.zip (app/src/scenes/crazy.ts, engine palette and post); research notes docs/research/styles/local-guides.md, \"Motion as Code — Signal Field Slam\"",
+      "licence": "MIT (pdoom-video engine, © 2026 Giacomo Magnanini); no code copied, the look is rebuilt; Archivo and IBM Plex Mono are SIL OFL"
+    }
+  ]
+}

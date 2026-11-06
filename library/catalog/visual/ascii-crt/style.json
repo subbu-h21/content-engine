@@ -1,0 +1,100 @@
+{
+  "id": "ascii-crt",
+  "name": "ASCII CRT",
+  "kind": "visual",
+  "version": 1,
+  "status": "built-in",
+  "summary": "Everything is a real glyph on a monospace grid, lit by the amber phosphor of an old monochrome tube: typed titles, inverse-video tags, ASCII pictures built from a density ramp, banner numerals, a LOG strip for captions, one soft blue switched on once, scanlines and bloom.",
+  "tags": ["dark", "mono", "terminal", "retro", "amber", "glyphs", "tech", "crt"],
+  "suits": ["developer tools", "tech and launches", "logs, migrations and launch days", "a machine as narrator", "messages across distance or time", "science facts told as output"],
+  "needs": { "footage": false, "3d": false },
+  "frame": { "width": 1080, "height": 1920 },
+  "palette": [
+    { "role": "background", "hex": "#090604", "use": "the unlit glass: warm near-black, the ground of every frame" },
+    { "role": "text", "hex": "#ffb000", "use": "phosphor at normal brightness (0.7): every glyph's middle tone" },
+    { "role": "muted", "hex": "#ff6605", "use": "phosphor dim (0.42): timestamps, separators, far planes, the low end of the ramp" },
+    { "role": "faint", "hex": "#3a1f08", "use": "barely lit cells and the dashed LOG separator's gaps (proposed: the dim end of the ramp at 15%)" },
+    { "role": "accent", "hex": "#ffebb8", "use": "phosphor overexposed (1.0): bold glyphs, the cursor, landing flashes" },
+    { "role": "accent2", "hex": "#bfe4ff", "use": "the one soft second colour, for the one thing only: blue light. Switched on once, never decoration" },
+    { "role": "bezel", "hex": "#000000", "use": "outside the tube's rounded glass (proposed)" }
+  ],
+  "fonts": {
+    "display": { "family": "VT323", "source": "google", "weights": [400] },
+    "body": { "family": "VT323", "source": "google", "weights": [400] }
+  },
+  "type": {
+    "display": 260,
+    "body": 60,
+    "label": 52,
+    "min": 40,
+    "log": 56,
+    "leading": 2,
+    "cell": [0.4, 0.8],
+    "tracking": 0,
+    "case": "upper",
+    "emphasis": "brightness (dim 0.42 / normal 0.7 / bold 1.0), inverse video, a bigger grid, slower typing",
+    "levels": { "dim": 0.42, "normal": 0.7, "bold": 1.0 },
+    "maxWords": 8
+  },
+  "layout": {
+    "margin": 72,
+    "safe": { "top": 230, "bottom": 330 },
+    "align": "left",
+    "grids": { "title": 9, "headline": 22, "terminal": 30, "list": 24, "log": 34, "picture": 60, "diagram": 40, "prism": 36, "banner": 38 },
+    "log": { "y": 1400, "height": 176 },
+    "screen": { "inset": 18, "radius": 96 }
+  },
+  "elements": {
+    "ramp": " .:-=+*#%@",
+    "blank": 0.05,
+    "dither": 0.7,
+    "gamma": 1.25,
+    "cursor": { "period": 1.06, "duty": 0.5 },
+    "afterglow": 0.11,
+    "flash": 1.9,
+    "inverseTag": "LOG"
+  },
+  "motion": {
+    "recipes": {
+      "push": { "kind": "ease", "curve": "sine-in-out", "duration": 1.2 },
+      "power": { "kind": "ease", "curve": "cubic-out", "duration": 0.45 },
+      "roller": { "kind": "ease", "curve": "quart-out", "duration": 0.9 },
+      "afterglow": { "kind": "ease", "curve": "expo-out", "duration": 0.12 },
+      "fall": { "kind": "ease", "curve": "cubic-in-out", "duration": 0.6 }
+    },
+    "typing": { "machine": 0.012, "command": 0.038, "dramatic": 0.13, "title": 0.1 },
+    "enter": "typing",
+    "exit": "clear screen",
+    "stagger": 0.12,
+    "hold": 1.5
+  },
+  "finish": {
+    "grain": 0.02,
+    "vignette": 0.3,
+    "glow": true,
+    "bloom": 0.55,
+    "halo": 0.22,
+    "scanlines": { "period": 4, "strength": 0.3 },
+    "flicker": 0.012,
+    "reflection": 0.05,
+    "edge": 0.85
+  },
+  "banned": [
+    "an image or a photo run through an \"ASCII filter\": every character is drawn as a character on the grid",
+    "falling green code rain, hacker-movie clichés",
+    "pixel-art sprites, free pixels, vector lines or floating HUD panels",
+    "a second hue for decoration: the one second colour belongs to one thing, switched on once",
+    "an RGB grille (a monochrome tube has none)",
+    "crossfades between screens: clear, redraw, scroll, power on/off",
+    "noise-textured subjects: subjects are silhouettes",
+    "chiptune music",
+    "copying any film's or product's interface text, fonts or logos; real agency names"
+  ],
+  "sources": [
+    {
+      "what": "Lemo-Opuscar style No. 22 \"ASCII / CRT Terminal\" (STYLE.md, DEMO.md, style.json; core/post/crt.js), via research notes",
+      "where": "github.com/lemomo-ai/lemo-opuscar styles/ascii-crt; docs/research/styles/five-skills.md, section \"ASCII / CRT Terminal\"",
+      "licence": "MIT (code and docs); demo films and stills CC BY 4.0 (LemoLab). No code copied. VT323: SIL OFL"
+    }
+  ]
+}

@@ -1,0 +1,103 @@
+{
+  "id": "urban-sketch",
+  "name": "Urban Sketch",
+  "kind": "visual",
+  "version": 1,
+  "status": "built-in",
+  "summary": "A location sketchbook page: wobbly sepia fineliner first, then loose transparent watercolour dropped slightly off the lines and blooming in from a point, never painted edge to edge, with handwriting in the blank margins.",
+  "tags": ["light", "warm", "hand-drawn", "watercolour", "sketchbook", "handwriting", "gentle"],
+  "suits": ["city and travel diaries", "architecture", "a day in a place", "lifestyle brands", "slice of life", "gentle comedy"],
+  "needs": { "footage": false, "3d": false },
+  "frame": { "width": 1080, "height": 1920 },
+  "palette": [
+    { "role": "background", "hex": "#f5eede", "use": "warm cream cold-press paper; the brightest value, reserved, never painted" },
+    { "role": "text", "hex": "#2b2520", "use": "the sepia fineliner and all handwriting: one colour forever" },
+    { "role": "muted", "hex": "#5a5f82", "use": "the shared cool violet: shadow sides are local colour mixed 45 % toward it, never used alone" },
+    { "role": "faint", "hex": "#b9c0cc", "use": "haze: distant blocks are mixed 50 % toward it" },
+    { "role": "accent", "hex": "#d8ad5f", "use": "the one coloured thing: the straw hat, a sun" },
+    { "role": "accent2", "hex": "#86a6c8", "use": "sky wash; the colour that arrives as an event in this sample" },
+    { "role": "surface", "hex": "#d8ccb1", "use": "path and pavement wash" }
+  ],
+  "pigments": {
+    "foliage": ["#d6d56f", "#aabf57", "#7fa04a", "#56793c", "#3f5d36"],
+    "sky": ["#9fbcd6", "#86a6c8"],
+    "cloudBelly": "#b7b3c9",
+    "buildings": ["#d8c6a0", "#cfaa72", "#98b1c8", "#c49a7a"],
+    "hatBand": "#4b4a6a",
+    "figureShadow": "#464873",
+    "red": "#b0453a"
+  },
+  "fonts": {
+    "display": { "family": "Caveat", "source": "google", "weights": [500, 600] },
+    "body": { "family": "Caveat", "source": "google", "weights": [500, 600] },
+    "note": { "family": "Reenie Beanie", "source": "google", "weights": [400] }
+  },
+  "type": {
+    "display": 120,
+    "title": 176,
+    "number": 330,
+    "body": 62,
+    "label": 60,
+    "note": 84,
+    "min": 44,
+    "leading": 0.98,
+    "charEm": 0.365,
+    "case": "sentence, as written by hand",
+    "emphasis": "a loose wash swiped behind the word; the ink never changes",
+    "maxWords": 10
+  },
+  "layout": { "margin": 96, "safe": { "top": 230, "bottom": 330 }, "align": "left" },
+  "elements": {
+    "line": [2.2, 4],
+    "wobble": [0.9, 1.3],
+    "overshoot": [3, 8],
+    "gapChance": [0.3, 0.6],
+    "gap": [3, 9],
+    "washAlpha": [0.4, 0.65],
+    "washEdge": [4, 12],
+    "washOffset": [1, 3],
+    "driedEdge": 0.35,
+    "granulation": [0.82, 0.36],
+    "shadowMix": 0.45,
+    "hazeMix": 0.5,
+    "paperMottle": 0.045,
+    "boilFps": 12,
+    "penSpeed": 1100,
+    "strokeTime": [0.1, 0.5],
+    "writeRate": 32,
+    "frontDark": 0.7
+  },
+  "motion": {
+    "recipes": {
+      "bloom": { "kind": "ease", "curve": "cubic-out", "duration": 0.9 },
+      "wetFront": { "kind": "ease", "curve": "smootherstep", "duration": 0.16 },
+      "pen": { "kind": "ease", "curve": "sine-in-out", "duration": 0.3 },
+      "curl": { "kind": "ease", "curve": "cubic-in-out", "duration": 0.4 },
+      "follow": { "kind": "spring", "damping": 10.583, "stiffness": 28, "mass": 1 },
+      "fall": { "kind": "spring", "damping": 16.733, "stiffness": 70, "mass": 1 }
+    },
+    "enter": "pen",
+    "exit": "curl",
+    "stagger": 0.08,
+    "hold": 1.8
+  },
+  "finish": { "grain": 0.02, "vignette": 0, "glow": false },
+  "banned": [
+    "line-free wet-in-wet painting",
+    "marker or explainer diagrams; brush calligraphy; monochrome ink tones",
+    "painting edge to edge",
+    "colour that snaps on; dissolves",
+    "ink that changes colour",
+    "a generic overlay subtitle box or any typed text",
+    "straight edges in the colour field; rectangular masks round silhouettes",
+    "painting the paper white",
+    "copying the references' characters, melodies, layouts or type"
+  ],
+  "sources": [
+    {
+      "what": "Lemo-Opuscar style No. 45 \"Urban Sketch\" (Urban Sketch, Pen & Wash): STYLE.md, DEMO.md, style.json",
+      "where": "github.com/lemomo-ai/lemo-opuscar styles/urban-sketch; research notes docs/research/styles/five-skills.md, \"Urban Sketch · Pen & Wash\"",
+      "licence": "Lemo-Opuscar (lemomo-ai/lemo-opuscar), MIT (code and docs); demo films and stills CC BY 4.0, not used. No code copied. Caveat and Reenie Beanie are SIL OFL."
+    }
+  ]
+}

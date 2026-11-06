@@ -1,0 +1,90 @@
+{
+  "id": "text-in-space",
+  "name": "Text in Space",
+  "kind": "visual",
+  "version": 1,
+  "status": "built-in",
+  "summary": "Bold lowercase words placed inside a talking-head shot: behind the speaker's head, bent on arcs, orbiting as a ring, racking in and out of focus, in white and one brand red.",
+  "tags": ["kinetic type", "talking head", "footage", "3d text", "lowercase", "red", "creator"],
+  "suits": ["talking-head shorts", "creator explainers", "how I made this", "tool and product hype"],
+  "needs": { "footage": true, "3d": false },
+  "frame": { "width": 1080, "height": 1920 },
+  "palette": [
+    { "role": "background", "hex": "#141416", "use": "stand-in for the footage plate in previews (the real ground is the speaker's shot) (proposed)" },
+    { "role": "surface", "hex": "#2c2c31", "use": "the plate stand-in's lit centre (proposed)" },
+    { "role": "text", "hex": "#f4f4f4", "use": "main and connecting words" },
+    { "role": "muted", "hex": "#7d7d7d", "use": "grey words and the 9 px sticker outline" },
+    { "role": "faint", "hex": "#5c5c63", "use": "the speaker stand-in silhouette in previews (proposed)" },
+    { "role": "accent", "hex": "#b51722", "use": "emphasis words: the big word behind the head, slams, Six Caps key words" },
+    { "role": "accent2", "hex": "#5e0006", "use": "the hard offset shadow under slam words" }
+  ],
+  "fonts": {
+    "display": { "family": "Poppins", "source": "google", "weights": [700, 800, 900] },
+    "body": { "family": "Poppins", "source": "google", "weights": [700] },
+    "condensed": { "family": "Six Caps", "source": "google", "weights": [400] }
+  },
+  "type": {
+    "display": 170,
+    "hero": 300,
+    "connect": 96,
+    "condensed": 420,
+    "number": 330,
+    "arc": 110,
+    "ring": 100,
+    "label": 60,
+    "body": 64,
+    "min": 48,
+    "leading": 0.85,
+    "tracking": -0.05,
+    "condensedTracking": 0.02,
+    "condensedStroke": 8,
+    "stickerOutline": 9,
+    "slamShadow": 0.045,
+    "case": "lowercase",
+    "emphasis": "brand red and 2-3x the size, behind the head or slammed in front of the body",
+    "maxWords": 6
+  },
+  "layout": {
+    "margin": 72,
+    "safe": { "top": 230, "bottom": 330 },
+    "align": "center",
+    "head": { "x": 540, "y": 900, "rx": 112, "ry": 138 },
+    "shoulders": 1075
+  },
+  "motion": {
+    "recipes": {
+      "swing": { "kind": "spring", "damping": 13, "stiffness": 140, "mass": 0.7, "rotateY": 80, "rotateZ": 18, "z": 700, "x": 380, "spacing": 0.2 },
+      "pop": { "kind": "spring", "damping": 10, "stiffness": 230, "mass": 0.6, "stagger": 0.0333, "jitter": 0.35, "settle": 0.3 },
+      "stretch": { "kind": "spring", "damping": 8, "stiffness": 150, "mass": 0.8, "from": 0.15 },
+      "slam": { "kind": "spring", "damping": 9, "stiffness": 190, "mass": 0.8 },
+      "slide": { "kind": "ease", "curve": "expo-out", "duration": 0.2, "distance": 280, "tilt": 18, "opacity": 0.1 },
+      "fade": { "kind": "ease", "curve": "expo-out", "duration": 0.133, "scale": 1.08 },
+      "drop": { "kind": "ease", "curve": [0.33, 1, 0.68, 1], "duration": 0.133, "distance": 320 },
+      "focus": { "kind": "ease", "curve": [0.65, 0, 0.35, 1], "duration": 0.333, "blur": 9 },
+      "ring": { "kind": "ease", "curve": "linear", "duration": 1, "degPerSecond": 135, "radius": 285, "tilt": 24, "letterGap": 0.01 },
+      "push": { "kind": "ease", "curve": "linear", "duration": 3, "from": 1, "to": 1.16, "perspective": 1600 }
+    },
+    "enter": "swing",
+    "exit": "cut",
+    "stagger": 0.0333,
+    "hold": 0.5
+  },
+  "finish": { "grain": 0, "vignette": 0, "glow": false, "softShadow": 0.28, "maxBlur": 9 },
+  "banned": [
+    "words over the face or the hands",
+    "words off-screen, overlapping each other, or unreadable",
+    "capitalised Poppins: main words are lowercase (only Six Caps key words are uppercase)",
+    "more than one emphasis colour: white and one brand red",
+    "words floating on top of everything: every shot uses the four layers (plate, back words, cutout, front words)",
+    "another creator's footage, branding or script; real logos",
+    "AI-generated video for the plate: it is the speaker's own locked-off footage",
+    "grain, glow or colour grades on the type"
+  ],
+  "sources": [
+    {
+      "what": "Kinetic Type: the complete workflow guide, the text-in-space look over footage",
+      "where": "D:\\code_files\\resources to make content engine\\aman thakur's resources\\Kinetic Type_ the complete workflow guide.pdf, pp. 3, 5–8, 11, 13, 21–22, 24; research notes docs/research/styles/local-guides.md, \"Kinetic Type — red text-in-space over footage\"",
+      "licence": "the guide states none; the technique is described in our own words, no code or assets copied; Poppins and Six Caps are SIL OFL"
+    }
+  ]
+}

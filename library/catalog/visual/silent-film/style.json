@@ -1,0 +1,101 @@
+{
+  "id": "silent-film",
+  "name": "Silent Film",
+  "kind": "visual",
+  "version": 1,
+  "status": "built-in",
+  "summary": "An engraved ink-and-silver-wash drawing projected as a flickering, weaving, scratched print inside a picture house, with intertitle cards instead of voices, deco borders that follow the emotion, an iris, velvet drapes and footlights, and at most one hand-tinted colour.",
+  "tags": ["sepia", "film", "1920s", "serif", "theatre", "engraved", "intertitles", "retro"],
+  "suits": ["wordless comedy", "retro brand films", "silent storytelling", "mock newsreels", "company archive pieces", "facts told with cards"],
+  "needs": { "footage": false, "3d": false },
+  "frame": { "width": 1080, "height": 1920 },
+  "palette": [
+    { "role": "background", "hex": "#0e0d0b", "use": "the intertitle card; the dark screen before the lamp strikes" },
+    { "role": "text", "hex": "#ece5d5", "use": "intertitle type and deco borders" },
+    { "role": "muted", "hex": "#9e805e", "use": "sepia mid: the tone ramp at L = 0.6" },
+    { "role": "faint", "hex": "#1b120b", "use": "sepia low: darks, ink contours" },
+    { "role": "surface", "hex": "#f7ebd1", "use": "sepia high: highlights in the print" },
+    { "role": "accent", "hex": "#6f9bc0", "use": "the one colour: hand-tinted blue light, kept through the print (proposed for this topic; the source's example is #d97757)" },
+    { "role": "accent2", "hex": "#a8874a", "use": "the pelmet's tarnished fringe (proposed)" },
+    { "role": "theatre", "hex": "#050404", "use": "the base under the drapes" },
+    { "role": "velvet", "hex": "#4a0f12", "use": "the drapes, lit by the screen's spill and by footlights (proposed)" },
+    { "role": "velvet-dark", "hex": "#240608", "use": "folds in the drapes (proposed)" },
+    { "role": "lamp", "hex": "#ffaa6e", "use": "footlights" },
+    { "role": "burn", "hex": "#3a2413", "use": "brown edge fog on the print" }
+  ],
+  "fonts": {
+    "display": { "family": "Playfair Display SC", "source": "google", "weights": [700, 900] },
+    "body": { "family": "Old Standard TT", "source": "google", "weights": [400], "italic": true }
+  },
+  "type": {
+    "display": 128,
+    "title": 132,
+    "number": 330,
+    "shout": 72,
+    "narration": 88,
+    "end": 104,
+    "credit": 46,
+    "body": 54,
+    "min": 40,
+    "leading": 1.3,
+    "tracking": 0,
+    "case": "small caps for titles and shouts; sentence-case italic for narration",
+    "emphasis": "the card's border follows the emotion: a heavy rule for a shout, a double rule for narration, vines for tenderness",
+    "maxWords": 8
+  },
+  "layout": {
+    "margin": 60,
+    "safe": { "top": 230, "bottom": 330 },
+    "align": "center",
+    "gate": { "x": 60, "y": 240, "w": 960, "h": 1280, "radius": 22 }
+  },
+  "elements": {
+    "heavyRule": { "stroke": 9, "inset": 30 },
+    "doubleRule": { "outer": 5.5, "inner": 2.2, "inset": 30, "gap": 14 },
+    "contour": 3,
+    "hatch": 11,
+    "wash": [0.07, 0.25, 0.5, 0.75, 0.93]
+  },
+  "motion": {
+    "recipes": {
+      "iris": { "kind": "ease", "curve": "smootherstep", "duration": 1.1 },
+      "curtain": { "kind": "ease", "curve": "smootherstep", "duration": 1.1 },
+      "pose": { "kind": "ease", "curve": "smootherstep", "duration": 0.8 }
+    },
+    "crank": 16,
+    "chase": 18,
+    "enter": "iris",
+    "exit": "iris",
+    "stagger": 0.1,
+    "hold": 2.5
+  },
+  "finish": {
+    "grain": 0.06,
+    "vignette": 0.62,
+    "glow": false,
+    "strength": { "card": 0.5, "shout": 0.85, "tender": 0.32 },
+    "sepia": { "card": 0.14, "shout": 0.1, "tender": 0.36 },
+    "flicker": 0.09,
+    "weave": 1.4,
+    "scratches": 4,
+    "dust": 9,
+    "burn": 0.55,
+    "soft": 0.5
+  },
+  "banned": [
+    "noir: hard shadows as mood, voice-over",
+    "a sepia filter over modern animation: the drawing itself is engraved and inked",
+    "a pastiche of any star comedian: never the famous bowler, toothbrush moustache and cane",
+    "any real film's gags or a published melody",
+    "foley and voice: the piano is the sound design",
+    "dissolves within a scene; whip pans; big close-ups of rigged faces; implied motion blur",
+    "more than one colour"
+  ],
+  "sources": [
+    {
+      "what": "Lemo-Opuscar style No. 34 \"1920s Silent Film (Projected Photoplay)\" (STYLE.md, DEMO.md, style.json, demo/engine/film.js, demo/film.js, demo/engine/cards.js), via research notes",
+      "where": "github.com/lemomo-ai/lemo-opuscar styles/silent-film; docs/research/styles/five-skills.md, section \"1920s Silent Film (Projected Photoplay)\"",
+      "licence": "MIT (code and docs); demo film and stills CC BY 4.0 (LemoLab). No code copied. Playfair Display SC, Old Standard TT: SIL OFL"
+    }
+  ]
+}

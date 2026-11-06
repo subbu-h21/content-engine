@@ -1,6 +1,7 @@
 /**
  * Claude Code UserPromptSubmit hook (installed into a project's .claude/settings.local.json by the engine).
  * Adds one paragraph to every prompt: where the user is in the editor (time, scene, narration line, what's on screen).
+ * In the catalog folder (marked by .ce-catalog) it says what the Catalog page shows instead.
  * Prints nothing when the engine or the project's Studio isn't running, so Claude Code is unaffected then.
  */
 import fs from "node:fs";
@@ -19,7 +20,12 @@ async function main() {
     // no JSON on stdin: fall back to the working directory
   }
   let dir = path.resolve(cwd);
+  let catalog = false;
   while (!fs.existsSync(path.join(dir, "project.json"))) {
+    if (fs.existsSync(path.join(dir, ".ce-catalog"))) {
+      catalog = true;
+      break;
+    }
     const up = path.dirname(dir);
     if (up === dir) return;
     dir = up;
@@ -34,7 +40,7 @@ async function main() {
     }
     url = `http://127.0.0.1:${port}`;
   }
-  const r = await fetch(`${url}/api/projects/${encodeURIComponent(path.basename(dir))}/context`, { signal: AbortSignal.timeout(1500) });
+  const r = await fetch(catalog ? `${url}/api/catalog/context` : `${url}/api/projects/${encodeURIComponent(path.basename(dir))}/context`, { signal: AbortSignal.timeout(1500) });
   if (!r.ok) return;
   const { text } = await r.json();
   if (!text) return;

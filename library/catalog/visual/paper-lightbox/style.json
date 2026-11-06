@@ -1,0 +1,113 @@
+{
+  "id": "paper-lightbox",
+  "name": "Paper Lightbox",
+  "kind": "visual",
+  "version": 1,
+  "status": "built-in",
+  "summary": "A stack of cut-paper sheets in a shallow box lit from behind: moonlit blue layers, each one flat colour and each casting a soft shadow on the next, windows and lanterns burning through, titles on gold paper strips.",
+  "tags": ["dark", "paper", "cut paper", "backlit", "warm light", "night", "storytelling", "serif"],
+  "suits": ["stories and fables", "festivals and holidays", "\"two places, one light\" stories", "cultural explainers", "keepsakes and gifts", "calm science stories"],
+  "needs": { "footage": false, "3d": false },
+  "frame": { "width": 1080, "height": 1920 },
+  "palette": [
+    { "role": "background", "hex": "#0a1330", "use": "the night sky at the top of the back panel; the box's dark" },
+    { "role": "surface", "hex": "#172a58", "use": "the back panel's second step" },
+    { "role": "text", "hex": "#fbf3e4", "use": "the burned-in subtitle line under the picture" },
+    { "role": "muted", "hex": "#c3cbe8", "use": "auspicious clouds (the far layer); quiet subtitle words" },
+    { "role": "faint", "hex": "#43598a", "use": "the back panel's lowest, lightest step" },
+    { "role": "accent", "hex": "#ffb862", "use": "window glow: warm light is the only saturated thing" },
+    { "role": "accent2", "hex": "#b3302a", "use": "seal red: the one accent, on seals only" },
+    { "role": "sky3", "hex": "#2e4478", "use": "the back panel's third step" },
+    { "role": "moon", "hex": "#fffaf0", "use": "the moon disc" },
+    { "role": "halo", "hex": "#fff0cf", "use": "the moon's halo and the backlight's colour" },
+    { "role": "haloOuter", "hex": "#f7dca4", "use": "the halo's outer ring" },
+    { "role": "far", "hex": "#6a86c2", "use": "far mountains (translucency 0.7)" },
+    { "role": "mid", "hex": "#3f5a92", "use": "mid mountains with carved contour slits (0.45)" },
+    { "role": "walls", "hex": "#5a70a6", "use": "village walls (0.25)" },
+    { "role": "roofs", "hex": "#1b284f", "use": "village roofs" },
+    { "role": "river", "hex": "#22325e", "use": "the river (0.3)" },
+    { "role": "trail", "hex": "#e9cf96", "use": "the moon's trail on the water" },
+    { "role": "tree", "hex": "#17224a", "use": "tree and bridge (0.12)" },
+    { "role": "blossom", "hex": "#d9a24a", "use": "blossoms on the tree" },
+    { "role": "bank", "hex": "#0e1532", "use": "the near-black foreground bank and figures (0.05)" },
+    { "role": "lantern", "hex": "#0d1328", "use": "lantern frames" },
+    { "role": "lanternGlow", "hex": "#ff8a48", "use": "lantern light" },
+    { "role": "wallWarm", "hex": "#b08058", "use": "the warm interior ladder: the back wall" },
+    { "role": "props", "hex": "#6e3b1f", "use": "the warm ladder: middle sheets" },
+    { "role": "figure", "hex": "#2e170d", "use": "the warm ladder's front sheet; ink on the gold strips" },
+    { "role": "glowWarm", "hex": "#ffc878", "use": "the warm ladder's light" },
+    { "role": "strip", "hex": "#f1dbac", "use": "gold title paper" },
+    { "role": "strip2", "hex": "#f3d998", "use": "the sign-off strip" },
+    { "role": "walnut", "hex": "#8a6a52", "use": "the box's wooden frame in outside shots" },
+    { "role": "room", "hex": "#2a2018", "use": "the dark room around the box (falls to #0a0806)" },
+    { "role": "roomDark", "hex": "#0a0806", "use": "the room's far dark" },
+    { "role": "spill", "hex": "#ffc98a", "use": "lamp light spilling onto the table" }
+  ],
+  "fonts": {
+    "display": { "family": "Cormorant", "source": "google", "weights": [600, 700] },
+    "body": { "family": "Noto Serif", "source": "google", "weights": [500] }
+  },
+  "type": {
+    "display": 92,
+    "title": 104,
+    "number": 470,
+    "strip": 44,
+    "kicker": 30,
+    "body": 40,
+    "label": 38,
+    "min": 24,
+    "leading": 1.05,
+    "charEm": 0.46,
+    "subtitleTracking": 0.06,
+    "case": "sentence case on strips; spaced small caps for kickers",
+    "emphasis": "a red seal beside the word, or a character lighting on its spoken word",
+    "maxWords": 8
+  },
+  "layout": { "margin": 80, "safe": { "top": 230, "bottom": 330 }, "align": "left", "subtitleY": 1560, "stripHeight": 1.5 },
+  "elements": {
+    "translucency": { "clouds": 0.9, "far": 0.7, "mid": 0.45, "walls": 0.25, "river": 0.3, "tree": 0.12, "bank": 0.05 },
+    "shadow": { "dy": 9, "blur": 11, "alpha": 0.55 },
+    "rim": { "shift": 3, "alpha": 0.35 },
+    "falloff": { "near": 1, "far": 0.22, "radius": 900, "strength": 0.62 },
+    "flicker": { "amount": 0.06, "a": 7.3, "b": 3.1 },
+    "moon": { "halo": 3.2 },
+    "drift": 1.4,
+    "fibre": 0.22
+  },
+  "motion": {
+    "recipes": {
+      "light": { "kind": "ease", "curve": [0.42, 0, 0.58, 1], "duration": 0.6 },
+      "moon": { "kind": "ease", "curve": [0.42, 0, 0.58, 1], "duration": 1.2 },
+      "strip": { "kind": "ease", "curve": [0.42, 0, 0.58, 1], "duration": 0.6 },
+      "slide": { "kind": "ease", "curve": [0.42, 0, 0.58, 1], "duration": 1.0 },
+      "push": { "kind": "ease", "curve": [0.42, 0, 0.58, 1], "duration": 7.0 },
+      "subtitleIn": { "kind": "ease", "curve": "linear", "duration": 0.15 },
+      "subtitleOut": { "kind": "ease", "curve": "linear", "duration": 0.3 },
+      "dissolve": { "kind": "ease", "curve": [0.42, 0, 0.58, 1], "duration": 0.8 }
+    },
+    "enter": "light",
+    "exit": "dissolve",
+    "stagger": 0.42,
+    "hold": 1.8
+  },
+  "finish": { "grain": 0, "vignette": 0.42, "glow": true, "bloom": 0.35, "saturation": 1.05 },
+  "banned": [
+    "flat paper-cut without depth: every sheet is backlit and casts a soft shadow",
+    "a pale front layer: back layers bright and translucent, front layers dark and opaque",
+    "more than one flat colour on a sheet; gradients on sheets (only the lit back panel and light)",
+    "a second temperature in one stack (a new ladder means a new place)",
+    "squash, stretch, morphing or bending: paper slides, turns on a pivot, grows from an edge or lights up",
+    "a 3D diorama: every element is a flat sheet parallel to the front",
+    "whip pans, digital zooms, a drum kit",
+    "the same words as paper and as subtitle",
+    "half-visible box edges: fully out of frame or clearly in it",
+    "copying a specific lamp, film frame or character"
+  ],
+  "sources": [
+    {
+      "what": "Lemo-Opuscar style No. 10 \"Paper Lightbox\" (Paper-cut Lightbox, layered shadow-box lamp): STYLE.md, DEMO.md, style.json",
+      "where": "github.com/lemomo-ai/lemo-opuscar styles/paper-lantern; research notes docs/research/styles/five-skills.md, \"Paper-cut Lightbox (layered shadow-box lamp)\"",
+      "licence": "MIT (code and docs); demo films and stills CC BY 4.0, except the demo's narration (Edge TTS), which is excluded and not used. No code copied; the look is rebuilt in SVG. Cormorant and Noto Serif are SIL OFL."
+    }
+  ]
+}

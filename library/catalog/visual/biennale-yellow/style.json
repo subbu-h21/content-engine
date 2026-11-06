@@ -1,0 +1,119 @@
+{
+  "id": "biennale-yellow",
+  "name": "Biennale Yellow",
+  "kind": "visual",
+  "version": 1,
+  "status": "built-in",
+  "summary": "An art-biennale catalogue in motion: warm parchment, one deep indigo ink for all type and rules, huge Instrument Serif, and soft solar-yellow sun blooms that rise behind the page; words soak in from pale to ink without moving.",
+  "tags": ["light", "parchment", "serif", "yellow", "indigo", "museum", "calm", "literary"],
+  "suits": ["culture and events", "programmes", "essays", "quote cards", "slow explainers"],
+  "needs": { "footage": false, "3d": false },
+  "frame": { "width": 1080, "height": 1920 },
+  "palette": [
+    { "role": "background", "hex": "#e9e5db", "use": "paper: the ground of every frame; never white or grey" },
+    { "role": "surface", "hex": "#dcd6c4", "use": "paper-deep: secondary paper, and the pale tone words soak in from" },
+    { "role": "text", "hex": "#1b2566", "use": "ink: ALL type and ALL rules; there's no second text colour" },
+    { "role": "muted", "hex": "#555b87", "use": "ink at 72% on paper: the page number only (proposed)" },
+    { "role": "faint", "hex": "#c0bfc4", "use": "ink at 20% on paper: soft hairlines (proposed)" },
+    { "role": "accent", "hex": "#f1ee2e", "use": "sun: bloom core, the yellow panel, block tiles (40-70%), the hard block under a key word" },
+    { "role": "accent2", "hex": "#e26b4a", "use": "ember: only as a 15-22% counter-bloom in the corner opposite the sun; never a fill or text" },
+    { "role": "sunSoft", "hex": "#f8f39b", "use": "bloom mid stop; light that has passed through" },
+    { "role": "haze", "hex": "#f0da7c", "use": "bloom outer stop (18-22%)" }
+  ],
+  "fonts": {
+    "display": { "family": "Instrument Serif", "source": "google", "weights": [400], "italic": true },
+    "body": { "family": "Archivo", "source": "google", "weights": [400, 600] },
+    "mono": { "family": "JetBrains Mono", "source": "google", "weights": [400] }
+  },
+  "type": {
+    "display": 280,
+    "displayIt": 216,
+    "headline": 132,
+    "headlineSm": 88,
+    "numeralJumbo": 500,
+    "numeralMd": 168,
+    "strand": 74,
+    "body": 38,
+    "label": 26,
+    "labelTracking": 0.18,
+    "railTracking": 0.32,
+    "mono": 30,
+    "monoTracking": 0.04,
+    "pagenum": 24,
+    "min": 24,
+    "leading": 1.02,
+    "displayLeading": 0.86,
+    "tracking": -0.005,
+    "displayTracking": -0.018,
+    "numeralTracking": -0.04,
+    "case": "sentence case for display; labels uppercase with at least 0.16em tracking",
+    "emphasis": "one italic key word, or a hard square sun block under one word; never bold, never a second colour",
+    "maxWords": 8
+  },
+  "layout": {
+    "margin": 84,
+    "safe": { "top": 230, "bottom": 330 },
+    "align": "left",
+    "blockWidth": 842,
+    "pageNumY": 1558,
+    "empty": "55-60% of a frame is empty; the ledger is the one dense exception"
+  },
+  "elements": {
+    "bloom": {
+      "stops": [
+        { "at": 0, "hex": "#f1ee2e", "alpha": 0.92 },
+        { "at": 30, "hex": "#f1ee2e", "alpha": 0.5 },
+        { "at": 55, "hex": "#f0da7c", "alpha": 0.22 },
+        { "at": 78, "hex": "#e9e5db", "alpha": 0 }
+      ],
+      "ember": 0.2,
+      "from": 0.78
+    },
+    "hairline": 2,
+    "softLine": 0.2,
+    "tile": { "columns": 8, "rows": 4, "alphaMin": 0.4, "alphaMax": 0.7 }
+  },
+  "motion": {
+    "recipes": {
+      "sunrise": { "kind": "ease", "curve": "sine-in-out", "duration": 1.5 },
+      "ink": { "kind": "ease", "curve": "quart-out", "duration": 0.6 },
+      "rule": { "kind": "ease", "curve": "expo-out", "duration": 0.9 },
+      "panel": { "kind": "ease", "curve": "quart-out", "duration": 0.8 },
+      "lift": { "kind": "ease", "curve": "expo-out", "duration": 0.9 },
+      "block": { "kind": "ease", "curve": "quart-out", "duration": 0.14 },
+      "pop": { "kind": "ease", "curve": "cubic-out", "duration": 0.14, "from": 0.97 },
+      "tile": { "kind": "ease", "curve": "quart-out", "duration": 0.4 },
+      "ray": { "kind": "ease", "curve": "expo-out", "duration": 0.8 },
+      "out": { "kind": "ease", "curve": "cubic-in", "duration": 0.3 }
+    },
+    "enter": "ink",
+    "exit": "out",
+    "stagger": 0.09,
+    "listStagger": 0.08,
+    "hold": 1.2
+  },
+  "finish": { "grain": 0.015, "vignette": 0, "glow": false },
+  "banned": [
+    "drop shadows, text shadows, rounded corners, bordered cards, borders over the hairline",
+    "a second text colour, bold Instrument Serif, inverted ink grounds (ink on yellow, never yellow on ink)",
+    "mono in body or display; any substitute face",
+    "crowding; a frame with no bloom or yellow surface; a headline blown edge to edge",
+    "ember as a fill or as text; ember stronger than 22%",
+    "rows of three cards; KPI grids",
+    "text that moves while it's read: words soak in where they stand and stay dead still",
+    "pulsing or drifting blooms: a bloom rises once and holds",
+    "bounce, overshoot, linear easing"
+  ],
+  "sources": [
+    {
+      "what": "HyperFrames frame preset Biennale Yellow: palette, faces, type ramp, elements, frames, banned list, caption skin",
+      "where": "github.com/heygen-com/hyperframes skills/hyperframes/assets/frame-presets/biennale-yellow; research notes docs/research/styles/hyperframes.md, \"Biennale Yellow\"",
+      "licence": "Apache-2.0. Tokens and rules re-expressed; no code copied. The fonts are SIL OFL."
+    },
+    {
+      "what": "HyperFrames taste rules T36-T60 (motion)",
+      "where": "docs/research/styles/hyperframes.md, \"Taste rules\"",
+      "licence": "Apache-2.0"
+    }
+  ]
+}

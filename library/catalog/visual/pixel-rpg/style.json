@@ -1,0 +1,117 @@
+{
+  "id": "pixel-rpg",
+  "name": "Pixel RPG",
+  "kind": "visual",
+  "version": 1,
+  "status": "built-in",
+  "summary": "A mid-90s console RPG on a 180×320 pixel grid (6 px each): indexed 32-colour palette, Bayer-dithered skies, typed dialog boxes with a talking portrait, quest logs, battle messages and a save crystal; the topic becomes a quest.",
+  "tags": ["pixel art", "retro", "game", "16-bit", "rpg", "playful", "dithered"],
+  "suits": ["game-style explainers", "levelling-up stories", "recaps", "quests and steps", "nostalgia"],
+  "needs": { "footage": false, "3d": false },
+  "frame": { "width": 1080, "height": 1920 },
+  "palette": [
+    { "role": "background", "hex": "#181425", "use": "night: the darkest index; the ink outline of every sprite and window; the 1-pixel text shadow" },
+    { "role": "surface", "hex": "#262b44", "use": "navy: the middle of the dialog-box fill and of the night sky" },
+    { "role": "text", "hex": "#ffffff", "use": "dialog and menu text, the inner white border of windows, the brightest highlight" },
+    { "role": "muted", "hex": "#c0cbdc", "use": "silver: the third window border, labels, the middle band of title type" },
+    { "role": "faint", "hex": "#5a6988", "use": "steel: greyed-out menu items, the hero's cloak" },
+    { "role": "accent", "hex": "#e43b44", "use": "protected red: red light (700 nm) and nothing else" },
+    { "role": "accent2", "hex": "#2ce8f5", "use": "protected crystal cyan: blue light, scattered sparks, the save crystal; the thread of the film" },
+    { "role": "accent2-mid", "hex": "#0099db", "use": "protected cyan, middle tone: blue light shading, the day sky's middle band" },
+    { "role": "accent2-dark", "hex": "#124e89", "use": "protected cyan, dark tone: crystal shade, the top of the day sky and of the dialog fill" },
+    { "role": "accent-dark", "hex": "#a22633", "use": "protected red, dark tone" },
+    { "role": "keyword", "hex": "#fee761", "use": "emphasised words in dialog (like an item name), sparkle stars, the sun's core" },
+    { "role": "sun", "hex": "#feae34", "use": "the sun's middle tone, the hero's scarf (the hero carries sunlight)" },
+    { "role": "sun-dark", "hex": "#f77622", "use": "the sun's shaded edge, the scarf's shade" },
+    { "role": "night-3", "hex": "#3a4466", "use": "the night sky near the horizon, empty bar tracks, the hero's cloak shade" },
+    { "role": "steel-2", "hex": "#8b9bb4", "use": "the bottom band of title type, the hero's cloak highlight, the molecule's shade" },
+    { "role": "grass-1", "hex": "#63c74d", "use": "lit grass tops" },
+    { "role": "grass-2", "hex": "#3e8948", "use": "grass" },
+    { "role": "grass-3", "hex": "#265c42", "use": "far hills, grass shade" },
+    { "role": "grass-4", "hex": "#193c3e", "use": "farthest hills, hills at night" },
+    { "role": "skin", "hex": "#e8b796", "use": "the hero's face" },
+    { "role": "skin-dark", "hex": "#c28569", "use": "the hero's face in shade" },
+    { "role": "boot", "hex": "#733e39", "use": "boots, wood" },
+    { "role": "green", "hex": "#63c74d", "use": "spectrum orb: green" },
+    { "role": "orange", "hex": "#f77622", "use": "spectrum orb: orange" },
+    { "role": "violet", "hex": "#b55088", "use": "spectrum orb: violet (the palette's nearest); the dawn sky's pink band" },
+    { "role": "plum", "hex": "#68386c", "use": "the dawn sky between night and pink" }
+  ],
+  "fonts": {
+    "display": { "family": "Jersey 10", "source": "google", "weights": [400] },
+    "body": { "family": "Jersey 10", "source": "google", "weights": [400] },
+    "ui": { "family": "Silkscreen", "source": "google", "weights": [400] }
+  },
+  "type": {
+    "display": 126,
+    "title": 126,
+    "number": 360,
+    "body": 84,
+    "label": 48,
+    "min": 30,
+    "leading": 1.15,
+    "tracking": 0,
+    "case": "sentence in dialog; UPPERCASE in menus and labels",
+    "emphasis": "the keyword colour (yellow) in the same face, like an item name",
+    "outline": 1,
+    "shadow": 1,
+    "charsPerSecond": 38,
+    "maxWords": 12
+  },
+  "layout": {
+    "margin": 48,
+    "safe": { "top": 230, "bottom": 330 },
+    "align": "left",
+    "native": { "top": 38, "bottom": 265 }
+  },
+  "elements": {
+    "grid": { "w": 180, "h": 320, "px": 6 },
+    "window": { "border": 3, "pad": 6, "corner": 1, "slide": 10 },
+    "portrait": 28,
+    "hero": { "w": 14, "h": 22 },
+    "sun": { "r": 13, "glow": [3, 6] },
+    "molecule": { "r": 15 },
+    "spark": { "count": 10, "size": 2, "length": 7, "reach": 60, "every": 0.45 },
+    "bar": { "h": 5 },
+    "crystal": { "r": 15, "h": 22, "steps": 8 }
+  },
+  "motion": {
+    "recipes": {
+      "window": { "kind": "ease", "curve": [0.33, 1, 0.68, 1], "duration": 0.3 },
+      "dissolve": { "kind": "ease", "curve": "linear", "duration": 0.5 },
+      "mosaic": { "kind": "ease", "curve": "linear", "duration": 0.75 },
+      "beam": { "kind": "ease", "curve": "linear", "duration": 0.5 },
+      "spark": { "kind": "ease", "curve": [0.33, 1, 0.68, 1], "duration": 1.35 },
+      "fill": { "kind": "ease", "curve": [0.33, 1, 0.68, 1], "duration": 0.8 },
+      "count": { "kind": "ease", "curve": [0.33, 1, 0.68, 1], "duration": 0.9 }
+    },
+    "enter": "window",
+    "exit": "cut",
+    "stagger": 0.25,
+    "hold": 1.8,
+    "spriteFps": 8,
+    "effectFps": 12,
+    "caretHz": 3,
+    "cursorFps": 4,
+    "walk": 30
+  },
+  "finish": { "grain": 0, "vignette": 0, "glow": false, "scanlines": false, "dither": "bayer-4x4" },
+  "banned": [
+    "alpha fades, soft gradients, blur, glow, grain or scanlines: colour changes by dither or by swapping the palette in one frame",
+    "sub-pixel positions: everything sits on the 6 px grid (one native pixel)",
+    "colours outside the 32-colour palette",
+    "more than the two protected colours (cyan = blue light, red = red light) carrying meaning",
+    "existing games' names, characters, fonts, window frames, logos, melodies or sound effects",
+    "a slime-shaped enemy or any well-known game creature",
+    "numbers or stats that aren't true (no invented HP or levels)",
+    "text drawn outside a window or a title screen",
+    "smooth-dome hair or helmet heads; pale clothing that reads as skin"
+  ],
+  "sources": [
+    {
+      "what": "Lemo-Opuscar style No. 29 \"16-bit Pixel RPG\" (STYLE.md, DEMO.md), via research notes",
+      "where": "github.com/lemomo-ai/lemo-opuscar styles/pixel-rpg; docs/research/styles/five-skills.md, section \"16-bit Pixel RPG\"",
+      "licence": "MIT (code and docs); demo films and stills CC BY 4.0 (LemoLab). ENDESGA-32 palette: free to use. Jersey 10 and Silkscreen: SIL OFL"
+    }
+  ]
+}

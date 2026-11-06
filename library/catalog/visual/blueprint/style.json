@@ -1,0 +1,94 @@
+{
+  "id": "blueprint",
+  "name": "Blueprint",
+  "kind": "visual",
+  "version": 1,
+  "status": "built-in",
+  "summary": "An engineering drawing that comes alive on one sheet of cyanotype paper: white line work on uneven Prussian blue, built in drafting order, hand-lettered notes that carry the wit, one red stamp.",
+  "tags": ["blue", "paper", "hand-lettered", "drafting", "white line", "dry wit"],
+  "suits": ["how it works", "hardware launches", "engineering", "explainer", "product versions", "plans"],
+  "needs": { "footage": false, "3d": false },
+  "frame": { "width": 1080, "height": 1920 },
+  "palette": [
+    { "role": "background", "hex": "#18336B", "use": "sheet blue low: the paper's deeper value, and the paper fill that hides lines behind a solid" },
+    { "role": "surface", "hex": "#2A58A6", "use": "sheet blue high: the paper's lighter value" },
+    { "role": "text", "hex": "#E7F0F9", "use": "all line work and all lettering" },
+    { "role": "muted", "hex": "#B7CCE8", "use": "the same white at a lighter weight: field names, secondary lettering" },
+    { "role": "faint", "hex": "#7E9FD2", "use": "the same white at its softest: sheet furniture, fold creases" },
+    { "role": "accent", "hex": "#C23B2E", "use": "the one rubber stamp: the only non-blue colour, used exactly once in a piece" },
+    { "role": "accent2", "hex": "#5B8CC4", "use": "sun-bleached sheet: worn edges and the pale halo of fold lines" },
+    { "role": "note", "hex": "#0C1C3E", "use": "note boxes, at 58 % opacity" },
+    { "role": "table", "hex": "#0D1116", "use": "the drafting table cloth outside the sheet" }
+  ],
+  "fonts": {
+    "display": { "family": "Architects Daughter", "source": "google", "weights": [400] },
+    "body": { "family": "Architects Daughter", "source": "google", "weights": [400] },
+    "mono": { "family": "B612", "source": "google", "weights": [400, 700] },
+    "signature": { "family": "Allura", "source": "google", "weights": [400] }
+  },
+  "type": {
+    "display": 112,
+    "title": 132,
+    "number": 250,
+    "body": 40,
+    "label": 32,
+    "eyebrow": 30,
+    "field": 25,
+    "min": 24,
+    "leading": 1.14,
+    "tracking": 4,
+    "eyebrowTracking": 2,
+    "case": "upper",
+    "emphasis": "revision cloud",
+    "maxWords": 10,
+    "charEm": 0.6,
+    "capEm": 0.66,
+    "narrowEm": 0.3
+  },
+  "layout": { "margin": 96, "safe": { "top": 230, "bottom": 330 }, "align": "left", "figY": 250, "blockY": 1442, "blockH": 148 },
+  "motion": {
+    "recipes": {
+      "draw": { "kind": "ease", "curve": "cubic-in-out", "duration": 0.8 },
+      "letter": { "kind": "ease", "curve": "linear", "duration": 0.35 },
+      "hatch": { "kind": "ease", "curve": "linear", "duration": 0.6 },
+      "count": { "kind": "ease", "curve": "cubic-out", "duration": 1.3 },
+      "snap": { "kind": "ease", "curve": [0.34, 1.56, 0.64, 1], "duration": 0.6 },
+      "stamp": { "kind": "ease", "curve": "expo-in", "duration": 0.16 },
+      "cut": { "kind": "ease", "curve": "linear", "duration": 0 }
+    },
+    "enter": "draw",
+    "exit": "cut",
+    "stagger": 0.05,
+    "hold": 1.8
+  },
+  "finish": { "grain": 0.018, "vignette": 0, "glow": false, "inkSoft": 0.3, "inkBreak": 0.55 },
+  "elements": {
+    "zoom": 1.4,
+    "lines": { "outline": 3.2, "detail": 2.0, "thin": 1.25, "hair": 0.9 },
+    "dash": { "centre": [34, 7, 6, 7], "hidden": [11, 7], "phantom": [30, 6, 5, 6, 5, 6] },
+    "hatch": 14,
+    "noteAlpha": 0.58,
+    "balloon": 30,
+    "arrow": 22,
+    "cloud": 44,
+    "sheetInset": 34,
+    "borderInset": 48,
+    "tableBorder": 24,
+    "order": { "centre": 0.15, "outline": 0.45, "detail": 0.85, "hatch": 1.15, "dims": 1.5, "balloons": 1.8, "labels": 2.1 }
+  },
+  "banned": [
+    "3D rendering, glowing wireframes or a 3D orbit",
+    "marker on white",
+    "hue variation in the white",
+    "a second non-blue colour, or the stamp colour more than once",
+    "dissolves",
+    "subtitles fixed to the bottom of the frame",
+    "dark ink grounds, orange pen sparks or glow: this is paper",
+    "real patents, a real inventor's machine or signature",
+    "per-lobe shading on blobby shapes",
+    "line weights not scaled with zoom"
+  ],
+  "sources": [
+    { "what": "palette, fonts, line weights, dash patterns, drafting order, notes, stamp, paper recipe, banned list (original name: Blueprint)", "where": "Lemo-Opuscar (lemomo-ai/lemo-opuscar) styles/blueprint, notes in docs/research/styles/five-skills.md, section Blueprint", "licence": "MIT" }
+  ]
+}

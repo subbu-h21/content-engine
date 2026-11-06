@@ -179,10 +179,49 @@ start Claude; it writes the project's `.mcp.json`/hook like the editor does).
   the user asks; `again` for a second copy), `chrome_check_report`. Facts about a file (ffprobe) are cached per version.
 - Test-only overrides: `CE_SECRETS_DIR`, `CE_SETTINGS_FILE`, `CE_GOOGLE_AUTH_URL`, `CE_GOOGLE_TOKEN_URL`, `CE_YOUTUBE_API`.
 
+## Catalog (visual styles)
+
+The plan behind this is in `vision.md` §5 and `docs/visual-catalog.md`. The format is in `library/catalog/README.md`.
+
+- **What a style is:** one folder.
+  - `STYLE.md` is the style document Claude reads, written as a skill.
+  - `style.json` holds the numbers.
+  - `scenes/` holds Remotion sample scenes that draw the style.
+  - `preview/` holds the rendered stills, and `sources/` what the style was made from.
+- **Where styles live:**
+  - built-in styles in `library/catalog/visual/<id>/`;
+  - the user's styles in `<workspace>/catalog/visual/<id>/`.
+  - A user style with a built-in's id is the user's edited copy and takes the built-in's place.
+- **Shared pieces:**
+  - `library/catalog/kit/` and `sample.json` are shared by every style's scenes;
+  - `library/catalog/preview/` is the preview project. `ce catalog preview` copies it to `<workspace>/catalog/_preview/`
+    (with a node_modules junction) and renders one JPEG still per sample with `@remotion/renderer`, bundling once.
+    Nothing paid is called.
+- **The Catalog page:**
+  - `/catalog` is a gallery of covers that step through the stills on hover, with filters and search.
+  - `/catalog/<id>` is a style's sheet: stills, palette, type, motion, banned list, sources and the full STYLE.md. Its
+    actions are Approve (for experimental styles), Duplicate, Delete or Undo my changes (Recycle Bin, confirmed by
+    typing the id), and Add a font file.
+  - `/catalog/new` → `/catalog/new/<draft>` makes a new style from dropped files, links and a note, handed to Claude.
+- **The catalog's Claude:** the chat named `_catalog`, running in `<workspace>/catalog/`.
+  - The engine refreshes `CLAUDE.md` (from `library/catalog/CATALOG-CLAUDE.md`) and the skills `make-style` and
+    `visual-taste` every time it opens.
+  - It writes a `.ce-catalog` marker and the prompt hook, but no editor tools.
+  - The hook asks `/api/catalog/context`, which describes the gallery, the open style or a draft.
+  - The `_catalog` name is accepted only by the chat routes and the chat socket, never by project routes such as
+    delete or render.
+- **New styles:**
+  - A new style's draft lives in `<workspace>/catalog/drafts/<draft-id>/`: `sources/` and `draft.json`.
+  - Claude saves the style as `experimental` and writes `result.json` (`{"id"}`); the page then links to the style.
+- **Server and tests:**
+  - Server: `app/server/catalog.mjs` and the `/api/catalog/...` routes.
+  - Test: `tests/e2e/t16_catalog.mjs` (fake Claude, scratch engine).
+
 ## Commands
 
 ```
 ce app [--no-open]                 # the website (see above)
+ce catalog list | check <style> | preview <style> | copy <style> [--as <id>]   # the style catalog (above)
 ce settings workspace D:\code_files\animations   # where video projects live (currently set)
 ce new <slug> --title "..."        # project-<N>-<slug> from the template: packages linked, git repo, ready for Studio
 ce list                            # projects in the workspace
@@ -203,6 +242,7 @@ name in the workspace, or a project number.
 | `template/` | What a new project starts as: the generic Remotion layer (`src/components`, `src/lib`), an example scene, `project.json`, `script.json`, `sfx.json`, README and CLAUDE.md for the project. |
 | `pipeline/` | Python steps that read a project's `project.json` / `script.json` / `sfx.json` and write into it: OpenRouter voice (verbatim-checked) and Lyria music, stems and music ducking, procedural sound effects, plate bloom + encode, captions. |
 | `library/blender/` | Reusable Blender builders (brain, phone) with their assets. A project copies what it uses into `blender/lib/`. |
+| `library/catalog/` | The style catalog: built-in visual styles, the kit and sample content their scenes share, the preview project, the catalog's skills (`make-style`, `visual-taste`) and the catalog Claude's CLAUDE.md. Format: its README. |
 | `cli/` | `ce.mjs` (commands) and `projects.mjs` (create/list/link projects; the website reuses it). |
 | `app/` | The website: `server/` (Express API, MCP endpoint, Studio management, the Claude chat, bridge, hook), `web/` (React page, built with esbuild into `dist/`: `npm run build`). Own packages, separate from `runtime/`. |
 | `migrations/phone-reel/` | Turns the existing reel (project-3-development + project-2-expt/reel) into an engine project. |
