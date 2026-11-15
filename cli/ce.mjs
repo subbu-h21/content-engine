@@ -9,6 +9,8 @@
  *   ce pipeline <project> <step> ... run a pipeline step (vo, music, stems, sfx, plates, captions)
  *   ce blender <project> <script> [args...]   run a Blender script from the project's blender/ folder headless
  *   ce app [--no-open]               start the website (projects, editor with Studio + Claude) and open it
+ *   ce viewer [--tunnel] [--new-key] a read-only page with the rendered videos, for a phone (--tunnel: through a
+ *                                    cloudflared quick tunnel, printing the link to open; viewer.bat does this)
  *   ce catalog list                  the visual styles (built-in and your own)
  *   ce catalog check <style...>      check styles against the format (library/catalog/README.md)
  *   ce catalog preview <style...>    render a style's preview stills and moving reel into its preview/ folder
@@ -29,6 +31,7 @@ import { applyStyle, checkStyle, copyStyle, findStyle, listStyles, previewStyle 
 import { createProject, ENGINE_DIR, linkProject, listProjects, loadSettings, resolveProject, RUNTIME_MODULES, saveSettings } from "./projects.mjs";
 import { readHooks, runPackage } from "./packaging.mjs";
 import { runReview } from "./review.mjs";
+import { findCloudflared, startTunnel, startViewer, viewerKey } from "./viewer.mjs";
 
 const [cmd, ...rest] = process.argv.slice(2);
 const settings = loadSettings();
@@ -198,6 +201,47 @@ const commands = {
     } else throw new Error("usage: ce catalog list | check <style...> | preview <style...> | copy <style> [--as <new id>] | use <style> [--project <p>]");
   },
 
+  viewer() {
+    // read-only phone viewer (cli/viewer.mjs); the website itself stays local-only
+    const tunnel = rest.includes("--tunnel");
+    const workspace = flag("workspace") ?? process.env.CE_WORKSPACE ?? settings.workspace;
+    const port = Number(process.env.CE_VIEWER_PORT || settings.viewerPort || 4200);
+    const key = viewerKey(process.env.CE_SECRETS_DIR || path.join(ENGINE_DIR, "secrets"), rest.includes("--new-key"));
+    const server = startViewer({ workspace, port, key });
+    let child = null;
+    const stop = () => {
+      if (child && !child.killed) child.kill();
+      server.close();
+    };
+    process.on("SIGINT", () => (stop(), process.exit(0)));
+    process.on("exit", () => child && !child.killed && child.kill());
+    server.on("error", (e) => {
+      console.error(e.code === "EADDRINUSE" ? `ce: port ${port} is busy: the viewer is probably already running (close its window first).` : `ce: ${e.message}`);
+      process.exitCode = 1;
+    });
+    server.on("listening", () => {
+      console.log(`Video viewer (read-only): http://127.0.0.1:${port}/?k=${key}`);
+      console.log(`Videos from ${workspace}`);
+      if (!tunnel) {
+        console.log(`For your phone: run  cloudflared tunnel --url http://127.0.0.1:${port}  and open its https address with /?k=${key} at the end.`);
+        return;
+      }
+      const exe = findCloudflared();
+      if (!exe) {
+        console.log("cloudflared isn't installed, so there's no phone link. Install it, then start this again.");
+        return;
+      }
+      console.log("Starting the tunnel (a few seconds)…");
+      child = startTunnel(exe, port, (url) => {
+        console.log("");
+        console.log("Open this on your phone (keep it private: the key in it is the only lock):");
+        console.log(`  ${url}/?k=${key}`);
+        console.log("");
+        console.log("Keep this window open while you watch. Closing it stops the viewer and the tunnel.");
+      });
+      child.on("exit", (code) => console.log(`The tunnel stopped (code ${code}). The viewer still works on this PC.`));
+    });
+  },
   doctor() {
     const ok = (b, label, extra = "") => console.log(`${b ? " ok " : "FAIL"}  ${label}${extra ? `  (${extra})` : ""}`);
     ok(true, "node", process.version);

@@ -305,10 +305,31 @@ uploaded: no thumbnail goes to any platform yet.
   Their author found they catch bad lines but barely separate hits from misses.
 - **Test:** `tests/e2e/t20_packaging.mjs` plants faults in thumbnails, titles and captions.
 
+## Phone viewer
+
+`cli/viewer.mjs`, `ce viewer`, `viewer.bat` (2026-11-16). The user wanted to watch rendered videos on a phone through
+cloudflared; the website refuses any Host but `127.0.0.1`/`localhost` ("forbidden host") and must keep doing so, since
+it can run Claude, delete videos and post to the user's accounts. So the viewer is a separate, tiny server:
+
+- **Read-only:** GET/HEAD only (others 405). It lists each engine project's videos with the Publish page's rules
+  (`out/` and one folder below, not `out/render` or `out/check`; `out/delivery.mp4` = Final) and serves only files on
+  that list, so no path from a request reaches the disk. Videos stream with Range (206) for seeking on phones.
+- **Keyed:** every request needs `?k=<key>` (constant-time compare). The key is 24 random bytes, kept in
+  `secrets/viewer-key.txt` (`CE_SECRETS_DIR`), made on first start; `--new-key` replaces it. Any Host is accepted (the
+  tunnel's changes). Pages send `Referrer-Policy: no-referrer`, a strict CSP, `X-Frame-Options: DENY`, `noindex`.
+- **Local:** listens on `127.0.0.1` only, port `settings.viewerPort` | `CE_VIEWER_PORT` | 4200. `--tunnel` starts
+  `cloudflared tunnel --url http://127.0.0.1:<port>` (cloudflared from PATH or Program Files) and prints the
+  `https://….trycloudflare.com/?k=…` link; closing the window stops both.
+- **Test:** `tests/e2e/t22_viewer.mjs` (scratch workspace, port 4172): keys, a foreign Host, Range, HEAD, download,
+  path tricks (`../`, `..\`, absolute paths, `p=..`), skipped folders, methods, not reachable on the LAN address.
+  32/32 pass. Also checked by hand through a real quick tunnel on a scratch workspace (403 without key, list, 206 with
+  the right bytes, 405), and at phone size in headless Chrome on the real workspace.
+
 ## Commands
 
 ```
 ce app [--no-open]                 # the website (see above)
+ce viewer [--tunnel] [--new-key]   # read-only phone viewer of the rendered videos (see "Phone viewer"); viewer.bat adds --tunnel
 ce catalog list | check <style> | preview <style> | copy <style> [--as <id>]   # the style catalog (above)
 ce review [project] [--no-critic]  # the quality gate (above)
 ce hooks [project]                 # score the hook options in brief/hooks.json

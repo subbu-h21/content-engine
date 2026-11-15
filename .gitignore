@@ -10,3 +10,7 @@ settings.json
 secrets/
 # API keys (OPENROUTER_API_KEY lives in the workspace's .env; guard against one landing here)
 .env
+# stray videos dropped in the engine folder (style previews under library/ stay tracked)
+/*.mp4
+# Windows folder settings (desktop.ini) and other local .ini files
+*.ini

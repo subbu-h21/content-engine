@@ -41,7 +41,9 @@ For a fresh Claude Code session opened in `D:\code_files\content-engine`. Read t
 - **The Claude chat (2026-10-21, not committed):** replaced the xterm/node-pty terminal on Brief, Editor, Final and
   Publish. See `docs/ENGINE.md` "The Claude chat" and "Verified, the Claude chat". The user's choices: earlier conversations shown
   (from Claude Code's saved `.jsonl`), tool steps folded into one line, a **Terminal** button (same conversation in a
-  real window; the chat waits), Claude closes after 15 idle minutes. The user doesn't want remote access/tunnels.
+  real window; the chat waits), Claude closes after 15 idle minutes. Remote access: the website stays local-only; on 2026-11-16 the user asked to
+  watch videos on their phone through cloudflared, so `viewer.bat` (read-only, keyed viewer; `docs/ENGINE.md` "Phone
+  viewer") was added instead of opening the website.
 - **Final (`/p/<p>/final`):** the render queue (`app/server/render.mjs`): audio → Blender plates (only missing
   frames, 200 per call) → plate encode → Remotion render → `out/delivery.mp4`. Stop, Resume, interrupted after an
   engine restart, failures handed to the Claude panel (at most 2 automatic fixes).
@@ -154,9 +156,10 @@ in git).
      return in `Mark`): stills can't see this kind of bug, so a new style should always get its reel.
    - **Quality gate (step 2):** see `docs/ENGINE.md` "Quality gate". `ce review`, the Review tab, storyboard at the
      approval step, final render in BT.709. Test: `tests/e2e/t19_quality_gate.mjs`.
-   - **Project 9 after the gate:** 4 review rounds took it from 9 P1 notes to 2; 0 failed, 0 P0, 8 P2. Final render
-     done (20.46 s, BT.709, −15.7 LUFS), but the gate hasn't passed. The 2 open P1s are the ring not reading as a sample
-     of the sea, and the jump at the cut into the ending at 17 s. Nobody has heard it yet.
+   - **Project 9 after the gate:** 4 review rounds took it from 9 P1 notes to 2; 0 failed, 0 P0, 8 P2. The jump at the
+     17 s cut was then fixed by hand, and the final render includes it (20.46 s, BT.709, −15.7 LUFS). The report still
+     counts that note, because only a full critic run clears it. Really open: the ring not reading as a sample of the
+     sea, and the P2s. The gate hasn't passed. Nobody has heard the video yet.
    - **Critic memory:** new critics kept reversing earlier notes, so each now gets earlier P0 and P1 notes
      (`review/history.json`). It has run once with a real critic, on project 9, but only knew the previous round because
      older rounds weren't saved, and that run still reversed a round 2 note. A new video is the first full test.

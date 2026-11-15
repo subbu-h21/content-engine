@@ -149,8 +149,20 @@ Downloaded on first use, automatically:
 - the Whisper speech model (about 460 MB), the first time a reference video is studied
 
 The website only listens on this PC (`127.0.0.1`), so other computers can't reach it. If the PC is a remote or cloud
-machine, use the engine through Remote Desktop on that machine. Don't open the port to the network: the website has
-no login.
+machine, use the engine through Remote Desktop on that machine. Don't open the port to the network or a tunnel: the
+website has no login, and it can run Claude, delete videos and post to your accounts. A tunnel to it shows
+"forbidden host" on purpose. To watch your videos on your phone, use the viewer below instead.
+
+### Watch your videos on your phone
+
+Double-click **`viewer.bat`**. It starts a small read-only page with every rendered video (it can only list and play
+them) and a cloudflared tunnel to it, then prints a link like `https://….trycloudflare.com/?k=…`. Open that link on
+your phone. Keep the window open while you watch; closing it stops both.
+
+- It needs cloudflared installed (`winget install Cloudflare.cloudflared`). The engine website doesn't need to run.
+- The `?k=…` part is a secret key, the only lock: share the link only with people who may see your videos. To shut
+  out old links, run `ce viewer --tunnel --new-key` (or `viewer.bat --new-key`).
+- The tunnel's address changes every time you start it; the key stays the same.
 
 ## 7. Connect YouTube, Facebook and Instagram
 
@@ -238,6 +250,7 @@ Each takes about 10 minutes.
 
 ```
 ce app [--no-open]                  # start the website (what start.bat does)
+ce viewer [--tunnel] [--new-key]    # the read-only video viewer for your phone (viewer.bat = ce viewer --tunnel)
 ce doctor                           # check node, Python packages, ffmpeg, Blender, disk, video links
 ce settings [key value]             # show or change settings (workspace, python, blender, appPort)
 ce new <name> --title "..."         # a new video folder from the template (the website's Create does this)
@@ -258,4 +271,4 @@ ce blender <video> <shot>.py <args> # run a video's Blender shot script without 
 | `library/blender/` | Reusable Blender scene builders and assets |
 | `cli/` | The `ce` commands |
 | `docs/ENGINE.md` | How it all works, and what was tested |
-| `secrets/`, `settings.json`, `models/` | Per PC, not in git: sign-ins, settings, the Whisper model |
+| `secrets/`, `settings.json`, `models/` | Per PC, not in git: sign-ins, the viewer's key, settings, the Whisper model |

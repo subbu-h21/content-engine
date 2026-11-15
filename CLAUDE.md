@@ -9,6 +9,9 @@
 - Website (`app/`): after changing `app/web/src`, run `npm run build` in `app/` (`ce app` only builds when `dist/` is
   missing). Keep the server's safety checks: listen on 127.0.0.1 only, reject foreign Host/Origin, chat socket
   only from the engine's own page. `app/` has its own packages; don't add website packages to `runtime/`.
+- Phone access goes only through the read-only viewer (`cli/viewer.mjs`, `viewer.bat`): never allow a tunnel's Host
+  on the website. Keep the viewer GET/HEAD-only, keyed, list-based (no request paths to disk), on 127.0.0.1; re-run
+  `tests/e2e/t22_viewer.mjs` after changing it.
 - Testing the website while the user's engine runs: build into another folder (`node build.mjs D:\tmp\<dist>`) and
   start the scratch engine with `CE_APP_DIST` pointing there. `npm run build` replaces the `app/dist` the user's
   engine serves, so a new page would meet the old server until the user restarts it.
